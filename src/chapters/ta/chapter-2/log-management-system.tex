@@ -1,0 +1,15 @@
+\section{Log Management System}
+
+\subsection{Definisi}
+Pemantauan server melalui aktivitas \textit{logging} merupakan elemen krusial bagi administrator sistem untuk melacak aktivitas pengguna, menyeimbangkan beban (\textit{load balancing}), hingga mendeteksi serangan seperti DDoS. Namun, sistem \textit{logging} konvensional seringkali membebani sumber daya karena biaya yang tinggi dalam hal penyimpanan, pengumpulan data, serta proses pencarian dan analisis.
+
+Implementasi manajemen log yang efektif mengikuti siklus hidup yang terstruktur untuk memastikan kegunaan data (Chuvakin et al., 2012):
+\begin{enumerate}
+    \item \textbf{Log Generation}: Proses pembuatan entitas data oleh aplikasi, server, atau perangkat jaringan.
+    \item \textbf{Log Analysis}: Penggunaan algoritma untuk mengidentifikasi pola anomali atau ancaman keamanan.
+    \item \textbf{Log Storage \& Retention}: Penyimpanan data dalam jangka waktu tertentu sesuai kebijakan retensi (misal: log akses rekam medis wajib disimpan minimal 5 tahun).
+    \item \textbf{Log Disposal}: Penghapusan data log secara aman setelah masa retensi berakhir untuk menjaga efisiensi penyimpanan.
+\end{enumerate}
+
+\subsection{Contoh Implementasi}
+Nguyen et al. \cite{18}, mengusulkan sebuah sistem bernama eLMS (\textit{efficient Log Management System}). Sistem ini dirancang untuk dapat mengumpulkan log dari berbagai server secara terukur (\textit{scalable}), terindeks dengan baik, dan dapat dianalisis dengan cepat. Secara teknis, eLMS dikembangkan berbasis core \textit{open-source} ELK (ElasticSearch, LogStash, Kibana), namun dengan modifikasi signifikan pada metode pengiriman datanya. Alih-alih menggunakan teknik \textit{upload} standar seperti pada LogStash, sistem ini menerapkan teknik antrean (\textit{queue}) dan \textit{streaming}. Hasil pengujian menunjukkan bahwa pendekatan ini mampu meningkatkan kecepatan pemrosesan hingga sepuluh kali lipat dibandingkan sistem ELK standar, menjadikannya solusi yang lebih efisien untuk manajemen log skala besar.

@@ -5,32 +5,56 @@ Bab Pendahuluan secara umum yang dijadikan landasan kerja dan arah kerja penulis
 \section{Latar Belakang}
 \label{sec:latarbelakang}
 
-Latar Belakang berisi dasar pemikiran, kebutuhan atau alasan yang menjadi ide dari topik tugas akhir. Tujuan utamanya adalah untuk memberikan informasi secukupnya kepada pembaca agar memahami topik yang akan dibahas.  Saat menuliskan bagian ini, posisikan anda sebagai pembaca – apakah anda tertarik untuk terus membaca?
+Transformasi digital di sektor kesehatan merupakan sebuah keniscayaan. Salah satu pilar utamanya adalah implementasi Rekam Medis Elektronik (RME). Di Indonesia, kewajiban implementasi RME telah diatur dalam Peraturan Menteri Kesehatan (Permenkes) No. 24 Tahun 2022 \cite{1}, yang bertujuan untuk meningkatkan efisiensi, efektivitas, dan kontinuitas pelayanan kesehatan. RME mengandung data yang sangat sensitif dan bersifat pribadi, sehingga keamanan dan integritasnya menjadi prioritas utama.
+
+Untuk memenuhi kebutuhan tersebut, berbagai penelitian dan pengembangan RME berbasis \textit{Distributed Ledger Technology} (DLT) telah dilakukan. Salah satu bentuk implementasinya adalah penggunaan teknologi IOTA, yang dirancang untuk mendukung pencatatan data medis secara terdesentralisasi dan efisien. Secara umum, penerapan DLT terbukti mampu meningkatkan ketahanan sistem terhadap ancaman manipulasi dan pemalsuan data berkat sifatnya yang \textit{immutable} dan transparan. Setiap transaksi atau akses terhadap data pasien dapat tercatat secara permanen dalam \textit{ledger} yang terdistribusi di antara para pemangku kepentingan seperti rumah sakit, klinik, dan laboratorium. Namun, meskipun DLT unggul dalam menjaga integritas data, aspek pencatatan dan pengelolaan log untuk kebutuhan forensik digital masih belum optimal. Banyak implementasi yang belum menyediakan mekanisme pencatatan insiden secara terstruktur dan dapat diverifikasi, sehingga menyulitkan proses pelacakan serta pembuktian forensik ketika terjadi pelanggaran keamanan.
+
+Ketika insiden keamanan seperti \textit{insider} dan \textit{replay attack} terjadi, proses investigasi forensik digital menjadi krusial untuk mengidentifikasi pelaku, memahami metode serangan, dan mengumpulkan bukti digital yang sah di mata hukum. Menurut Undang-Undang No. 19 Tahun 2016 tentang Informasi dan Transaksi Elektronik (UU ITE) \cite{5}, bukti elektronik diakui sebagai alat bukti hukum yang sah. Namun, tantangannya adalah bagaimana memastikan bahwa bukti yang dikumpulkan dari sistem berbasis DLT memiliki integritas yang tak terbantahkan dan dapat diverifikasi secara kriptografis. Proses forensik konvensional mungkin tidak cukup memadai untuk lingkungan DLT yang terdistribusi dan kompleks.
+
+Oleh karena itu, diperlukan sebuah sistem \textit{monitoring} dan \textit{log management} yang dirancang khusus untuk \textit{incident management} sistem RME berbasis DLT. Sistem ini harus mampu menghasilkan bukti kriptografis yaitu sebuah bukti digital yang keaslian dan integritasnya dijamin oleh mekanisme kriptografi yang dapat digunakan dalam proses audit internal.
 
 \section{Rumusan Masalah}
 
-Rumusan Masalah berisi masalah utama yang dibahas dalam tugas akhir. Rumusan masalah yang baik memiliki struktur sebagai berikut:
-
+Berdasarkan latar belakang yang telah diuraikan, penelitian ini dirancang untuk menjawab serangkaian pertanyaan kunci yang mendesak. Masalah-masalah ini berfokus pada perancangan, implementasi, dan validasi bukti kriptografis untuk insiden \textit{handling} di lingkungan RME modern. Rumusan masalah dalam penelitian ini adalah sebagai berikut:
 \begin{enumerate}
-	\item Penjelasan ringkas tentang kondisi/situasi yang ada sekarang terkait dengan topik utama yang dibahas Tugas Akhir.
-	\item Pokok persoalan dari kondisi/situasi yang ada, dapat dilihat dari kelemahan atau kekurangannya. \textbf{Bagian ini merupakan inti dari rumusan masalah}.
-	\item Elaborasi lebih lanjut yang menekankan pentingnya untuk menyelesaikan pokok persoalan tersebut.
-	\item Usulan singkat terkait dengan solusi yang ditawarkan untuk menyelesaikan persoalan.
+    \item Bagaimana merancang sistem \textit{log management} dan \textit{monitoring} yang mampu mencatat aktivitas akses dan pertukaran data secara komprehensif sebagai \textit{audit trail} pada sistem RME berbasis DLT?
+    \item Bagaimana mekanisme pengelolaan log untuk menjamin integritas, konsistensi, dan keterlacakan data log, baik pada komponen \textit{on-chain} maupun \textit{off-chain}, sehingga log tidak dapat dimanipulasi dan tetap andal untuk keperluan pemantauan dan penelusuran insiden?
+    \item Bagaimana sistem \textit{log management} dan \textit{monitoring} yang dirancang dapat mendukung deteksi dan analisis insiden keamanan tanpa melanggar privasi data rekam medis pasien?
 \end{enumerate}
 
-Penting untuk diperhatikan bahwa persoalan yang dideskripsikan pada subbab ini akan dipertanggungjawabkan di bab Evaluasi apakah terselesaikan atau tidak.
+% Penting untuk diperhatikan bahwa persoalan yang dideskripsikan pada subbab ini akan dipertanggungjawabkan di bab Evaluasi apakah terselesaikan atau tidak.
 
 \section{Tujuan}
 
-Tuliskan tujuan utama dan/atau tujuan detil yang akan dicapai dalam pelaksanaan tugas akhir. Fokuskan pada hasil akhir yang ingin diperoleh setelah tugas akhir diselesaikan, terkait dengan penyelesaian persoalan pada rumusan masalah. Penting untuk diperhatikan bahwa tujuan yang dideskripsikan pada subbab ini akan dipertanggungjawabkan di akhir pelaksanaan tugas akhir apakah tercapai atau tidak.
+Tujuan dari Tugas Akhir ini adalah merancang dan mengimplementasikan sebuah sistem \textit{log management} dan \textit{monitoring} untuk RME berbasis IOTA (DecMed) yang mampu mengumpulkan log dari keseluruhan sistem.
+
+Keberhasilan penelitian ini akan diukur melalui tiga indikator spesifik sebagai berikut:
+\begin{enumerate}
+    \item Dihasilkannya sistem \textit{audit trail} yang terintegrasi dengan sistem RME DecMed.
+    \item Sistem yang diusulkan harus mampu mensimulasikan pengumpulan bukti dari setidaknya dua skenario serangan (\textit{insider} dan \textit{replay attack}) pada prototipe sistem RME.
+\end{enumerate}
 
 \section{Batasan Masalah}
 
-Tuliskan batasan-batasan yang diambil dalam pelaksanaan tugas akhir. Batasan ini dapat dihindari (tidak perlu ada) jika topik/judul tugas akhir dibuat cukup spesifik.
+Untuk menjaga fokus dan kelayakan penelitian, beberapa batasan perlu ditetapkan. Batasan-batasan ini mencakup ruang lingkup teknologi, jenis ancaman, fokus analisis, dan skala implementasi. Penelitian ini memiliki batasan-batasan sebagai berikut:
+\begin{enumerate}
+    \item Platform DLT yang digunakan untuk mensimulasikan lingkungan RME yang terkontrol dan relevan secara industri, adalah DecMed sebuah prototipe IOTA yang telah dikembangkan sebelumnya oleh I Putu Bakta Hari Sudewa.
+    \item Aspek keamanan yang dibahas hanya mencakup keamanan data rekam medis pasien, bukan keamanan sistem secara keseluruhan seperti IOTA atau IPFS.
+\end{enumerate}
 
 \section{Metodologi}
 
-Tuliskan semua tahapan yang akan dilalui selama pelaksanaan tugas akhir. Tahapan ini spesifik untuk menyelesaikan persoalan tugas akhir. Tahapan studi literatur tidak perlu dituliskan karena ini adalah pekerjaan yang harus Anda lakukan selama proses pelaksanaan tugas akhir.
+Untuk mencapai tujuan yang telah ditetapkan, penelitian ini akan dilaksanakan menggunakan metodologi yang sistematis dan terstruktur. Metodologi ini terdiri dari tahapan-tahapan utama yang saling berkaitan, dimulai dari perencanaan hingga pengujian sistem. Metodologi yang akan digunakan dalam penelitian ini adalah sebagai berikut:
+\begin{enumerate}
+    \item \textbf{Perencanaan} \\
+    Tahap perencanaan berfokus pada penyusunan dasar konseptual dan teknis dari kerangka kerja yang akan dikembangkan. Kegiatan utama pada tahap ini meliputi analisis komparatif terhadap penelitian dan \textit{framework} terdahulu untuk mengidentifikasi kebutuhan, tantangan, serta pendekatan yang paling sesuai dengan karakteristik sistem yang akan dibangun. Selain itu, dilakukan pemilihan standar dan \textit{best practices} yang relevan dalam bidang keamanan, integritas data, dan forensik digital guna memastikan rancangan memiliki landasan yang kuat dan dapat diimplementasikan secara berkelanjutan. Hasil dari tahap ini berupa rancangan konseptual arsitektur serta pedoman teknis yang akan menjadi acuan dalam tahap implementasi.
+    
+    \item \textbf{Implementasi Sistem} \\
+    Tahap implementasi berfokus pada penerapan rancangan yang telah disusun menjadi sistem yang berfungsi secara operasional. Proses ini mencakup pengembangan arsitektur sistem, pembangunan modul inti yang menangani proses akuisisi, pencatatan, dan pembangkitan bukti kriptografis, serta integrasi komponen ke dalam alur investigasi digital yang terstruktur. Setiap modul dirancang untuk menjamin aspek keamanan, keterlacakan, dan integritas data melalui penerapan algoritma kriptografi serta mekanisme verifikasi yang andal. Setelah sistem terintegrasi secara menyeluruh, dilakukan pengujian dan validasi untuk memastikan seluruh komponen berjalan sesuai spesifikasi dan hasil yang diperoleh dapat dipercaya secara forensik.
+    
+    \item \textbf{Pengujian dan Simulasi} \\
+    Tahap ini berfokus pada pengujian dari implementasi yang telah dibuat serta analisis keberhasilan dari implementasi tersebut. Kegiatan utama pada tahap ini adalah melakukan simulasi skenario serangan yang telah ditentukan yaitu \textit{insider} dan \textit{replay attack} terhadap sistem prototipe yang digunakan. Setelah itu akan dijalankan proses forensik menggunakan kerangka kerja yang dibangun, dan menganalisis bukti yang dihasilkan untuk validasi.
+\end{enumerate}
 
 \section{Jadwal Pelaksanaan Tugas Akhir}
 

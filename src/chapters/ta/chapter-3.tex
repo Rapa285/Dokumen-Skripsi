@@ -2,8 +2,56 @@
 
 Tujuan utama penulisan bab ini adalah untuk menguraikan rencana penyelesaian masalah implementasi dari judul TA
 
-\section{Analisis}
-\blindtext
+\section{Analisis Masalah}
 
-\section{Rancangan}
-\blindtext
+Pembangunan sistem audit trail memerlukan analisis mendalam terhadap
+beberapa faktor sebelum merancang solusi. Hasil dari analisis akan mempengaruhi pemilihan solusi yang digunakan dari alternatif yang ada. Analisis ini juga mendefinisikan lingkup tugas akhir menjadi lebih spesifik.
+
+Analisis masalah akan terbagi menjadi tiga bagian, yaitu analisis kerentanan sistem, analisis kebutuhan isi audit trail dan analisis kekurangan infrastruktur managemen audit trail. Analisis jenis kerentanan pada Subbab III.1.1 membahas karakteristik dan keterbatasan analisis statis pada masing masing kerentanan. Analisis pemilihan dataset pada Subbab III.1.2 membahas pemilihan dataset yang akan digunakan pada tugas akhir ini. Analisis dataset benchmark pada Subbab III.1.3 meninjau komponen-komponen yang diperlukan untuk membangun benchmark tugas akhir.
+
+Saat ini, Indonesia menghadapi beberapa tantangan dalam mengimplementasikan sistem Rekam Medis Elektronik (RME), khususnya pada aspek keamanan dan integritas data yang ada padanya. Sebagai upaya untuk mengatasi permasalahan tersebut, beberapa percobaan implementasi RME menggunakan sistem \textit{Distributed Ledger Technology} (DLT) telah dikembangkan. Meskipun penerapan DLT itu dinilai sudah cukup memadai dalam pemenuhan aspek keamanan, implementasi yang ada seringkali belum mempertimbangkan aspek lain seperti manajemen insiden secara menyeluruh apabila gangguan keamanan seperti sebuah serangan siber tetap terjadi pada sistem. Bukti-bukti insiden, yang umumnya berupa \textit{audit trail}, seringkali masih tersebar di berbagai lokasi penyimpanan, baik secara \textit{on-chain} maupun \textit{off-chain}. Selain itu juga fokus dari jaminan keamanan data biasanya hanya terdapat pada log yang tersimpan secara \textit{on-chain}, sedangkan pada log \textit{off-chain} seringkali belum diterapkan standar yang memadai untuk menjamin integritasnya. Kondisi kesenjangan integritas data serta persebaran lokasi log ini sangat mempersulit proses manajemen insiden ketika serangan terjadi.
+
+\subsection{Analisis Kondisi DecMed}
+Implementasi sistem \textit{Decentralized Medical Record} (DecMed) \cite{DecMed} telah menunjukkan kemampuan yang memadai dalam mengamankan sistem dari berbagai jenis serangan. Sistem DecMed sendiri sudah memiliki sebuah sistem audit trail yaitu dalam bentuk \textit{PatientAccessLog}. 
+
+Namun, sistem tersebut masih memiliki keterbatasan signifikan terkait ketersediaan dan pengelolaan \textit{audit trail}. Saat ini, audit trail pada decmed hanya terbatas pada pencatatan log dari \textit{PatientAccessLog}, yang merekam pemberian hak akses oleh pasien kepada tenaga medis. Aktivitas pada sisi klien (\textit{client-side}) hanya menampilkan log ke konsol (\textit{console output}) tanpa adanya mekanisme penyimpanan persisten (\textit{persistent storage}).
+
+Kondisi ini menyebabkan kekosongan data \textit{audit trail} pada komponen krusial sistem, khususnya pada modul autentikasi yang memegang peran vital dalam analisis forensik insiden. Selain itu, belum tersedia mekanisme penyimpanan yang terstandar untuk seluruh \textit{audit trail}, terutama untuk data log yang bersifat \textit{off-chain}. Aspek integritas log juga belum tertangani karena tidak adanya penerapan enkripsi maupun tanda tangan digital (\textit{digital signature}) pada berkas log. Lebih lanjut, sistem saat ini belum memiliki mekanisme sentralisasi yang mampu mengagregasi log \textit{off-chain} dan \textit{on-chain} dalam satu wadah pemantauan, sehingga menyulitkan proses deteksi dan respons terhadap insiden keamanan.
+
+
+\subsection{Analisis Kebutuhan Audit Trail}
+
+Bagian ini akan menganalisis kebutuhan audit trail terkait technical readiness dari sebuah audit trail.
+
+For technical readiness is needed a scoping plan which defines the knowledge requirements of the investigators:
+\begin{itemize}
+    \item What should be identified? \\
+Serangan terhadap sistem, untuk jenis serangannya akan ditentukan menggunakan analisis kerentanan sistem menggunakan threat modelling.
+
+    \item What data should be collected? \\
+Log yang diperlukan untuk mengidentifikasi serangan, untuk jenis lognya akan ditentukan pada analisis ini.
+
+    \item How should the potential evidence be identified? \\
+
+
+    \item How should the potential evidence be collected? \\
+Bagaimana mekanisme pengumpulan log yang aman dan terintegrasi dari berbagai sistem decmed seperti IOTA, IPFS, Proxy Re-Encyption server, dan Access control untuk memastikan data yang dikumpulkan dapat dipertanggungjawabkan.
+
+    \item How should the collected evidence be preserved? \\
+Bagaimana mekanisme penyimpanan log yang aman dan terintegrasi untuk memastikan integritas data tetap terjaga.
+
+
+\end{itemize}
+
+
+\subsubsection{Threat Modelling}
+
+
+\section{Rancangan Solusi}
+Untuk menjawab masalah pada bab III.1, tugas ini menawarkan solusi berupa pengembangan modul manajemen insiden dan \textit{audit trail} yang terintegrasi dengan sistem DecMed. Solusi yang ditawarkan berfokus pada tiga aspek utama: sentralisasi log, efisiensi penyimpanan \textit{off-chain} yang berintegritas, serta mekanisme keamanan data.
+
+Pertama, untuk mengatasi permasalahan tersebarnya data \textit{audit trail} dan minimnya visualisasi aktivitas sistem, penelitian ini mengusulkan implementasi \textit{Log Management System} (LMS) terpusat berbasis ELK Stack (Elasticsearch, Logstash, Kibana). Mekanisme ini bekerja dengan menggunakan agen pengumpul (\textit{shipper}) seperti Logstash atau Filebeat yang bertugas menarik log dari berbagai komponen sistem, termasuk sisi klien, server autentikasi, dan \textit{node blockchain}. Data yang terkumpul kemudian dikirim ke Elasticsearch untuk diindeks agar mudah dicari, dan selanjutnya divisualisasikan melalui dasbor Kibana. Pendekatan ini bertujuan memberikan visibilitas menyeluruh (\textit{holistic visibility}) terhadap aktivitas sistem, sehingga memudahkan administrator dalam mendeteksi anomali yang mengindikasikan serangan \textit{insider} atau \textit{replay attack} secara \textit{real-time}.
+
+Kedua, solusi ini mengusulkan penggunaan IPFS (\textit{InterPlanetary File System}) sebagai media penyimpanan log \textit{off-chain} untuk menjawab tantangan skalabilitas dan efisiensi biaya penyimpanan (\textit{gas fee}) pada \textit{blockchain}. Dalam skema ini, file log disimpan dalam jaringan IPFS yang terdesentralisasi menggunakan mekanisme pengalamatan berbasis konten (\textit{content-addressing}), yang menjamin bahwa setiap perubahan kecil pada file akan menghasilkan alamat \textit{hash} yang berbeda. Untuk menjamin integritas data tanpa membebani jaringan utama, hanya nilai \textit{hash} (CID) dari file log tersebut yang akan dicatat ke dalam \textit{smart contract} di \textit{blockchain}. Dengan demikian, validitas file log di IPFS dapat diverifikasi kapan saja dengan mencocokkannya terhadap \textit{hash} yang tersimpan secara \textit{on-chain}, memastikan data tidak dimanipulasi meskipun disimpan di luar rantai blok utama.
+
+Ketiga, aspek \textit{confidentiality} data diperkuat melalui penerapan enkripsi, baik \textit{encryption at transport} maupun \textit{encryption at rest}. Mengingat log medis dan data autentikasi mengandung informasi sensitif, seluruh jalur transmisi data dari komponen sistem menuju server ELK maupun IPFS akan diamankan menggunakan protokol TLS/SSL untuk mencegah penyadapan (\textit{sniffing}). Selain itu, sebelum file log diunggah ke jaringan publik IPFS, sistem akan melakukan enkripsi terlebih dahulu menggunakan standar algoritma kriptografi (AES-256), di mana kunci dekripsi hanya dikelola oleh entitas yang berwenang. Mekanisme ini memastikan bahwa meskipun file log tersimpan di jaringan terdistribusi yang dapat diakses publik, konten di dalamnya tetap terlindungi dan tidak dapat dibaca oleh pihak yang tidak memiliki otorisasi.

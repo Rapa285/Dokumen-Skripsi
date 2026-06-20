@@ -1,0 +1,42 @@
+\section{Threat Modeling}
+Perujukan literatur dapat dilakukan dengan menambahkan entri baru di berkas. Tulisan ini merujuk pada \parencite{vasp1} atau \parencite{codingame2021media} dan \parencite{4026885}
+
+Sekarang mau ke bab berapa yaaaa.... hmm... ke bab \ref{chapter:studi-literatur} ahhhhh.
+
+
+\subsection{STRIDE}
+\label{subsec:stride}
+STRIDE merepresentasikan berbagai jenis ancaman yang berlawanan dengan sifat keamanan yang diharapkan dimiliki oleh suatu sistem, yaitu autentisitas (authenticity), integritas (integrity), non-repudiasi (non-repudiation), kerahasiaan (confidentiality), ketersediaan (availability), dan otorisasi (authorization). Hubungan antara setiap kategori ancaman STRIDE dengan properti keamanan yang ingin dipertahankan, beserta definisi, pihak yang umumnya terdampak, dan contoh ancamannya, ditunjukkan pada Tabel~\ref{tab:stride}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Ancaman STRIDE}
+    \label{tab:stride}
+    \begin{tabular}{|p{2cm}|p{2.5cm}|p{4cm}|p{4cm}||}
+        \hline
+        \textbf{THREAT} & \textbf{PROPERTY VIOLATED} & \textbf{THREAT DEFINITION} & \textbf{TYPICAL VICTIMS} \\
+        \hline
+        Spoofing & Authentication & Pretending to be something or someone other than yourself & Processes, external entities, people \\
+        \hline
+        Tampering & Integrity & Modifying something on disk, on a network, or in memory & Data stores, data flows, processes  \\
+        \hline
+		Repudiation & Non-Repudiation & Modifying something on disk, on a network, or in memory & Data stores, data flows, processes  \\
+        \hline
+		Information Disclosure & Confidentiality & Modifying something on disk, on a network, or in memory & Data stores, data flows, processes  \\
+        \hline
+		Denial of Service & Availability & Modifying something on disk, on a network, or in memory & Data stores, data flows, processes  \\
+        \hline
+		Elevation of Privilege & Authority & Modifying something on disk, on a network, or in memory & Data stores, data flows, processes  \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Dalam proses pemodelan ancaman menggunakan STRIDE, fokus utama adalah mengidentifikasi berbagai kemungkinan kejadian yang dapat mengganggu keamanan sistem. Pada tahap ini, analisis belum perlu membahas secara rinci mekanisme maupun teknik yang memungkinkan ancaman tersebut terjadi. Penjelasan mengenai bagaimana suatu serangan dapat dieksploitasi dapat dikembangkan pada tahap selanjutnya. Dalam praktiknya, proses tersebut dapat bersifat sederhana maupun kompleks, terutama ketika sistem telah memiliki mekanisme mitigasi tertentu. Sebagai contoh, ketika sebuah ancaman diidentifikasi sebagai kemungkinan modifikasi terhadap tabel manajemen, pihak lain dapat berargumen bahwa tindakan tersebut tidak mungkin dilakukan karena telah terdapat kontrol keamanan yang memadai. Meskipun demikian, ancaman tersebut tetap layak untuk didokumentasikan karena keberadaan mitigasi merupakan fitur keamanan yang harus dapat diuji dan diverifikasi melalui skenario pengujian yang sesuai.
+
+STRIDE sering kali disebut sebagai \textit{STRIDE categories} atau \textit{STRIDE taxonomy}. Namun, sudut pandang tersebut kurang tepat karena STRIDE pada dasarnya dirancang sebagai alat bantu untuk menemukan ancaman, bukan sebagai kerangka klasifikasi ancaman. Dalam banyak kasus, suatu serangan dapat melibatkan lebih dari satu kategori STRIDE sehingga sulit untuk diklasifikasikan secara tegas. Sebagai contoh, manipulasi terhadap basis data autentikasi dapat digunakan untuk melakukan \textit{spoofing}. Dalam situasi seperti ini, ancaman tersebut dapat dipandang sebagai bentuk \textit{tampering} maupun \textit{spoofing}. Oleh karena itu, penentuan kategori bukanlah aspek yang paling penting. Setelah suatu skenario serangan berhasil diidentifikasi, pengelompokan ancaman sering kali tidak memberikan nilai tambah yang signifikan. Tujuan utama STRIDE adalah membantu analis menemukan dan memahami potensi serangan. Meskipun pengkategorian terkadang dapat membantu dalam menentukan mekanisme pertahanan yang sesuai, upaya tersebut juga dapat menjadi aktivitas yang tidak memberikan manfaat yang sebanding. Kesulitan dalam mengklasifikasikan ancaman sering kali menimbulkan persepsi negatif terhadap STRIDE, padahal permasalahan tersebut berasal dari cara penggunaannya yang kurang tepat, bukan dari metodologi STRIDE itu sendiri.
+
+\subsubsection{Subsubsubbab}
+\blindtext
+
+\subsubsubsection{sub sub sub sub bab}
+\blindtext
