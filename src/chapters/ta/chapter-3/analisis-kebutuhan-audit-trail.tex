@@ -1,0 +1,112 @@
+\subsection{Analisis Kebutuhan Audit Trail}
+
+Hasil \textit{threat modeling} menggunakan metode STRIDE pada subbab sebelumnya menunjukkan berbagai ancaman yang berpotensi memengaruhi keamanan sistem DecMed. Agar ancaman tersebut dapat dideteksi, ditelusuri, dan dianalisis ketika insiden terjadi, diperlukan \textit{audit trail} yang mampu menyediakan bukti digital yang relevan dan dapat dipertanggungjawabkan. Selain itu, diperlukan pula infrastruktur yang mampu mengelola dan menyimpan \textit{audit trail} tersebut dengan tetap menjaga integritas, ketersediaan, dan kemudahan akses terhadap data log yang dihasilkan.
+
+Oleh karena itu, pada subbab ini dilakukan analisis kebutuhan \textit{audit trail} berdasarkan ancaman yang telah teridentifikasi. Analisis juga dilakukan terhadap kebutuhan infrastruktur yang diperlukan untuk mendukung pengelolaan \textit{audit trail} pada lingkungan sistem DecMed.
+
+
+\subsubsection{Identifikasi Kebutuhan Audit Trail}
+
+Setiap ancaman yang teridentifikasi pada analisis STRIDE memerlukan bukti digital yang berbeda untuk mendukung proses deteksi, investigasi, dan rekonstruksi insiden. Oleh karena itu, perlu dilakukan identifikasi terhadap informasi dan peristiwa (\textit{events}) yang harus dicatat oleh sistem sebagai \textit{audit trail}. Kebutuhan \textit{audit trail} pada penelitian ini diturunkan secara langsung dari ancaman yang telah diidentifikasi sebelumnya sehingga setiap data log yang diusulkan memiliki keterkaitan yang jelas dengan kebutuhan investigasi insiden keamanan.
+
+Bagian ini akan menganalisis kebutuhan audit trail terkait technical readiness dari sebuah audit trail.
+
+For technical readiness is needed a scoping plan which defines the knowledge requirements of the investigators:
+\begin{itemize}
+    \item What should be identified? \\
+Serangan terhadap sistem, untuk jenis serangannya akan ditentukan menggunakan analisis kerentanan sistem menggunakan threat modelling.
+
+    \item What data should be collected? \\
+Log yang diperlukan untuk mengidentifikasi serangan, untuk jenis lognya akan ditentukan pada analisis ini.
+
+    \item How should the potential evidence be identified? \\
+
+
+    \item How should the potential evidence be collected? \\
+Bagaimana mekanisme pengumpulan log yang aman dan terintegrasi dari berbagai sistem decmed seperti IOTA, IPFS, Proxy Re-Encyption server, dan Access control untuk memastikan data yang dikumpulkan dapat dipertanggungjawabkan.
+
+    \item How should the collected evidence be preserved? \\
+Bagaimana mekanisme penyimpanan log yang aman dan terintegrasi untuk memastikan integritas data tetap terjaga.
+\end{itemize}
+
+Bagian ini akan menganalisis kebutuhan audit trail terkait technical readiness dari sebuah audit trail.
+
+
+\begin{xltabular}{\textwidth}{|c|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}p{3.5cm}|}
+\caption{Kebutuhan Audit Trail per Ancaman STRIDE (Berdasarkan NIST SP 800-12)}
+\label{tab:audit-trail-per-threat} \\
+\hline
+\textbf{ID} & \textbf{Kebutuhan Isi Audit Trail} & \textbf{Trigger} & \textbf{Asal Log} \\
+\hline
+\endfirsthead
+
+\multicolumn{4}{c}{{Tabel \thetable\ -- Lanjutan dari halaman sebelumnya}} \\
+\hline
+\textbf{ID} & \textbf{Kebutuhan Isi Audit Trail} & \textbf{Kapan Di-log} & \textbf{Dari Mana Di-log} \\
+\hline
+\endhead
+
+\hline
+\multicolumn{4}{r}{{\textit{Berlanjut ke halaman berikutnya...}}} \\
+\endfoot
+
+\hline
+\endlastfoot
+
+T01 & ID pengguna, waktu, identitas perangkat, perlengkapan autentikasi, status log-on (sukses/gagal). & Saat pengguna/entitas manusia mencoba masuk (log-on) ke aplikasi klien. & Aplikasi Klien \& Proxy Server \\
+\hline
+T02 & Gambar data "sebelum" dan "sesudah" diubah, ID pengguna, perintah modifikasi, waktu akses. & Saat terjadi aksi membaca, menambah, atau memodifikasi EMR. & IOTA Smart Contract \& Proxy Server \\
+\hline
+T03 & ID entitas/node jaringan, parameter fungsi (API/Move Call), status sukses/gagal, timestamp. & Saat sistem menerima konfirmasi transaksi dari luar (node IOTA eksternal). & IOTA Network \& Proxy Server \\
+\hline
+T04 & ID Transaksi, status penerimaan request gas sponsorship, waktu, alamat IOTA pengirim. & Saat transaksi (Gas Sponsorship Request) dikirimkan. & IOTA Gas Station Server \\
+\hline
+T05 & Hash integritas program, identitas proses, status verifikasi signature, waktu eksekusi. & Saat proses klien mencoba mengakses fungsi/meminta data dari API. & Sistem Operasi Klien \& Aplikasi Klien \\
+\hline
+T06 & Peringatan anomali memori/proses, jejak perintah instruksi aplikasi, waktu kejadian. & Saat sistem operasi atau IDS mendeteksi injeksi/manipulasi memori. & Sistem Operasi Klien \\
+\hline
+T07 & Jenis perintah pengguna (misal: "delete" log), status keberhasilan fungsi tulis memori. & Saat aplikasi klien gagal menulis ke disk lokal atau log coba dihapus. & Sistem Operasi Klien \\
+\hline
+T08 & Peringatan \textit{unhandled exception}, status \textit{dump} memori, waktu \textit{crash}, parameter sistem. & Saat aplikasi klien mengalami \textit{crash} atau pembuangan \textit{core memory}. & Sistem Operasi Klien \\
+\hline
+T09 & Metrik penggunaan CPU, memori, atau disk, pesan \textit{timeout}, rentang waktu kejadian. & Secara kontinu (real-time) saat ambang batas \textit{resource} tercapai. & Sistem Operasi Klien \\
+\hline
+T10 & Jejak perintah UI, nama fungsi/API yang dipanggil, level hak akses (\textit{roles}), waktu. & Saat klien mencoba mengakses layar/menu yang membutuhkan privilese tinggi. & Aplikasi Klien \& Proxy Server \\
+\hline
+T11 & Nilai klaim JWT, status validasi signature kriptografis, IP sumber, ID pengakses, waktu. & Saat permintaan (\textit{request}) API Proxy dieksekusi dengan \textit{bearer token}. & Proxy Server (PRE Middleware) \\
+\hline
+T12 & Parameter status PRE (\textit{cFrag}/\textit{kFrag}), peringatan korupsi dekripsi, waktu proses re-enkripsi. & Saat PRE Engine melakukan komputasi enkripsi EMR dari IPFS. & Proxy Server (PRE Engine) \\
+\hline
+T13 & Error transaksi Move, log kegagalan jaringan (\textit{timeout}), stempel waktu transaksi IOTA. & Saat IOTA Transaction Client gagal mengeksekusi komitmen ke \textit{ledger}. & Proxy Server (IOTA Client) \\
+\hline
+T14 & Laporan \textit{stack trace/exception} terenkripsi, nama berkas bermasalah, modul API spesifik, waktu. & Saat fungsi \textit{backend} Proxy mengalami kegagalan proses. & Proxy Server \\
+\hline
+T15 & Jumlah permintaan API per detik, utilisasi jaringan sistem (\textit{bandwidth}), alamat IP sumber. & Secara kontinu saat terjadi lalu lintas \textit{request} API tidak wajar. & Proxy Server (API Gateway) \\
+\hline
+T16 & Peran pengguna saat diverifikasi (\textit{Personnel Role Lookup}), ID objek kapabilitas, stempel waktu. & Saat proses validasi aturan CapBAC dijalankan pada suatu aksi EMR. & Proxy Server \& IOTA Smart Contract \\
+\hline
+T17 & Identitas program pemanggil, perintah baca/tulis di Redis, nilai ID (iota\_address), waktu. & Saat nilai \textit{nonce} atau data sementara (PRE) dibaca/ditulis di \textit{cache}. & Redis Cache Server \\
+\hline
+T18 & Koneksi port/IP eksternal ke Redis, detail \textit{query database}, status kontrol akses database. & Saat akses ke basis data memori internal dipicu oleh entitas tidak sah. & Redis Cache Server \\
+\hline
+T19 & Perintah \textit{flush/delete}, administrator yang inisiasi, ID server, waktu penghapusan cache. & Saat seluruh atau sebagian isi penyimpanan \textit{cache} (Redis) dihapus secara paksa. & Redis Cache Server \\
+\hline
+T20 & Hash \textit{Content Identifier} (CID), status verifikasi integritas data (\textit{checksum}), waktu unduh data. & Saat data \textit{ciphertext} diambil dari, atau akan disimpan ke IPFS. & IPFS Gateway \& Proxy Server \\
+\hline
+T21 & Stempel waktu aman (\textit{secure time stamp}), bukti tanda tangan digital, rekaman log IOTA. & Saat \textit{node} melakukan sinkronisasi dengan status \textit{ledger} publik IOTA. & IOTA Network (On-Chain State) \\
+\hline
+T22 & Frekuensi \textit{query} metadata ke jaringan (inspeksi transaksi), ID entitas \textit{query}, alamat tujuan. & Saat metadata \textit{on-chain} ditarik melalui \textit{Move call} (inspect transaction mode). & IOTA Network \\
+\hline
+T23 & Log performa node, ukuran transaksi (\textit{payload}), frekuensi interaksi ke alamat \textit{smart contract}. & Saat IOTA Network mendeteksi \textit{spam} objek/transaksi bertubi-tubi. & IOTA Gas Station \& IOTA Network \\
+\hline
+T24 & Peringatan \textit{signature} lalu lintas jaringan tidak valid, ID sesi HTTPS, log anomali paket transit. & Saat ada upaya mengubah \textit{payload} di jaringan (antara Client dan Proxy). & Lapisan Jaringan / API Gateway \\
+\hline
+T25 & Protokol/versi TLS, \textit{cipher suite} yang disetujui untuk koneksi, alamat IP sumber-tujuan. & Saat sesi koneksi web Client dan Proxy Server dikompromikan (bukan HTTP terenkripsi). & Server Web Proxy \\
+\hline
+T26 & Peringatan pemutusan saluran, durasi \textit{downtime}, persentase ketersediaan port komunikasi. & Saat \textit{endpoint} API atau jaringan DLT gagal dijangkau atau menolak koneksi masuk. & OS Proxy Server / Firewall \\
+\hline
+\end{xltabular}
+
+\subsubsection{Identifikasi Kebutuhan Infrastruktur Audit Trail}
+
+Selain menentukan informasi yang perlu dicatat, perlu dilakukan identifikasi terhadap kebutuhan infrastruktur yang mendukung pengelolaan \textit{audit trail}. Infrastruktur tersebut harus mampu mengakomodasi karakteristik sistem DecMed yang terdiri atas berbagai komponen \textit{on-chain} dan \textit{off-chain}, serta memastikan bahwa data log yang dihasilkan tetap tersedia, terintegrasi, dan terlindungi dari manipulasi. Oleh karena itu, analisis pada bagian ini difokuskan pada kebutuhan fungsional dan non-fungsional yang harus dipenuhi oleh infrastruktur pengelolaan \textit{audit trail}.

@@ -1,50 +1,32 @@
 \chapter{Analisis Persoalan dan Rancangan Solusi}
 
-Tujuan utama penulisan bab ini adalah untuk menguraikan rencana penyelesaian masalah implementasi dari judul TA
+Bab ini membahas analisis permasalahan serta perancangan solusi untuk meningkatkan kemampuan auditabilitas dan manajemen audit trail pada sistem DecMed. Analisis dilakukan terhadap kondisi sistem saat ini, potensi ancaman keamanan yang dapat terjadi, kebutuhan audit trail untuk mendukung investigasi insiden, serta kesenjangan antara kebutuhan tersebut dengan implementasi yang telah tersedia.
 
 \section{Analisis Masalah}
 
-Pembangunan sistem audit trail memerlukan analisis mendalam terhadap
-beberapa faktor sebelum merancang solusi. Hasil dari analisis akan mempengaruhi pemilihan solusi yang digunakan dari alternatif yang ada. Analisis ini juga mendefinisikan lingkup tugas akhir menjadi lebih spesifik.
+Rekam Medis Elektronik (RME) merupakan sistem yang mengelola data kesehatan pasien dalam bentuk digital sehingga membutuhkan jaminan keamanan dan integritas data yang tinggi. Untuk memenuhi kebutuhan tersebut, beberapa penelitian telah mengusulkan pemanfaatan \textit{Distributed Ledger Technology} (DLT) sebagai infrastruktur penyimpanan dan pengelolaan data rekam medis. Pendekatan ini menawarkan berbagai keunggulan, seperti sifat data yang sulit dimodifikasi, transparansi transaksi, dan mekanisme verifikasi yang terdistribusi.
 
-Analisis masalah akan terbagi menjadi tiga bagian, yaitu analisis kerentanan sistem, analisis kebutuhan isi audit trail dan analisis kekurangan infrastruktur managemen audit trail. Analisis jenis kerentanan pada Subbab III.1.1 membahas karakteristik dan keterbatasan analisis statis pada masing masing kerentanan. Analisis pemilihan dataset pada Subbab III.1.2 membahas pemilihan dataset yang akan digunakan pada tugas akhir ini. Analisis dataset benchmark pada Subbab III.1.3 meninjau komponen-komponen yang diperlukan untuk membangun benchmark tugas akhir.
+Meskipun berbagai implementasi RME berbasis DLT telah berhasil meningkatkan aspek keamanan penyimpanan data, sebagian besar masih berfokus pada pencegahan serangan dan perlindungan data. Aspek manajemen insiden, khususnya kemampuan untuk merekam, menyimpan, dan mengelola bukti digital ketika insiden keamanan terjadi, sering kali belum mendapatkan perhatian yang memadai. Padahal, keberadaan audit trail yang lengkap dan terpercaya merupakan komponen penting dalam proses investigasi dan analisis forensik.
 
-Saat ini, Indonesia menghadapi beberapa tantangan dalam mengimplementasikan sistem Rekam Medis Elektronik (RME), khususnya pada aspek keamanan dan integritas data yang ada padanya. Sebagai upaya untuk mengatasi permasalahan tersebut, beberapa percobaan implementasi RME menggunakan sistem \textit{Distributed Ledger Technology} (DLT) telah dikembangkan. Meskipun penerapan DLT itu dinilai sudah cukup memadai dalam pemenuhan aspek keamanan, implementasi yang ada seringkali belum mempertimbangkan aspek lain seperti manajemen insiden secara menyeluruh apabila gangguan keamanan seperti sebuah serangan siber tetap terjadi pada sistem. Bukti-bukti insiden, yang umumnya berupa \textit{audit trail}, seringkali masih tersebar di berbagai lokasi penyimpanan, baik secara \textit{on-chain} maupun \textit{off-chain}. Selain itu juga fokus dari jaminan keamanan data biasanya hanya terdapat pada log yang tersimpan secara \textit{on-chain}, sedangkan pada log \textit{off-chain} seringkali belum diterapkan standar yang memadai untuk menjamin integritasnya. Kondisi kesenjangan integritas data serta persebaran lokasi log ini sangat mempersulit proses manajemen insiden ketika serangan terjadi.
+Berdasarkan kondisi tersebut, penelitian ini memfokuskan analisis pada dua permasalahan utama. Permasalahan pertama adalah keterbatasan ketersediaan audit trail yang dapat digunakan sebagai bukti digital selama proses investigasi insiden. Permasalahan kedua adalah belum adanya mekanisme penyimpanan audit trail yang mampu menjamin integritas, ketersediaan, dan pengelolaan log secara terpusat, terutama untuk data yang berada di luar jaringan blockchain (\textit{off-chain}). Kedua permasalahan tersebut menjadi dasar dalam perancangan solusi yang diusulkan pada penelitian ini.
 
-\subsection{Analisis Kondisi DecMed}
+\subsection{Analisis Permasalahan Audit Trail}
 Implementasi sistem \textit{Decentralized Medical Record} (DecMed) \cite{DecMed} telah menunjukkan kemampuan yang memadai dalam mengamankan sistem dari berbagai jenis serangan. Sistem DecMed sendiri sudah memiliki sebuah sistem audit trail yaitu dalam bentuk \textit{PatientAccessLog}. 
 
 Namun, sistem tersebut masih memiliki keterbatasan signifikan terkait ketersediaan dan pengelolaan \textit{audit trail}. Saat ini, audit trail pada decmed hanya terbatas pada pencatatan log dari \textit{PatientAccessLog}, yang merekam pemberian hak akses oleh pasien kepada tenaga medis. Aktivitas pada sisi klien (\textit{client-side}) hanya menampilkan log ke konsol (\textit{console output}) tanpa adanya mekanisme penyimpanan persisten (\textit{persistent storage}).
 
-Kondisi ini menyebabkan kekosongan data \textit{audit trail} pada komponen krusial sistem, khususnya pada modul autentikasi yang memegang peran vital dalam analisis forensik insiden. Selain itu, belum tersedia mekanisme penyimpanan yang terstandar untuk seluruh \textit{audit trail}, terutama untuk data log yang bersifat \textit{off-chain}. Aspek integritas log juga belum tertangani karena tidak adanya penerapan enkripsi maupun tanda tangan digital (\textit{digital signature}) pada berkas log. Lebih lanjut, sistem saat ini belum memiliki mekanisme sentralisasi yang mampu mengagregasi log \textit{off-chain} dan \textit{on-chain} dalam satu wadah pemantauan, sehingga menyulitkan proses deteksi dan respons terhadap insiden keamanan.
+Kondisi ini menyebabkan kekosongan data \textit{audit trail} pada komponen krusial sistem, khususnya pada modul autentikasi yang memegang peran vital dalam analisis forensik insiden. 
+
+\subsection{Analisis Permasalahan Infrastruktur Penyimpanan}
+
+Selain dari permsalahan kekurangan audit trail sendiri, Decmed masih belum tersedia mekanisme penyimpanan yang terstandar untuk seluruh \textit{audit trail}, terutama untuk data log yang bersifat \textit{off-chain}. Aspek integritas log juga belum tertangani karena tidak adanya penerapan enkripsi maupun tanda tangan digital (\textit{digital signature}) pada berkas log. Lebih lanjut, sistem saat ini belum memiliki mekanisme sentralisasi yang mampu mengagregasi log \textit{off-chain} dan \textit{on-chain} dalam satu wadah pemantauan, sehingga menyulitkan proses deteksi dan respons terhadap insiden keamanan.
 
 
-\subsection{Analisis Kebutuhan Audit Trail}
+\input{chapters/ta/chapter-3/analisis-kondisi-decmed.tex}
+\input{chapters/ta/chapter-3/stride-threat-modeling.tex}
+\input{chapters/ta/chapter-3/analisis-kebutuhan-audit-trail.tex}
+\input{chapters/ta/chapter-3/analisis-gap.tex}
 
-Bagian ini akan menganalisis kebutuhan audit trail terkait technical readiness dari sebuah audit trail.
-
-For technical readiness is needed a scoping plan which defines the knowledge requirements of the investigators:
-\begin{itemize}
-    \item What should be identified? \\
-Serangan terhadap sistem, untuk jenis serangannya akan ditentukan menggunakan analisis kerentanan sistem menggunakan threat modelling.
-
-    \item What data should be collected? \\
-Log yang diperlukan untuk mengidentifikasi serangan, untuk jenis lognya akan ditentukan pada analisis ini.
-
-    \item How should the potential evidence be identified? \\
-
-
-    \item How should the potential evidence be collected? \\
-Bagaimana mekanisme pengumpulan log yang aman dan terintegrasi dari berbagai sistem decmed seperti IOTA, IPFS, Proxy Re-Encyption server, dan Access control untuk memastikan data yang dikumpulkan dapat dipertanggungjawabkan.
-
-    \item How should the collected evidence be preserved? \\
-Bagaimana mekanisme penyimpanan log yang aman dan terintegrasi untuk memastikan integritas data tetap terjaga.
-
-
-\end{itemize}
-
-
-\subsubsection{Threat Modelling}
 
 
 \section{Rancangan Solusi}

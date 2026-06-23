@@ -1,0 +1,82 @@
+\subsection{Threat Modeling dengan STRIDE}
+
+Setelah aset, \textit{entry points}, dan \textit{trust boundaries} pada sistem DecMed berhasil diidentifikasi, langkah selanjutnya adalah melakukan analisis ancaman menggunakan metode STRIDE. Metode ini digunakan untuk mengidentifikasi berbagai ancaman keamanan yang berpotensi memengaruhi komponen sistem berdasarkan enam kategori ancaman, yaitu \textit{Spoofing}, \textit{Tampering}, \textit{Repudiation}, \textit{Information Disclosure}, \textit{Denial of Service}, dan \textit{Elevation of Privilege}.
+
+Analisis dilakukan terhadap seluruh elemen pada DFD, yang mencakup entitas eksternal, proses, penyimpanan data, serta aliran data. Untuk setiap komponen, diidentifikasi kemungkinan skenario serangan yang dapat terjadi beserta dampak yang ditimbulkannya terhadap operasional dan keamanan sistem. Hasil identifikasi ancaman ini selanjutnya digunakan untuk menentukan informasi dan bukti digital yang perlu dicatat oleh sistem. Dengan demikian, kebutuhan \textit{audit trail} yang dirumuskan pada penelitian ini dapat ditelusuri secara langsung berdasarkan ancaman yang berpotensi terjadi pada DecMed.
+
+Hasil identifikasi ancaman menggunakan metode STRIDE pada komponen-komponen sistem DecMed ditunjukkan pada Tabel~\ref{tab:stride-all-components}.
+
+\begin{xltabular}{\textwidth}{|c|>{\raggedright\arraybackslash}p{3.5cm}|c|X|X|}
+    \caption{Analisis STRIDE Komponen Sistem DecMed}
+    \label{tab:stride-all-components} \\
+    \hline
+    \textbf{ID} & \textbf{Komponen (Kode)} & \textbf{STRIDE} & \textbf{Skenario} & \textbf{Dampak} \\
+    \hline
+    \endfirsthead
+
+    \multicolumn{5}{c}{{Tabel \thetable\ -- Lanjutan dari halaman sebelumnya}} \\
+    \hline
+    \textbf{ID} & \textbf{Komponen (Kode)} & \textbf{STRIDE} & \textbf{Skenario Singkat} & \textbf{Dampak} \\
+    \hline
+    \endhead
+
+    \hline
+    \multicolumn{5}{r}{{\textit{Berlanjut ke halaman berikutnya...}}} \\
+    \endfoot
+
+    \hline
+    \endlastfoot
+
+    T01 & Entitas Manusia (E1, E2, E3) & S & Penyamaran menggunakan PIN/kredensial curian. & Akses EMR ilegal. \\
+    \hline
+    T02 & Entitas Manusia (E1, E2, E3) & R & Menyangkal pernah mengizinkan atau mengubah data. & Sengketa medis/hukum. \\
+    \hline
+    T03 & Entitas Sistem Eksternal (E4, E5) & S & Node luar menyamar untuk memalsukan status jaringan. & Gagal eksekusi transaksi. \\
+    \hline
+    T04 & Entitas Sistem Eksternal (E4, E5) & R & Node menyangkal menerima pesanan transaksi gas/data. & Status \textit{on-chain} terputus. \\
+    \hline
+    T05 & Proses Klien (P1, P2, P3) & S & \textit{Malware} menyamar sebagai proses aplikasi sah. & \textit{Bypass} kontrol lokal. \\
+    \hline
+    T06 & Proses Klien (P1, P2, P3) & T & Modifikasi \textit{runtime} memori aplikasi di perangkat. & Eksekusi kode jahat. \\
+    \hline
+    T07 & Proses Klien (P1, P2, P3) & R & Aplikasi gagal/dicegah mencatat log lokal. & Forensik lokal hilang. \\
+    \hline
+    T08 & Proses Klien (P1, P2, P3) & I & \textit{Memory dump} membocorkan Kunci IOTA/PIN. & Kredensial terkompromi. \\
+    \hline
+    T09 & Proses Klien (P1, P2, P3) & D & Menguras CPU/RAM perangkat klien. & Aplikasi \textit{crash}/hang. \\
+    \hline
+    T10 & Proses Klien (P1, P2, P3) & E & Mengakali UI untuk mengakses menu admin. & Akses fitur terlarang. \\
+    \hline
+    T11 & Proses \textit{Backend} (P4, P5, P6, P7, P8) & S & Injeksi JWT bajakan ke \textit{Proxy API}. & Sesi pengguna diambil alih. \\
+    \hline
+    T12 & Proses \textit{Backend} (P4, P5, P6, P7, P8) & T & Manipulasi instruksi memori di \textit{PRE Engine}. & Enkripsi data EMR korup. \\
+    \hline
+    T13 & Proses \textit{Backend} (P4, P5, P6, P7, P8) & R & Gagal mengirim metadata persetujuan ke IOTA. & \textit{Audit trail} terputus. \\
+    \hline
+    T14 & Proses \textit{Backend} (P4, P5, P6, P7, P8) & I & Pesan \textit{error/stack-trace} membocorkan kFrag/Token. & Data rahasia terekspos. \\
+    \hline
+    T15 & Proses \textit{Backend} (P4, P5, P6, P7, P8) & D & \textit{API Flooding} ke P4 (Proxy) atau P8 (IOTA Client). & Layanan \textit{backend} lumpuh. \\
+    \hline
+    T16 & Proses \textit{Backend} (P4, P5, P6, P7, P8) & E & Memanipulasi logika CapBAC saat verifikasi. & Eskalasi hak akses permanen. \\
+    \hline
+    T17 & Penyimpanan Internal (D1, D3) & T & Modifikasi \textit{nonce} di Redis / manipulasi \textit{Key Store}. & \textit{Replay attack} berhasil. \\
+    \hline
+    T18 & Penyimpanan Internal (D1, D3) & I & Basis data memori diakses pihak ketiga. & Materi kunci/token dicuri. \\
+    \hline
+    T19 & Penyimpanan Internal (D1, D3) & D & Menghapus paksa isi \textit{cache} atau direktori \textit{key}. & Gagal dekripsi/otentikasi. \\
+    \hline
+    T20 & Penyimpanan Publik (D2, D4) & T & Modifikasi \textit{ciphertext} di IPFS / Mayoritas \textit{node attack}. & Integritas rekam medis hancur. \\
+    \hline
+    T21 & Penyimpanan Publik (D2, D4) & R & (Khusus D4) Kehilangan log akses \textit{immutable}. & Jejak riwayat tak terlacak. \\
+    \hline
+    T22 & Penyimpanan Publik (D2, D4) & I & Analisis relasi lalu lintas metadata di publik. & Privasi institusi/pasien bocor. \\
+    \hline
+    T23 & Penyimpanan Publik (D2, D4) & D & \textit{Spam} \textit{junk data} / transaksi palsu ke \textit{node}. & Penarikan RME melambat. \\
+    \hline
+    T24 & Seluruh Aliran Data (F1 - F29) & T & \textit{Man-in-the-Middle} (MitM) mengubah paket jaringan. & Perintah transit termanipulasi. \\
+    \hline
+    T25 & Seluruh Aliran Data (F1 - F29) & I & \textit{Sniffing} pada jalur tanpa TLS/enkripsi memadai. & \textit{Payload} jaringan disadap. \\
+    \hline
+    T26 & Seluruh Aliran Data (F1 - F29) & D & Pemutusan koneksi / \textit{flooding} jalur komunikasi. & Sinkronisasi data terhenti. \\
+    \hline
+\end{xltabular}
