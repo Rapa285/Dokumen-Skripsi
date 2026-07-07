@@ -24,13 +24,14 @@ Selain dari permsalahan kekurangan audit trail sendiri, Decmed masih belum terse
 
 \input{chapters/ta/chapter-3/analisis-kondisi-decmed.tex}
 \input{chapters/ta/chapter-3/stride-threat-modeling.tex}
+\input{chapters/ta/chapter-3/analisis-kebutuhan-event-audit.tex}
 \input{chapters/ta/chapter-3/analisis-kebutuhan-audit-trail.tex}
 \input{chapters/ta/chapter-3/analisis-gap.tex}
 
 
 
 \section{Rancangan Solusi}
-Untuk menjawab masalah pada bab III.1, tugas ini menawarkan solusi berupa pengembangan modul manajemen insiden dan \textit{audit trail} yang terintegrasi dengan sistem DecMed. Solusi yang ditawarkan berfokus pada tiga aspek utama: sentralisasi log, efisiensi penyimpanan \textit{off-chain} yang berintegritas, serta mekanisme keamanan data.
+Untuk menjawab masalah pada bab III.1, tugas ini menawarkan solusi berupa pengembangan modul manajemen \textit{audit trail} yang terintegrasi dengan sistem DecMed. Solusi yang ditawarkan berfokus pada tiga aspek utama: sentralisasi log, efisiensi penyimpanan \textit{off-chain} yang berintegritas, serta mekanisme keamanan data.
 
 Pertama, untuk mengatasi permasalahan tersebarnya data \textit{audit trail} dan minimnya visualisasi aktivitas sistem, penelitian ini mengusulkan implementasi \textit{Log Management System} (LMS) terpusat berbasis ELK Stack (Elasticsearch, Logstash, Kibana). Mekanisme ini bekerja dengan menggunakan agen pengumpul (\textit{shipper}) seperti Logstash atau Filebeat yang bertugas menarik log dari berbagai komponen sistem, termasuk sisi klien, server autentikasi, dan \textit{node blockchain}. Data yang terkumpul kemudian dikirim ke Elasticsearch untuk diindeks agar mudah dicari, dan selanjutnya divisualisasikan melalui dasbor Kibana. Pendekatan ini bertujuan memberikan visibilitas menyeluruh (\textit{holistic visibility}) terhadap aktivitas sistem, sehingga memudahkan administrator dalam mendeteksi anomali yang mengindikasikan serangan \textit{insider} atau \textit{replay attack} secara \textit{real-time}.
 

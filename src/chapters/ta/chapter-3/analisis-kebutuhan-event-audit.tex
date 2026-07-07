@@ -1,0 +1,344 @@
+\subsection{Analisis Kebutuhan Event Audit}
+
+Berdasarkan hasil analisis ancaman menggunakan metode STRIDE, dilakukan identifikasi terhadap kebutuhan event audit yang perlu dicatat oleh sistem audit trail. Setiap ancaman dipetakan menjadi aktivitas yang perlu direkam untuk menyediakan bukti digital yang mendukung deteksi insiden, investigasi forensik, dan proses audit. Hasil pemetaan tersebut dikelompokkan ke dalam lima kategori sesuai dengan kategori ancaman STRIDE, yaitu \textit{Spoofing}, \textit{Tampering}, \textit{Repudiation}, \textit{Information Disclosure}, dan \textit{Elevation of Privilege}.
+
+\subsubsection{Kebutuhan Event Audit untuk Ancaman \textit{Spoofing}}
+
+Kategori \textit{Spoofing} berkaitan dengan ancaman ketika suatu entitas mencoba menyamar sebagai entitas lain yang sah untuk memperoleh akses terhadap sistem. Berdasarkan hasil analisis STRIDE, ancaman ini dapat terjadi pada proses autentikasi pengguna, komunikasi antar layanan, maupun interaksi dengan komponen eksternal seperti jaringan IOTA dan layanan \textit{Gas Station}. Oleh karena itu, kebutuhan event audit pada kategori ini berfokus pada pencatatan aktivitas autentikasi dan proses verifikasi identitas.
+
+Hasil pemetaan kebutuhan event audit terhadap ancaman \textit{Spoofing} ditunjukkan pada Tabel \ref{tab:event-spoofing}.
+
+\begin{xltabular}{\textwidth}{|X|c|X|}
+\caption{Pemetaan Kebutuhan Event Audit untuk Ancaman \textit{Spoofing}}
+\label{tab:event-spoofing}\\
+\hline
+\textbf{Event Audit} &
+\textbf{Elemen} &
+\textbf{Justifikasi Pencatatan}\\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Event Audit} &
+\textbf{Elemen} &
+\textbf{Justifikasi Pencatatan}\\
+\hline
+\endhead
+
+Percobaan autentikasi pasien (berhasil/gagal) &
+E1 &
+Menyediakan bukti aktivitas autentikasi untuk mendukung deteksi penggunaan PIN, \textit{session}, atau \textit{recovery phrase} oleh pihak yang tidak berwenang.\\
+\hline
+
+Percobaan autentikasi tenaga medis (berhasil/gagal) &
+E2 &
+Mendukung identifikasi penyalahgunaan CID, \textit{activation key}, maupun perangkat milik tenaga medis.\\
+\hline
+
+Percobaan autentikasi administrator &
+E3 &
+Menyediakan jejak audit terhadap proses autentikasi administrator yang memiliki hak istimewa dalam sistem.\\
+\hline
+
+Verifikasi \textit{signature} transaksi oleh jaringan IOTA &
+E4 &
+Memberikan bukti bahwa transaksi telah melalui proses verifikasi identitas pada jaringan blockchain.\\
+\hline
+
+Penerbitan token JWT &
+P5 &
+Mencatat proses pembentukan token autentikasi sebagai dasar validasi identitas pengguna.\\
+\hline
+
+Validasi token JWT &
+P5 &
+Menyediakan bukti bahwa setiap permintaan telah melalui proses autentikasi sebelum diproses lebih lanjut.\\
+\hline
+
+Verifikasi keaslian aplikasi client &
+P1, P2, P3 &
+Mendeteksi penggunaan aplikasi yang telah dimodifikasi atau aplikasi tidak resmi.\\
+\hline
+
+Verifikasi identitas Gas Station &
+E5 &
+Menyediakan bukti bahwa transaksi hanya disponsori oleh layanan Gas Station yang sah.\\
+\hline
+
+\end{xltabular}
+
+Berdasarkan hasil pemetaan pada Tabel \ref{tab:event-spoofing}, sebagian besar kebutuhan event audit pada kategori \textit{Spoofing} berkaitan dengan proses autentikasi dan verifikasi identitas. Selain mendukung deteksi percobaan penyamaran identitas, event-event tersebut juga menjadi dasar dalam membangun keterkaitan antara identitas pengguna dengan aktivitas yang dilakukan, sehingga dapat dimanfaatkan pada proses investigasi maupun pembuktian digital.
+
+Tidak seluruh ancaman \textit{Spoofing} menghasilkan kebutuhan event audit yang berbeda. Ancaman yang terjadi pada proses internal seperti \textit{Proxy Re-encryption API}, \textit{Medical Record Management}, maupun \textit{Proxy Re-encryption Engine} memiliki karakteristik yang serupa, sehingga cukup diwakili oleh event validasi token JWT dan verifikasi keaslian client tanpa memerlukan event audit tambahan.
+
+\subsubsection{Kebutuhan Event Audit untuk Ancaman \textit{Tampering}}
+
+Kategori \textit{Tampering} berkaitan dengan ancaman yang bertujuan mengubah data, proses, maupun konfigurasi sistem secara tidak sah sehingga integritas sistem tidak lagi dapat dipercaya. Berdasarkan hasil analisis STRIDE, ancaman ini dapat terjadi pada berbagai komponen DecMed, mulai dari data rekam medis, penyimpanan IPFS, proses \textit{Proxy Re-encryption}, hingga pembentukan dan validasi transaksi pada jaringan IOTA. Oleh karena itu, kebutuhan event audit pada kategori ini berfokus pada pencatatan aktivitas yang berhubungan dengan perubahan data, validasi integritas, serta proses-proses kritis yang berpotensi memengaruhi keutuhan data.
+
+Hasil pemetaan kebutuhan event audit terhadap ancaman \textit{Tampering} ditunjukkan pada Tabel \ref{tab:event-tampering}.
+
+\begin{xltabular}{\textwidth}{|X|c|X|}
+\caption{Pemetaan Kebutuhan Event Audit untuk Ancaman \textit{Tampering}}
+\label{tab:event-tampering}\\
+\hline
+\textbf{Event Audit} &
+\textbf{Elemen} &
+\textbf{Justifikasi Pencatatan} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Event Audit} &
+\textbf{Elemen} &
+\textbf{Justifikasi Pencatatan} \\
+\hline
+\endhead
+
+Perubahan (\textit{create}/\textit{update}) data rekam medis &
+P6 &
+Menyediakan bukti terhadap setiap perubahan data rekam medis sehingga perubahan yang tidak sesuai aturan bisnis dapat diidentifikasi.\\
+\hline
+
+Verifikasi integritas \textit{blob} terhadap CID &
+D2, F18 &
+Memastikan integritas data rekam medis terenkripsi dengan membandingkan \textit{blob} terhadap CID yang tersimpan pada ledger.\\
+\hline
+
+Penulisan dan pembacaan nilai kritis pada \textit{cache} (nonce/\textit{kfrag}) &
+D1 &
+Menyediakan jejak audit terhadap penggunaan nilai kritis yang berpengaruh pada proses autentikasi maupun \textit{proxy re-encryption}.\\
+\hline
+
+Eksekusi proses \textit{Proxy Re-encryption} &
+P7, F16 &
+Menyediakan bukti bahwa proses \textit{re-encryption} dijalankan sesuai parameter dan permintaan yang sah.\\
+\hline
+
+Pembentukan dan penandatanganan transaksi Move &
+P8 &
+Menyediakan bukti bahwa isi transaksi sesuai dengan permintaan pengguna sebelum dikirim ke jaringan blockchain.\\
+\hline
+
+Validasi transaksi Move oleh \textit{smart contract} &
+F23, D4 &
+Mencatat proses validasi transaksi sebelum dikomit ke ledger untuk mendukung verifikasi integritas transaksi.\\
+\hline
+
+Validasi \textit{payload} dan parameter pada \textit{Proxy Re-encryption API} &
+P4, F7 &
+Menyediakan bukti bahwa setiap permintaan telah melalui proses validasi format data dan pemeriksaan parameter sebelum diproses.\\
+\hline
+
+\textit{Commit} transaksi \textit{access grant} ke ledger &
+F9 &
+Menyediakan bukti bahwa informasi hak akses yang dikomit ke ledger sesuai dengan persetujuan pasien.\\
+\hline
+
+Perubahan kunci privat/PRE pada \textit{Client Key Store} &
+D3 &
+Menyediakan jejak audit terhadap perubahan material kriptografi yang berpengaruh pada proses dekripsi, penandatanganan, dan \textit{proxy re-encryption}.\\
+\hline
+
+\end{xltabular}
+
+Berdasarkan hasil pemetaan pada Tabel \ref{tab:event-tampering}, sebagian besar kebutuhan event audit pada kategori \textit{Tampering} berfokus pada pencatatan aktivitas yang dapat memengaruhi integritas data maupun proses dalam sistem. Event-event tersebut tidak hanya mencakup perubahan terhadap data rekam medis, tetapi juga proses validasi integritas, pengelolaan material kriptografi, serta pembentukan dan validasi transaksi pada jaringan blockchain. Dengan mencatat aktivitas-aktivitas tersebut, sistem audit trail dapat menyediakan bukti yang diperlukan untuk merekonstruksi perubahan yang terjadi serta mengidentifikasi sumber perubahan apabila ditemukan indikasi manipulasi.
+
+Tidak seluruh ancaman \textit{Tampering} menghasilkan kebutuhan event audit yang berbeda. Ancaman yang berasal dari modifikasi aplikasi client, manipulasi \textit{payload} QR, maupun perubahan logika aplikasi pada sisi pengguna pada umumnya baru dapat diamati ketika permintaan mencapai layanan backend. Oleh karena itu, kebutuhan pencatatannya telah diwakili oleh event validasi \textit{payload} dan parameter pada \textit{Proxy Re-encryption API}, verifikasi integritas data, serta \textit{commit} transaksi ke ledger, sehingga tidak diperlukan event audit tambahan untuk setiap variasi ancaman pada sisi client.
+
+\subsubsection{Kebutuhan Event Audit untuk Ancaman \textit{Repudiation}}
+
+Kategori \textit{Repudiation} berkaitan dengan ancaman ketika suatu entitas menyangkal telah melakukan suatu aktivitas pada sistem sehingga tindakan tersebut tidak dapat dipertanggungjawabkan. Berdasarkan hasil analisis STRIDE, ancaman ini dapat terjadi pada berbagai aktivitas penting di DecMed, seperti pemberian persetujuan akses, akses dan perubahan rekam medis, registrasi tenaga medis maupun fasilitas kesehatan, serta transaksi yang melibatkan jaringan IOTA. Oleh karena itu, kebutuhan event audit pada kategori ini berfokus pada pencatatan aktivitas yang mampu menghubungkan identitas pelaku dengan tindakan yang dilakukan beserta waktu kejadiannya sehingga setiap aktivitas dapat dipertanggungjawabkan.
+
+Hasil pemetaan kebutuhan event audit terhadap ancaman \textit{Repudiation} ditunjukkan pada Tabel \ref{tab:event-repudiation}.
+
+\begin{xltabular}{\textwidth}{|X|c|X|}
+\caption{Pemetaan Kebutuhan Event Audit untuk Ancaman \textit{Repudiation}}
+\label{tab:event-repudiation}\\
+\hline
+\textbf{Event Audit} &
+\textbf{Elemen} &
+\textbf{Justifikasi Pencatatan} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Event Audit} &
+\textbf{Elemen} &
+\textbf{Justifikasi Pencatatan} \\
+\hline
+\endhead
+
+Pemberian \textit{consent} akses oleh pasien &
+E1 &
+Menyediakan bukti bahwa pasien telah memberikan persetujuan akses kepada tenaga medis tertentu.\\
+\hline
+
+Pencabutan akses oleh pasien &
+E1 &
+Menyediakan bukti bahwa pasien telah mencabut hak akses yang sebelumnya diberikan.\\
+\hline
+
+Akses baca/tulis rekam medis oleh tenaga medis &
+E2, P6 &
+Menyediakan bukti aktivitas tenaga medis terhadap rekam medis sehingga setiap tindakan dapat dipertanggungjawabkan.\\
+\hline
+
+Registrasi dan aktivasi fasilitas kesehatan maupun tenaga medis &
+E3 &
+Menyediakan bukti bahwa proses registrasi dan penerbitan identitas dilakukan oleh administrator yang sah.\\
+\hline
+
+Keputusan otorisasi (\textit{grant}/\textit{deny}) oleh \textit{Authentication \& Access Control} &
+P5 &
+Menyediakan bukti mengenai keputusan otorisasi beserta konteks permintaan yang mendasarinya.\\
+\hline
+
+Eksekusi proses \textit{Proxy Re-encryption} &
+P7 &
+Menyediakan bukti bahwa proses \textit{re-encryption} dijalankan sebagai tindak lanjut dari permintaan akses yang sah.\\
+\hline
+
+Penandatanganan dan pengiriman transaksi oleh \textit{IOTA Transaction Client} &
+P8 &
+Menyediakan bukti keterkaitan antara transaksi blockchain dengan identitas pengguna yang memicu transaksi tersebut.\\
+\hline
+
+Finalisasi transaksi oleh jaringan IOTA &
+E4 &
+Menyediakan bukti bahwa transaksi telah difinalisasi oleh jaringan blockchain sesuai mekanisme konsensus yang berlaku.\\
+\hline
+
+Sponsorship transaksi oleh \textit{Gas Station} &
+E5 &
+Menyediakan bukti keterlibatan layanan \textit{Gas Station} dalam proses sponsorship transaksi.\\
+\hline
+
+\end{xltabular}
+
+
+Berdasarkan hasil pemetaan pada Tabel \ref{tab:event-repudiation}, sebagian besar kebutuhan event audit pada kategori \textit{Repudiation} berkaitan dengan penyediaan bukti yang menghubungkan identitas pengguna dengan aktivitas yang dilakukan. Aktivitas yang dicatat mencakup proses pemberian dan pencabutan hak akses, penggunaan rekam medis, keputusan otorisasi, hingga transaksi pada jaringan blockchain. Dengan adanya pencatatan tersebut, setiap tindakan yang dilakukan dalam sistem dapat ditelusuri kembali kepada pelaku dan waktu kejadiannya sehingga mendukung proses audit maupun investigasi.
+
+Tidak seluruh ancaman \textit{Repudiation} menghasilkan kebutuhan event audit yang berbeda. Ancaman yang berkaitan dengan tidak adanya bukti pada sesi aplikasi maupun komunikasi antar layanan telah diakomodasi melalui event autentikasi pada kategori \textit{Spoofing} serta event penandatanganan transaksi pada kategori ini. Oleh karena itu, hubungan antara identitas yang telah terverifikasi dengan aktivitas yang dilakukan tetap dapat dipertahankan tanpa memerlukan event audit tambahan untuk setiap proses maupun \textit{data flow}.
+
+\subsubsection{Kebutuhan Event Audit untuk Ancaman \textit{Information Disclosure}}
+
+Kategori \textit{Information Disclosure} berkaitan dengan ancaman ketika informasi yang seharusnya hanya dapat diakses oleh pihak yang berwenang terekspos kepada pihak lain. Berdasarkan hasil analisis STRIDE, ancaman ini tidak hanya mencakup kebocoran isi rekam medis, tetapi juga material kriptografi, token autentikasi, metadata transaksi, serta riwayat akses pengguna. Oleh karena itu, kebutuhan event audit pada kategori ini berfokus pada pencatatan aktivitas akses terhadap data dan sumber daya sensitif tanpa menyimpan isi data sensitif tersebut di dalam audit trail.
+
+Hasil pemetaan kebutuhan event audit terhadap ancaman \textit{Information Disclosure} ditunjukkan pada Tabel \ref{tab:event-information-disclosure}.
+
+\begin{xltabular}{\textwidth}{|X|c|X|}
+\caption{Pemetaan Kebutuhan Event Audit untuk Ancaman \textit{Information Disclosure}}
+\label{tab:event-information-disclosure}\\
+\hline
+\textbf{Event Audit} &
+\textbf{Elemen} &
+\textbf{Justifikasi Pencatatan} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Event Audit} &
+\textbf{Elemen} &
+\textbf{Justifikasi Pencatatan} \\
+\hline
+\endhead
+
+Akses baca (\textit{view}) rekam medis oleh tenaga medis &
+P1, P6, F28 &
+Menyediakan jejak audit terhadap setiap akses rekam medis untuk mendukung deteksi akses yang tidak sah maupun pola akses yang tidak wajar.\\
+\hline
+
+Pengambilan \textit{blob} terenkripsi dari IPFS &
+D2, F19 &
+Menyediakan bukti aktivitas pengambilan data terenkripsi sehingga pola akses terhadap penyimpanan dapat dianalisis.\\
+\hline
+
+Transfer material kriptografi antar proses &
+P7, D3, F14, F17 &
+Menyediakan jejak audit terhadap distribusi material kriptografi tanpa mencatat nilai material kriptografi itu sendiri.\\
+\hline
+
+Penerbitan dan pengiriman token autentikasi maupun otorisasi &
+P4, P5, F7, F13, F15 &
+Menyediakan bukti penggunaan token selama proses autentikasi dan otorisasi tanpa mencatat isi token.\\
+\hline
+
+Pembacaan atau \textit{query} metadata transaksi \textit{on-chain} &
+D4, F9, F21, F22 &
+Menyediakan jejak audit terhadap akses metadata transaksi untuk mendukung analisis pola akses terhadap ledger.\\
+\hline
+
+Akses terhadap riwayat akses (\textit{access log}) &
+F29 &
+Menyediakan bukti bahwa audit trail juga diawasi sehingga penyalahgunaan riwayat akses dapat dideteksi.\\
+\hline
+
+Permintaan \textit{Gas Station Sponsorship} &
+F24, F25 &
+Menyediakan jejak audit terhadap permintaan sponsorship guna mendukung analisis pola penggunaan layanan tanpa mengungkap informasi sensitif transaksi.\\
+\hline
+
+\end{xltabular}
+
+Berdasarkan hasil pemetaan pada Tabel \ref{tab:event-information-disclosure}, kebutuhan event audit pada kategori \textit{Information Disclosure} berfokus pada pencatatan aktivitas akses terhadap sumber daya yang mengandung informasi sensitif, seperti rekam medis, material kriptografi, token autentikasi, maupun metadata transaksi blockchain. Pencatatan aktivitas tersebut memungkinkan proses investigasi dilakukan ketika terjadi dugaan kebocoran informasi, sekaligus membantu mengidentifikasi pola akses yang tidak wajar atau tidak sesuai dengan kebijakan sistem.
+
+Berbeda dengan kategori ancaman lainnya, audit trail pada kategori \textit{Information Disclosure} tidak bertujuan menyimpan isi data sensitif yang diakses. Sebaliknya, audit trail hanya mencatat metadata aktivitas, seperti identitas pelaku, objek yang diakses, waktu akses, dan hasil akses. Pendekatan ini memungkinkan audit trail tetap mendukung proses investigasi tanpa meningkatkan risiko kebocoran informasi akibat penyimpanan data sensitif di dalam log audit. Selain itu, berbagai ancaman yang berkaitan dengan transmisi data sensitif maupun metadata antar proses memiliki karakteristik yang serupa sehingga telah diakomodasi melalui event transfer material kriptografi, pengelolaan token autentikasi, dan pencatatan akses terhadap sumber daya sensitif tanpa memerlukan event audit tambahan untuk setiap \textit{data flow}.
+
+\subsubsection{Kebutuhan Event Audit untuk Ancaman \textit{Elevation of Privilege}}
+
+Kategori \textit{Elevation of Privilege} berkaitan dengan ancaman ketika suatu entitas memperoleh atau menggunakan hak akses yang melebihi kewenangan yang seharusnya dimiliki. Berdasarkan hasil analisis STRIDE, ancaman ini dapat terjadi akibat kelemahan mekanisme otorisasi, validasi \textit{capability}, maupun kerentanan pada komponen yang mengelola hak akses. Oleh karena itu, kebutuhan event audit pada kategori ini berfokus pada pencatatan aktivitas yang berkaitan dengan proses otorisasi, pemeriksaan hak akses, serta penggunaan hak istimewa untuk memastikan setiap akses terhadap sumber daya sistem dapat ditelusuri dan dipertanggungjawabkan.
+
+Hasil pemetaan kebutuhan event audit terhadap ancaman \textit{Elevation of Privilege} ditunjukkan pada Tabel \ref{tab:event-elevation-of-privilege}.
+
+\begin{xltabular}{\textwidth}{|X|c|X|}
+\caption{Pemetaan Kebutuhan Event Audit untuk Ancaman \textit{Elevation of Privilege}}
+\label{tab:event-elevation-of-privilege}\\
+\hline
+\textbf{Event Audit} &
+\textbf{Elemen} &
+\textbf{Justifikasi Pencatatan} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Event Audit} &
+\textbf{Elemen} &
+\textbf{Justifikasi Pencatatan} \\
+\hline
+\endhead
+
+Pemeriksaan \textit{role} atau \textit{claim} sebelum eksekusi aksi &
+P5 &
+Menyediakan bukti bahwa setiap permintaan telah melalui proses pemeriksaan hak akses sebelum diproses oleh sistem.\\
+\hline
+
+Validasi \textit{capability} (\textit{CapBAC}) pada \textit{smart contract} &
+P8 &
+Menyediakan bukti bahwa transaksi telah divalidasi terhadap \textit{capability} yang dimiliki pengguna sebelum dikomit ke ledger.\\
+\hline
+
+Percobaan akses rekam medis di luar cakupan \textit{consent} &
+P6 &
+Menyediakan jejak audit terhadap percobaan akses yang melebihi hak akses atau ruang lingkup \textit{consent} yang diberikan pasien.\\
+\hline
+
+Percobaan penggunaan fungsi administratif oleh pengguna non-admin &
+P1, P2, P3 &
+Menyediakan bukti adanya percobaan penggunaan fungsi yang berada di luar kewenangan pengguna.\\
+\hline
+
+Eksekusi proses \textit{Proxy Re-encryption} untuk penerima di luar \textit{grant} &
+P7 &
+Menyediakan bukti bahwa proses \textit{re-encryption} hanya dilakukan untuk penerima yang telah memperoleh hak akses yang sah.\\
+\hline
+
+Percobaan \textit{bypass} otorisasi melalui \textit{Proxy Re-encryption API} &
+P4 &
+Menyediakan jejak audit terhadap permintaan yang mencoba melewati mekanisme otorisasi sebelum mengakses layanan backend.\\
+\hline
+
+\end{xltabular}
+
+Berdasarkan hasil pemetaan pada Tabel \ref{tab:event-elevation-of-privilege}, kebutuhan event audit pada kategori \textit{Elevation of Privilege} berfokus pada aktivitas yang berkaitan dengan proses pemeriksaan dan penggunaan hak akses dalam sistem. Event-event tersebut mencakup pemeriksaan \textit{role} dan \textit{capability}, penggunaan fungsi administratif, proses \textit{proxy re-encryption}, serta akses terhadap rekam medis berdasarkan \textit{consent} yang diberikan pasien. Dengan mencatat aktivitas tersebut, sistem audit trail dapat menyediakan bukti apabila terjadi penyalahgunaan hak akses atau percobaan memperoleh hak akses di luar kewenangan yang dimiliki.
+
+Sebagian kebutuhan event audit pada kategori ini memiliki keterkaitan dengan kategori \textit{Tampering} karena keduanya melibatkan proses validasi sebelum suatu permintaan diproses oleh sistem. Namun demikian, kategori \textit{Tampering} berfokus pada integritas data dan proses, sedangkan kategori \textit{Elevation of Privilege} berfokus pada kesesuaian hak akses yang digunakan oleh pengguna. Oleh karena itu, event-event pada kategori ini secara khusus dirancang untuk menyediakan bukti mengenai keputusan otorisasi dan penggunaan hak akses selama sistem beroperasi.

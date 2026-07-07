@@ -27,8 +27,24 @@ Sistem informasi rumah sakit sering kali menghadapi masalah kualitas dalam penca
 
 Selain itu, integrasi teknologi baru seperti \textit{blockchain} dalam layanan kesehatan telah diidentifikasi memiliki potensi keuntungan sekaligus ancaman baru. Meskipun menjanjikan desentralisasi, penerapannya harus mempertimbangkan interoperabilitas dan skalabilitas dalam lingkungan medis yang kompleks \cite{1}.
 
-\subsection{Standar dan Regulasi Rekam Medis Elektronik di Indonesia}
-Di Indonesia, penyelenggaraan RME diatur secara ketat oleh Peraturan Menteri Kesehatan (Permenkes) No. 24 Tahun 2022 \cite{1}. Peraturan ini mewajibkan seluruh fasilitas pelayanan kesehatan untuk beralih ke RME dan terhubung dengan platform SATUSEHAT, yang bertujuan untuk menciptakan interoperabilitas data kesehatan nasional. Untuk mencapai interoperabilitas ini, standar internasional menjadi acuan penting. Standar seperti ISO 18308 (\textit{Health informatics — Requirements for an electronic health record architecture}) \cite{12} dan HL7 FHIR (\textit{Fast Healthcare Interoperability Resources}) \cite{11} menjadi acuan global untuk memastikan data dapat dipertukarkan antar sistem secara konsisten, aman, dan semantik.
+\subsection{Audit Trail DecMed}
 
-\subsection{Tantangan Keamanan dan Privasi EMR}
-Data RME bersifat sangat rahasia dan bernilai tinggi, menjadikannya target utama serangan siber \cite{17}. Tantangan utama yang dihadapi meliputi risiko \textit{data breach} (pencurian data), akses tidak sah baik oleh pihak internal maupun eksternal, serta ancaman terhadap integritas data. Untuk mengatasi ini, sistem RME harus mengimplementasikan kontrol keamanan berlapis, termasuk enkripsi data (baik saat transit maupun saat disimpan), mekanisme audit log yang komprehensif untuk melacak semua aktivitas, serta jaminan \textit{non-repudiation} (kenirsangkalan) untuk memastikan setiap tindakan dapat diatribusikan secara unik dan tidak dapat disangkal oleh pelakunya.
+\subsection{Audit Trail DecMed}
+
+DecMed sendiri sudah membuat sebuah audit trail sederhana dalam bentuk log berupa patient\_access\_log. Patient\_access\_log berisikan riwayat pemberian akses CRUD rekam medis pasien kepada pegawai fasyankes. Log tersebut berisikan Timestamp, Nama Fasyankes, NAMA Petugas, jenis akses (read/update), tipe data akses (medical/administrative). Struct dari PatienAccessLog berbentuk demikian.
+
+% \begin{lstlisting}[language=Rust, caption={Struktur Data Patient Access Log}]
+% public struct PatientAccessLog has copy, drop, store {
+%     access_data_type: vector<HospitalPersonnelAccessDataType>,
+%     access_type: HospitalPersonnelAccessType,
+%     date: String,
+%     exp_dur: u64,
+%     hospital_metadata: HospitalMetadata,
+%     hospital_personnel_address: address,
+%     hospital_personnel_metadata: String,
+%     index: u64,
+%     is_revoked: bool,
+% }
+% \end{lstlisting}
+
+% Proses generasi log dilakukan melalui 

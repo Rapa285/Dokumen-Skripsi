@@ -1,1 +1,308 @@
-\subsection{Gap Audit Trail DecMed}
+\subsection{Analisis Gap DecMed}
+
+Analisis gap dilakukan untuk membandingkan kondisi DecMed saat ini dengan kebutuhan audit trail dan kebutuhan infrastruktur audit trail yang telah diidentifikasi pada subbab sebelumnya. Tujuan analisis ini adalah untuk menentukan kesenjangan yang perlu diatasi agar sistem mampu menyediakan bukti digital yang memadai serta mendukung proses investigasi insiden keamanan secara efektif.
+
+\subsubsection{Analisis Gap Audit Trail}
+
+Analisis gap audit trail dilakukan dengan membandingkan kondisi audit trail yang tersedia pada implementasi DecMed saat ini terhadap kebutuhan audit trail yang telah diidentifikasi pada bagian sebelumnya. Tujuan analisis ini adalah untuk mengetahui sejauh mana audit trail yang ada mampu mendukung proses pemantauan, deteksi, dan investigasi insiden keamanan.
+
+Perbandingan dilakukan terhadap dua aspek. Aspek pertama adalah pemenuhan atribut umum yang seharusnya dimiliki oleh setiap audit trail. Aspek kedua adalah pemenuhan kebutuhan audit trail spesifik yang diturunkan dari hasil analisis ancaman menggunakan metode STRIDE. Hasil analisis gap ini digunakan sebagai dasar untuk menentukan audit trail tambahan yang perlu diimplementasikan pada sistem DecMed. Hasil perbandingan antara kebutuhan atribut umum audit trail dan kondisi implementasi audit trail pada DecMed saat ini ditunjukkan pada Tabel~\ref{tab:analisis-gap-kebutuhan-umum-audit-trail}.
+
+
+\begin{table}[htbp]
+    \centering
+    \vspace{0.25cm}
+    \caption{Analisis Gap Kebutuhan Umum Audit Trail}
+    \label{tab:analisis-gap-kebutuhan-umum-audit-trail}
+    \begin{tabular}{|p{2.5cm}|p{1.5cm}|p{10cm}|}
+        \hline
+        \textbf{Atribut} & \textbf{Tersedia} & \textbf{Gap} \\
+        \hline
+        Event ID / Kode Log & Ya & Tidak ada gap. Setiap pencatatan hak akses atau rekam medis di IOTA secara otomatis memiliki ID Transaksi (Transaction Hash) yang unik. \\
+        \hline
+        Timestamp & Ya & Tidak ada gap. Sistem menggunakan parameter stempel waktu operasi (\textit{created\_at}) dan fitur Waktu/Clock bawaan jaringan IOTA [1, 2]. \\
+        \hline
+        Event Type & Ya & Tidak ada gap. Kategori terekam melalui jenis pemanggilan metode \textit{smart contract} (misal: \textit{create\_medical\_record}, \textit{create\_access}) [3, 4]. \\
+        \hline
+        Source Component & Ya & Tidak ada gap. Sumber inisiasi terekam secara arsitektural (berasal dari \textit{Proxy Server} atau eksekusi *node* IOTA di Layer 1) [5, 6]. \\
+        \hline
+        Subject Identifier & Ya & Tidak ada gap. Sistem menggunakan \textit{iota\_address} dan \textit{public key} kriptografi milik pasien atau tenaga medis yang diverifikasi sebagai subjek pemicu akses [7-9]. \\
+        \hline
+        Object Identifier & Ya & Tidak ada gap. Sistem menggunakan indeks EMR dan \textit{Content Identifier} (CID) dari IPFS sebagai identitas objek target yang unik [10-13]. \\
+        \hline
+        Action & Ya & Tidak ada gap. Aksi telah didefinisikan secara eksplisit di dalam entri \textit{Capability-Based Access Control} (CapBAC), seperti hak \textit{Read} atau \textit{Update/Write} [9, 14]. \\
+        \hline
+        Status & Ya & Tidak ada gap. Status sukses dicatat di buku besar, sementara penolakan/kegagalan menghasilkan kode \textit{error} IOTA Move (misal: \textit{EAccessExpired}, \textit{EAccessNotFound}) [15, 16]. \\
+        \hline
+        Severity Level & Parsial & \textbf{Terdapat Gap.} Implementasi \textit{smart contract} DecMed murni memproses transaksi (berhasil atau \textit{error}). DLT tidak mengklasifikasikan keparahan (\textit{severity}) seperti INFO, WARN, atau CRITICAL layaknya log sistem konvensional. \\
+        \hline
+        Integrity Information & Ya & Tidak ada gap. Integritas dijamin penuh secara bawaan melalui mekanisme konsensus IOTA (DLT \textit{immutability}) dan *hash* kriptografi CID dari IPFS [10, 11, 17, 18]. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Selain atribut umum audit trail, dilakukan pula analisis terhadap kebutuhan audit trail spesifik yang diturunkan dari setiap ancaman hasil analisis STRIDE. Analisis ini bertujuan untuk mengidentifikasi apakah bukti digital yang diperlukan untuk mendeteksi dan menginvestigasi masing-masing ancaman telah tersedia pada implementasi DecMed saat ini. Hasil perbandingan antara kebutuhan audit trail spesifik dan kondisi implementasi audit trail pada DecMed ditunjukkan pada Tabel~\ref{tab:gap-audit-trail-stride}.
+
+\begin{xltabular}{\textwidth}{|c|>{\raggedright\arraybackslash}X|c|p{6cm}|}
+    \caption{Analisis Gap Kebutuhan Audit Trail Berdasarkan Ancaman STRIDE}
+    \label{tab:gap-audit-trail-stride} \\
+    \hline
+    \textbf{ID} &
+    \textbf{Kebutuhan Audit Trail} &
+    \textbf{Tersedia} &
+    \textbf{Gap} \\
+    \hline
+    \endfirsthead
+
+    \hline
+    \textbf{ID} &
+    \textbf{Kebutuhan Audit Trail} &
+    \textbf{Tersedia} &
+    \textbf{Gap} \\
+    \hline
+    \endhead
+
+    \hline
+    \endfoot
+
+    \hline
+    \endlastfoot
+
+    T01 & Log autentikasi pengguna dan perangkat. & Parsial & Otentikasi divalidasi via \textit{smart contract} (cek akun) dan proksi (JWT), namun sistem tidak mencatat kegagalan login di perangkat klien lokal atau identitas fisik perangkat (\textit{Device ID}) ke dalam log sentral/\textit{on-chain}. \\
+    \hline
+    T02 & Log pemberian, pencabutan, dan perubahan hak akses EMR. & Ya & Tidak ada gap. Aksi pembuatan (\textit{create\_access}) dan pencabutan (\textit{revoke\_access}) dicatat permanen dan \textit{immutable} di jaringan IOTA. \\
+    \hline
+    T03 & Log validasi identitas node eksternal. & Ya & Tidak ada gap. Identitas \textit{node} divalidasi otomatis dan terdesentralisasi melalui protokol konsensus BFT Mysticeti IOTA pada Layer 1. \\
+    \hline
+    T04 & Log transaksi gas sponsorship. & Ya & Tidak ada gap. Setiap inisiasi transaksi disponsori diverifikasi oleh IOTA Gas Station dan statusnya dieksekusi serta direkam \textit{on-chain}. \\
+    \hline
+    T05 & Log integritas proses dan aplikasi klien. & Tidak & Terdapat gap. Tidak ada mekanisme di arsitektur yang menginspeksi atau mencatat integritas program (\textit{hash executable}) aplikasi klien sebelum/saat dijalankan. \\
+    \hline
+    T06 & Log perubahan memori atau proses aplikasi. & Tidak & Terdapat gap. Sistem tidak mengimplementasikan \textit{Intrusion Detection System} (IDS) lokal untuk mencatat upaya manipulasi memori secara \textit{runtime}. \\
+    \hline
+    T07 & Log kegagalan pencatatan audit trail. & Parsial & Terdapat gap. Jika pengiriman data gagal, \textit{error} (misal: \textit{timeout}) muncul, namun aplikasi klien tidak memiliki \textit{fallback} penyimpanan \textit{write-once} lokal. \\
+    \hline
+    T08 & Log exception dan crash aplikasi klien. & Tidak & Terdapat gap. Tidak ada sistem pelaporan \textit{crash} terenkripsi yang merekam pembuangan memori (\textit{core dump}) atau \textit{stack trace} saat klien \textit{error}. \\
+    \hline
+    T09 & Log penggunaan sumber daya sistem klien. & Tidak & Terdapat gap. Metrik pemantauan performa seperti lonjakan CPU dan RAM lokal di sisi aplikasi klien tidak dikumpulkan maupun dicatat. \\
+    \hline
+    T10 & Log otorisasi akses resource berdasarkan role. & Ya & Tidak ada gap. Pengecekan peran (\textit{Role}) divalidasi saat penerbitan JWT di Proksi dan ditegakkan secara mutlak oleh \textit{smart contract} (misal: modul \textit{hospital\_personnel}). \\
+    \hline
+    T11 & Log validasi JWT dan akses API. & Parsial & Terdapat gap. Validasi API berjalan ketat, namun DecMed tidak mendefinisikan infrastruktur penyimpanan sentral log spesifik untuk mencatat insiden token \textit{invalid}. \\
+    \hline
+    T12 & Log aktivitas proses proxy re-encryption. & Parsial & Terdapat gap. PRE memproses enkripsi data EMR dari IOTA/IPFS, namun karena \textit{stateless}, aktivitasnya tidak menghasilkan log rekam jejak yang permanen di Proksi. \\
+    \hline
+    T13 & Log pengiriman metadata ke ledger IOTA. & Ya & Tidak ada gap. Pengiriman dicatat presisi (\textit{timestamp}, alamat) melalui eksekusi \textit{sponsored transaction} (misal: \textit{create\_medical\_record}). \\
+    \hline
+    T14 & Log exception pada komponen backend. & Tidak & Terdapat gap. Belum ada prosedur log terenkripsi di \textit{Proxy Server} untuk mencegah \textit{Information Disclosure} lewat pesan \textit{error} HTTP. \\
+    \hline
+    T15 & Log trafik API dan rate limiting. & Tidak & Terdapat gap. Arsitektur DecMed belum mencakup perlindungan spesifik atau pemantauan log \textit{rate-limiting} (lalu lintas anomali) pada sisi Proksi. \\
+    \hline
+    T16 & Log validasi aturan CapBAC dan otorisasi. & Ya & Tidak ada gap. Validasi tipe akses (\textit{Read/Update}) dan waktu kedaluwarsa dicatat serta ditolak otomatis (\textit{EAccessExpired}) oleh IOTA. \\
+    \hline
+    T17 & Log akses dan perubahan data Redis atau key store. & Tidak & Terdapat gap. Basis data Redis di \textit{backend} bersifat sekilas (\textit{ephemeral}) untuk performa (seperti \textit{nonce} TTL 3 menit) dan tidak merekam \textit{audit trail}. \\
+    \hline
+    T18 & Log akses ke penyimpanan internal. & Tidak & Terdapat gap. Tidak disebutkan adanya mekanisme log pemantauan jaringan koneksi IP/Port internal dari luar menuju Redis Cache Server. \\
+    \hline
+    T19 & Log penghapusan objek pada penyimpanan internal. & Tidak & Terdapat gap. Data dihapus secara terprogram setelah komputasi PRE selesai, namun jejak administratif penghapusan tersebut tidak direkam. \\
+    \hline
+    T20 & Log verifikasi integritas data IPFS. & Ya & Tidak ada gap. Bukti verifikasi integritas data \textit{off-chain} otomatis tercatat melalui pencocokan kriptografis \textit{hash Content Identifier} (CID) \textit{on-chain}. \\
+    \hline
+    T21 & Log sinkronisasi dan verifikasi transaksi on-chain. & Ya & Tidak ada gap. Dipenuhi sepenuhnya oleh mekanisme sinkronisasi buku besar terdistribusi IOTA tanpa butuh tambahan dari DecMed. \\
+    \hline
+    T22 & Log akses metadata on-chain. & Parsial & Terdapat gap. Sifat pemanggilan data di IOTA (\textit{inspect transaction mode}) bersifat bebas \textit{gas fee} (gratis) sehingga akses baca (\textit{read-only}) tidak tercatat ke dalam transaksi \textit{on-chain}. \\
+    \hline
+    T23 & Log aktivitas transaksi pada jaringan publik. & Ya & Tidak ada gap. Protokol jaringan mengevaluasi lalu lintas DAG dan IOTA Gas Station mengelola aliran kuota transaksi secara otomatis. \\
+    \hline
+    T24 & Log validasi integritas komunikasi antar komponen. & Parsial & Terdapat gap. DecMed mengandalkan keamanan transpor (HTTP over TLS), namun interupsi \textit{signature/payload} tidak ditangkap ke dalam berkas audit API khusus. \\
+    \hline
+    T25 & Log pembentukan dan validasi sesi TLS. & Parsial & Terdapat gap. Meski wajib menggunakan HTTPS, spesifikasi log untuk mencatat hasil persetujuan pertukaran \textit{cipher suite} tidak disediakan. \\
+    \hline
+    T26 & Log kegagalan konektivitas dan ketersediaan layanan. & Tidak & Terdapat gap. Sistem tidak mengumpulkan data telemetri tentang pemutusan saluran atau \textit{timeout} (DoS) komponen \textit{backend} untuk investigasi ketersediaan. \\
+    \hline
+
+\end{xltabular}
+
+\subsubsection{Analisis Gap Infrastruktur Audit Trail}
+
+Ketersediaan audit trail yang memadai tidak hanya ditentukan oleh informasi yang dicatat, tetapi juga oleh kemampuan infrastruktur dalam mengelola, melindungi, dan menyediakan audit trail tersebut ketika dibutuhkan. Oleh karena itu, selain mengevaluasi isi audit trail, perlu dilakukan analisis terhadap infrastruktur yang mendukung proses pengumpulan, penyimpanan, pemantauan, serta perlindungan audit trail.
+
+Analisis gap infrastruktur audit trail dilakukan dengan membandingkan kebutuhan infrastruktur yang telah diidentifikasi pada Subbab III.X.X dengan kondisi implementasi DecMed saat ini. Tujuannya adalah untuk mengidentifikasi keterbatasan yang dapat memengaruhi integritas, ketersediaan, maupun kemudahan pemanfaatan audit trail dalam proses investigasi insiden keamanan.
+
+Hasil perbandingan antara kebutuhan infrastruktur audit trail dan kondisi implementasi DecMed ditunjukkan pada Tabel~\ref{tab:gap-infrastruktur-audit}.
+
+% \begin{table}[htbp]
+% \centering
+% \caption{Analisis Gap Infrastruktur Audit Trail pada DecMed}
+% \label{tab:gap-infrastruktur-audit}
+%     \begin{tabular}{|p{3cm}|c|p{3.5cm}|p{3.5cm}|}
+%     \hline
+%     \textbf{Kebutuhan} &
+%     \textbf{Tersedia} &
+%     \textbf{Kondisi DecMed Saat Ini} &
+%     \textbf{Kebutuhan Perbaikan} \\
+%     \hline
+
+%     Sentralisasi Log &
+%      &
+%     &
+%     \\
+%     \hline
+
+%     Identifikasi Sumber Log &
+%      &
+%     &
+%     \\
+%     \hline
+
+%     Sinkronisasi Waktu &
+%      &
+%     &
+%     \\
+%     \hline
+
+%     Perlindungan Integritas Log &
+%      &
+%     &
+%     \\
+%     \hline
+
+%     Penyimpanan Persisten &
+%      &
+%     &
+%     \\
+%     \hline
+
+%     Kontrol Akses Log &
+%      &
+%     &
+%     \\
+%     \hline
+
+%     Klasifikasi Audit Trail &
+%      &
+%     &
+%     \\
+%     \hline
+
+%     Retensi Log &
+%      &
+%     &
+%     \\
+%     \hline
+
+%     Monitoring dan Peringatan &
+%      &
+%     &
+%     \\
+%     \hline
+
+%     Korelasi Kejadian &
+%      &
+%     &
+%     \\
+%     \hline
+
+%     Ketersediaan Log &
+%      &
+%     &
+%     \\
+%     \hline
+
+%     Verifikasi Keaslian Log &
+%      &
+%     &
+%     \\
+%     \hline
+
+%     \end{tabular}
+% \end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Analisis Gap Infrastruktur Audit Trail pada DecMed}
+\label{tab:gap-infrastruktur-audit}
+    \begin{tabular}{|p{3cm}|c|p{3.5cm}|p{3.5cm}|}
+    \hline
+    \textbf{Kebutuhan} &
+    \textbf{Tersedia} &
+    \textbf{Kondisi DecMed Saat Ini} &
+    \textbf{Kebutuhan Perbaikan} \\
+    \hline
+
+    Sentralisasi Log &
+    Parsial &
+    Log akses \textit{on-chain} tersentralisasi secara terdesentralisasi di IOTA. Namun, log \textit{error/crash off-chain} berserakan di sisi proxy dan perangkat klien. &
+    Penyediaan server log terpusat terpisah untuk mengumpulkan rekaman \textit{error}, trafik API, dan anomali aplikasi dari \textit{Proxy Server} dan Klien. \\
+    \hline
+
+    Identifikasi Sumber Log &
+    Ya &
+    Dicatat secara presisi; \textit{smart contract} mengidentifikasi inisiator akses melalui \textit{iota\_address} dan \textit{public key} kriptografi [2, 3]. &
+    Tidak ada gap. \\
+    \hline
+
+    Sinkronisasi Waktu &
+    Ya &
+    Sistem memanfaatkan fitur sinkronisasi waktu/Clock bawaan dari jaringan IOTA untuk membubuhkan \textit{timestamp} (\textit{created\_at}) pada transaksi [4]. &
+    Tidak ada gap. \\
+    \hline
+
+    Perlindungan Integritas Log &
+    Ya &
+    Integritas sepenuhnya dijamin oleh konsensus DLT; jejak audit berbentuk \textit{immutable state transitions} yang tidak dapat dirusak [1, 5]. &
+    Tidak ada gap. \\
+    \hline
+
+    Penyimpanan Persisten &
+    Ya &
+    Metadata akses (\textit{capability}) disimpan secara persisten di \textit{IOTA Tangle} [6]. &
+    Tidak ada gap. \\
+    \hline
+
+    Kontrol Akses Log &
+    Parsial &
+    Pasien memiliki kontrol melihat log aksesnya sendiri (\textit{get\_access\_log}) [7]. Namun, buku besar IOTA bersifat transparan sehingga metadata terekspos ke publik. &
+    Dibutuhkan mekanisme anonimisasi yang lebih kuat pada jaringan publik untuk mencegah relasi pasien-dokter dapat dilacak oleh pihak luar. \\
+    \hline
+
+    Klasifikasi Audit Trail &
+    Tidak &
+    IOTA hanya merekam status transaksi (\textit{success/error}) murni tanpa klasifikasi level keparahan (\textit{INFO, WARN, CRITICAL}) layaknya log aplikasi konvensional. &
+    Implementasi modul pelabelan (\textit{tagging}) tingkat keparahan insiden di lapisan \textit{middleware/Proxy} sebelum diekspor. \\
+    \hline
+
+    Retensi Log &
+    Parsial &
+    Log \textit{on-chain} tersimpan selamanya. Namun, sistem tidak memiliki kebijakan pengelolaan siklus hidup atau retensi otomatis untuk log internal \textit{Proxy/Redis}. &
+    Penentuan kebijakan batas waktu penyimpanan dan pemusnahan yang aman untuk log operasional internal di \textit{backend}. \\
+    \hline
+
+    Monitoring dan Peringatan &
+    Tidak &
+    Tidak ada mekanisme pemantauan \textit{real-time} atau \textit{alerting} (peringatan otomatis) ketika terjadi kegagalan \textit{crash} klien, atau serangan \textit{Denial of Service} [8]. &
+    Integrasi sistem \textit{Intrusion Detection System} (IDS) dan peringatan notifikasi otomatis untuk administrator \textit{Proxy}. \\
+    \hline
+
+    Korelasi Kejadian &
+    Tidak &
+    Belum ada fungsi sistem yang mampu menghubungkan interaksi antara log lalu lintas jaringan lokal, akses Redis, log PRE, dan aktivitas \textit{on-chain} secara komprehensif. &
+    Integrasi dengan sistem \textit{Security Information and Event Management} (SIEM) untuk mengkorelasikan log lintas komponen. \\
+    \hline
+
+    Ketersediaan Log &
+    Ya &
+    Sangat tinggi karena arsitektur jaringan P2P IOTA menyingkirkan titik kegagalan tunggal (\textit{single point of failure}) dalam pembacaan log [1, 6]. &
+    Tidak ada gap. \\
+    \hline
+
+    Verifikasi Keaslian Log &
+    Ya &
+    Otorisasi tindakan dan pembentukan kapabilitas harus diverifikasi menggunakan tanda tangan (\textit{signature}) BFT kriptografi dari pengirim yang sah [9, 10]. &
+    Tidak ada gap. \\
+    \hline
+
+    \end{tabular}
+\end{table}
+
+Berdasarkan hasil analisis gap terhadap kebutuhan audit trail dan infrastruktur pendukungnya, ditemukan bahwa DecMed masih memiliki keterbatasan baik pada aspek ketersediaan bukti digital maupun mekanisme pengelolaan audit trail. Temuan ini menjadi dasar dalam perancangan solusi yang diusulkan pada bagian selanjutnya, yaitu penambahan mekanisme pencatatan audit trail serta pembangunan infrastruktur manajemen audit trail yang mampu menjamin integritas, ketersediaan, dan kemudahan investigasi insiden keamanan.
