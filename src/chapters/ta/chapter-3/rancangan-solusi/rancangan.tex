@@ -1,0 +1,256 @@
+% \section{Rancangan}
+
+% \input{chapters/ta/chapter-3/rancangan-solusi/arsitektur.tex}
+
+% \input{chapters/ta/chapter-3/rancangan-solusi/fungsionalitas.tex}
+
+\section{Rancangan}
+
+\subsection{Arsitektur Sistem Audit Trail}
+
+Untuk mengatasi permasalahan yang telah diidentifikasi pada Analisis Masalah
+--- yaitu tidak adanya sistem \textit{audit trail} yang terintegrasi, \textit{append-only},
+dan mudah dianalisis --- penelitian ini mengusulkan penambahan satu komponen
+baru pada arsitektur DecMed, yaitu \textbf{Audit Trail Service (ATS)}.
+ATS dirancang sebagai layanan \textit{backend} yang independen terhadap
+komponen DecMed yang telah ada (PRE Server, Gas Station Server, maupun
+\textit{smart contract}), sehingga penambahan mekanisme audit trail tidak
+mengubah alur bisnis maupun fungsionalitas DecMed yang sudah berjalan.
+Arsitektur sistem audit trail dapat dilihat pada Gambar~\ref{fig:audit-arsitektur}.
+
+ATS terdiri atas tiga modul utama:
+\begin{itemize}
+    \item \textbf{Audit Collector} -- menyediakan \textit{endpoint} penerimaan
+    audit \textit{event} dari tiga sumber, yaitu Client Apps, PRE Server, dan
+    Gas Station Server. Setiap sumber mengirimkan \textit{event} melalui
+    permintaan terautentikasi ke Audit Collector.
+    \item \textbf{Audit Processor} -- bertugas memvalidasi, menstandardisasi,
+    dan melengkapi \textit{event} yang diterima menjadi \textit{audit record}
+    yang siap disimpan, termasuk menghitung \textit{hash} dari isi \textit{record}
+    sebagai bukti integritas awal.
+    \item \textbf{Audit Storage Manager} -- bertugas mengunggah \textit{audit
+    record} ke IPFS Cluster serta menginisialisasi transaksi bersponsor ke
+    jaringan IOTA melalui Gas Station Server yang sudah ada, mengikuti pola
+    penyimpanan yang sama dengan data RME.
+    \item \textbf{Audit Query Index} -- basis data sekunder (non-otoritatif)
+    yang menyimpan salinan metadata audit record untuk mendukung kebutuhan
+    pencarian dan analisis secara efisien, tanpa mengubah sifat \textit{append-only}
+    dari data yang tersimpan di IOTA dan IPFS.
+\end{itemize}
+
+ATS berkomunikasi dengan Gas Station Server yang telah ada pada arsitektur
+DecMed untuk mensponsori transaksi audit trail ke jaringan IOTA, serta dengan
+IPFS Cluster yang telah ada untuk menyimpan berkas \textit{audit record}.
+Dengan demikian, ATS tidak menambah infrastruktur penyimpanan baru, melainkan
+memanfaatkan kembali (\textit{reuse}) infrastruktur \textit{off-chain} dan
+\textit{on-chain} yang sudah tersedia pada DecMed.
+
+Selain itu, ditambahkan satu modul baru pada \textit{smart contract} DecMed,
+yaitu \texttt{decmed::audit\_trail}, yang menyediakan \textit{method}
+\texttt{create\_audit\_entry} untuk mencatat referensi \textit{audit record}
+(CID beserta metadata terkait) pada penyimpanan \textit{on-chain}. Modul ini
+hanya menyediakan operasi penciptaan entri baru dan secara sengaja tidak
+menyediakan \textit{method} pengubahan maupun penghapusan, sehingga setiap
+entri yang telah tercatat bersifat permanen (\textit{append-only}).
+
+\subsection{Mekanisme Pembangkitan Audit Trail}
+
+Audit \textit{event} dibangkitkan dari tiga sumber yang telah diidentifikasi
+pada tahap analisis kebutuhan audit trail (III.1.3), yaitu:
+
+\begin{enumerate}
+    \item \textbf{Client Apps} -- membangkitkan \textit{event} atas aktivitas
+    yang dilakukan langsung oleh pengguna pada perangkatnya, seperti
+    autentikasi lokal (PIN/biometrik), registrasi akun, dan pemindaian kode QR
+    delegasi akses.
+    \item \textbf{PRE Server} -- membangkitkan \textit{event} atas setiap
+    permintaan yang ditanganinya, seperti proses autentikasi (\textit{nonce},
+    penerbitan token), pengambilan maupun perubahan data RME, dan re-enkripsi
+    data.
+    \item \textbf{Gas Station Server} -- membangkitkan \textit{event} atas
+    setiap permintaan reservasi dan eksekusi transaksi bersponsor yang
+    ditanganinya.
+\end{enumerate}
+
+Setiap sumber membangkitkan \textit{event} dalam format standar yang telah
+ditentukan, mengacu pada kebutuhan isi \textit{audit record} sebagaimana
+dianalisis pada III.1.3 dan selaras dengan kontrol AU-3 (\textit{Content of
+Audit Records}) pada NIST SP 800-53 Rev. 5, yang mencakup atribut berikut:
+
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{2.8cm}|X|}
+    \hline
+    \textbf{Atribut} & \textbf{Deskripsi} \\
+    \hline
+    \texttt{event\_type} & Jenis aktivitas yang dicatat (mis. \texttt{AUTH\_LOGIN},
+    \texttt{ACCESS\_GRANT}, \texttt{ACCESS\_REVOKE}, \texttt{RECORD\_READ},
+    \texttt{RECORD\_WRITE}, \texttt{KEY\_ISSUANCE}, \texttt{TX\_SPONSOR}, dsb.) \\
+    \hline
+    \texttt{source} & Sumber pembangkit \textit{event}, yaitu \texttt{CLIENT\_APP},
+    \texttt{PRE\_SERVER}, atau \texttt{GAS\_STATION} \\
+    \hline
+    \texttt{actor\_ref} & Identitas atau referensi aktor yang terlibat (mis.
+    \texttt{iota\_address} pasien/personel) \\
+    \hline
+    \texttt{timestamp} & Waktu terjadinya aktivitas \\
+    \hline
+    \texttt{outcome} & Status hasil aktivitas (\textit{success}/\textit{failure}) \\
+    \hline
+    \texttt{detail} & Data kontekstual tambahan spesifik \textit{event}
+    (mis. \texttt{capability\_id}, \texttt{medical\_metadata\_index}) \\
+    \hline
+\end{xltabular}
+
+Setelah \textit{event} dibangkitkan oleh sumber, \textit{event} tersebut
+dikirimkan ke Audit Collector pada ATS melalui permintaan terautentikasi.
+Audit Processor kemudian memvalidasi kelengkapan atribut, melengkapi
+\texttt{audit\_id} unik, dan menghitung \texttt{record\_hash} dari
+keseluruhan isi \textit{record} sebelum diteruskan ke tahap penyimpanan.
+
+\subsection{Mekanisme Penyimpanan Audit Trail}
+
+Mekanisme penyimpanan \textit{audit trail} mengikuti pola yang sama dengan
+mekanisme penyimpanan data RME pada DecMed (III.2.2 pada dokumen rancangan
+DecMed), yaitu memisahkan penyimpanan isi data (\textit{off-chain}) dari
+penyimpanan referensi dan metadata (\textit{on-chain}).
+
+Setiap \textit{audit record} yang telah distandardisasi oleh Audit Processor
+diserialisasi menjadi satu berkas (satu \textit{event} menghasilkan satu
+berkas) dan diunggah ke IPFS Cluster yang telah digunakan DecMed untuk
+menyimpan data klinis RME. Proses unggah ini menghasilkan \textit{Content
+Identifier} (CID) yang bersifat unik terhadap isi berkas tersebut; apabila
+isi berkas berubah, CID yang dihasilkan juga akan berbeda, sehingga CID
+berfungsi sebagai \textit{fingerprint} integritas \textit{audit record}.
+
+Selanjutnya, Audit Storage Manager menginisialisasi transaksi bersponsor
+melalui Gas Station Server untuk memanggil \texttt{create\_audit\_entry}
+pada modul \texttt{decmed::audit\_trail}. Transaksi tersebut menyimpan CID
+beserta metadata \textit{audit record} (\texttt{event\_type}, \texttt{source},
+\texttt{actor\_ref}, \texttt{timestamp}, \texttt{record\_hash}) pada
+penyimpanan \textit{on-chain} IOTA. Karena modul \texttt{decmed::audit\_trail}
+hanya menyediakan operasi penciptaan entri baru, setiap aktivitas -- termasuk
+pemberian dan pencabutan akses -- akan selalu tercatat sebagai entri baru
+yang berdiri sendiri, alih-alih memperbarui entri yang sudah ada seperti pada
+\textit{PatientAccessLog}. Pendekatan ini secara langsung menjawab kelemahan
+\textit{immutability} yang diuraikan pada Analisis Masalah.
+
+Dengan kombinasi CID (di IPFS) dan referensi \textit{on-chain} (di IOTA),
+setiap \textit{audit record} memiliki dua lapis jaminan integritas: isi
+\textit{record} tidak dapat diubah tanpa mengubah CID-nya, dan CID yang
+telah dicatat pada IOTA tidak dapat diubah maupun dihapus setelah transaksi
+final. Dokumen ini tidak membahas mekanisme \textit{batching} maupun
+optimasi kinerja pengiriman, karena isu kinerja dan skalabilitas berada di
+luar cakupan pembahasan penelitian ini.
+
+\subsection{Mekanisme Pengelolaan Audit Trail}
+
+Mekanisme pengelolaan \textit{audit trail} pada ATS mencakup tiga aspek,
+yaitu pencarian/analisis, retensi, dan verifikasi integritas.
+
+\subsubsection{Pencarian dan Analisis}
+Data \textit{on-chain} dan \textit{off-chain} tetap menjadi sumber
+kebenaran (\textit{source of truth}) yang bersifat \textit{immutable}, namun
+tidak efisien untuk ditelusuri secara langsung. Oleh karena itu, setiap kali
+sebuah \textit{audit record} berhasil disimpan, ATS turut menyimpan salinan
+metadatanya (bukan isi lengkapnya) pada Audit Query Index, yaitu basis data
+sekunder yang mendukung pencarian dan agregasi berdasarkan atribut seperti
+rentang waktu, jenis \textit{event}, sumber, maupun aktor. Mekanisme ini
+menjawab kelemahan \textit{transaction block} IOTA yang tidak memiliki
+mekanisme \textit{query}, indeks, maupun agregasi log.
+
+\subsubsection{Retensi}
+Berkas \textit{audit record} pada IPFS Cluster di-\textit{pin} dengan
+kebijakan yang sama dengan data klinis RME, sehingga tidak hilang akibat
+mekanisme \textit{garbage collection} pada node IPFS yang tidak melakukan
+\textit{pinning}. Referensi \textit{on-chain} pada IOTA tidak memiliki
+mekanisme penghapusan pada level \textit{smart contract}, sehingga retensi
+metadata audit trail bergantung pada kebijakan retensi ledger IOTA itu
+sendiri di luar level aplikasi.
+
+\subsubsection{Verifikasi Integritas}
+Pihak yang berwenang (auditor/administrator) dapat memverifikasi keutuhan
+sebuah \textit{audit record} secara independen dengan mengambil CID yang
+tercatat pada IOTA, mengambil isi berkas dari IPFS menggunakan CID tersebut,
+menghitung ulang \textit{hash} isi berkas, dan membandingkannya dengan
+\texttt{record\_hash} yang tercatat \textit{on-chain}. Kecocokan hasil
+verifikasi menandakan bahwa \textit{audit record} belum mengalami perubahan
+sejak pertama kali dicatat.
+
+\subsection{Fungsionalitas Sistem}
+
+Subbab ini menjelaskan fungsionalitas sistem audit trail secara rinci,
+mencakup deskripsi alur bagi setiap kebutuhan fungsional yang telah
+diidentifikasi pada III.1.3, kecuali kebutuhan fungsional yang bersifat
+sederhana (mis. validasi format masukan) yang tidak memerlukan penjelasan
+alur tersendiri. Setiap mekanisme direferensikan ke diagram sekuens terkait,
+yang akan dilengkapi pada bagian berikutnya.
+
+\subsubsection{Mekanisme Pembangkitan dan Pengiriman Audit Record dari Client Apps}
+Mekanisme ini dapat dilihat pada Gambar~\ref{fig:audit-generate-client}.
+Ketika pengguna melakukan aktivitas yang tercakup dalam cakupan audit pada
+Client Apps (mis. autentikasi lokal PIN/biometrik, registrasi akun, atau
+pemindaian kode QR delegasi akses), Client Apps menyusun \textit{event}
+dengan atribut standar (\texttt{event\_type}, \texttt{source}=\texttt{CLIENT\_APP},
+\texttt{actor\_ref}, \texttt{timestamp}, \texttt{outcome}, \texttt{detail}) dan
+mengirimkannya ke \textit{endpoint} Audit Collector pada ATS melalui
+permintaan terautentikasi. Audit Collector menerima \textit{event} tersebut
+dan meneruskannya ke Audit Processor untuk tahap pemrosesan lebih lanjut,
+sebagaimana dijelaskan pada mekanisme pemrosesan dan penyimpanan.
+
+\subsubsection{Mekanisme Pembangkitan dan Pengiriman Audit Record dari PRE Server}
+Mekanisme ini dapat dilihat pada Gambar~\ref{fig:audit-generate-pre}.
+Setiap kali PRE Server menangani permintaan pada salah satu \textit{endpoint}-nya
+(\texttt{/nonce}, \texttt{/keys}, \texttt{/medical-record}, \texttt{/administrative},
+dan sejenisnya), PRE Server menyusun \textit{event} dengan
+\texttt{source}=\texttt{PRE\_SERVER} yang merepresentasikan aktivitas
+autentikasi, penerbitan token, maupun akses/perubahan data RME yang telah
+ditangani, kemudian mengirimkan \textit{event} tersebut ke Audit Collector
+pada ATS. Pengiriman \textit{event} dilakukan secara asinkron terhadap alur
+utama permintaan pengguna, sehingga tidak menghambat waktu respons PRE
+Server terhadap Client Apps.
+
+\subsubsection{Mekanisme Pembangkitan dan Pengiriman Audit Record dari Gas Station Server}
+Mekanisme ini dapat dilihat pada Gambar~\ref{fig:audit-generate-gas}.
+Setiap kali Gas Station Server menerima permintaan reservasi maupun eksekusi
+\textit{gas object} untuk mensponsori suatu transaksi, Gas Station Server
+menyusun \textit{event} dengan \texttt{source}=\texttt{GAS\_STATION} yang
+mencatat transaksi yang disponsorinya (termasuk transaksi
+\texttt{create\_audit\_entry} milik ATS sendiri), kemudian mengirimkan
+\textit{event} tersebut ke Audit Collector pada ATS.
+
+\subsubsection{Mekanisme Pemrosesan dan Penyimpanan Audit Record}
+Mekanisme ini dapat dilihat pada Gambar~\ref{fig:audit-process-store}.
+Setelah \textit{event} diterima oleh Audit Collector dari salah satu dari
+ketiga sumber di atas, Audit Processor memvalidasi kelengkapan atribut
+\textit{event}, melengkapi \texttt{audit\_id} unik apabila belum tersedia,
+dan menghitung \texttt{record\_hash} dari keseluruhan isi \textit{record}.
+\textit{Record} yang telah diproses diserahkan kepada Audit Storage Manager,
+yang menyerialisasikannya menjadi satu berkas (satu \textit{event}
+menghasilkan satu berkas) dan mengunggah berkas tersebut ke IPFS Cluster,
+menghasilkan CID. Audit Storage Manager selanjutnya menginisialisasi
+transaksi bersponsor yang memanggil \texttt{create\_audit\_entry} pada modul
+\texttt{decmed::audit\_trail} melalui Gas Station Server. Setelah Gas
+Station Server mengeksekusi transaksi tersebut dan dikonfirmasi oleh
+jaringan IOTA, CID beserta metadata \textit{audit record} tercatat secara
+permanen pada penyimpanan \textit{on-chain}. ATS kemudian memperbarui Audit
+Query Index dengan metadata yang sama untuk mendukung kebutuhan pencarian.
+
+\subsubsection{Mekanisme Pencarian Audit Trail}
+Mekanisme ini dapat dilihat pada Gambar~\ref{fig:audit-query}.
+Pihak berwenang (Admin Fasyankes/Kementerian Kesehatan) memasukkan kriteria
+pencarian, seperti rentang waktu, jenis \textit{event}, sumber, maupun
+aktor, melalui antarmuka yang tersedia pada Client Fasyankes/Kementerian.
+Permintaan pencarian diteruskan ke ATS, yang menelusuri Audit Query Index
+untuk memperoleh daftar \textit{audit record} yang sesuai kriteria. ATS
+mengembalikan metadata beserta referensi CID dari setiap \textit{record}
+yang ditemukan untuk ditampilkan kepada pengguna.
+
+\subsubsection{Mekanisme Verifikasi Integritas Audit Record}
+Mekanisme ini dapat dilihat pada Gambar~\ref{fig:audit-verify}.
+Pengguna memilih satu \textit{audit record} hasil pencarian untuk
+diverifikasi keutuhannya. ATS mengambil CID \textit{record} tersebut dari
+penyimpanan \textit{on-chain} IOTA, mengambil isi berkas dari IPFS
+menggunakan CID tersebut, menghitung ulang \textit{hash} isi berkas, dan
+membandingkannya dengan \texttt{record\_hash} yang tercatat \textit{on-chain}.
+Hasil perbandingan (\textit{match}/\textit{mismatch}) dikembalikan dan
+ditampilkan kepada pengguna sebagai bukti keutuhan \textit{audit record}
+sejak pertama kali dicatat.
