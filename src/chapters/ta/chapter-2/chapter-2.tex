@@ -1,0 +1,360 @@
+\chapter{Studi Literatur}
+\label{ch:studi-literatur}
+
+\section{Rekam Medis Elektronik}
+\label{sec:rme}
+
+\subsection{Definisi dan Regulasi RME di Indonesia}
+\label{subsec:definisi-regulasi-rme}
+
+Sesuai dengan Pasal 1 ayat (1) dan (2) Peraturan Menteri Kesehatan Republik Indonesia Nomor 24 Tahun 2022 tentang Rekam Medis, rekam medis adalah dokumen yang berisikan data identitas pasien, pemeriksaan, pengobatan, tindakan, dan pelayanan lain yang telah diberikan kepada pasien, sedangkan Rekam Medis Elektronik (RME) adalah rekam medis yang dibuat dengan menggunakan sistem elektronik yang diperuntukkan bagi penyelenggaraan rekam medis (\cite{permenkes24_2022}). Berdasarkan definisi tersebut, RME bukan sekadar bentuk digital dari berkas rekam medis konvensional, melainkan mencakup keseluruhan proses penyelenggaraan yang berkelanjutan, mulai dari bagaimana data dibuat, diakses, disimpan, hingga didistribusikan kepada pihak-pihak tertentu untuk memenuhi kebutuhan pelayanan kesehatan. Permenkes Nomor 24 Tahun 2022 juga mewajibkan seluruh fasilitas pelayanan kesehatan (fasyankes) di Indonesia, mulai dari praktik mandiri tenaga kesehatan hingga rumah sakit, untuk menyelenggarakan RME sebagai pengganti rekam medis konvensional (\cite{permenkes24_2022}).
+
+Selain mewajibkan bentuk elektronik, Permenkes Nomor 24 Tahun 2022 turut mengatur hak pasien atas data rekam medis miliknya, termasuk larangan akses oleh pihak yang tidak berwenang (\cite{permenkes24_2022}). Ketentuan ini menjadi dasar regulasi bahwa setiap akses terhadap data RME seorang pasien pada dasarnya harus melalui mekanisme yang dapat mempertanggungjawabkan siapa yang mengakses, kapan, dan untuk keperluan apa. Hal tersebut sejalan dengan Undang-Undang Nomor 19 Tahun 2016 tentang Perubahan atas Undang-Undang Nomor 11 Tahun 2008 tentang Informasi dan Transaksi Elektronik, yang mengategorikan RME sebagai dokumen elektronik sehingga harus dibuat dan dikelola dalam sistem elektronik dengan jaminan keamanan dan akuntabilitas agar dapat digunakan sebagai alat bukti yang sah secara hukum (\cite{uu19_2016}). Dengan kata lain, regulasi di Indonesia tidak hanya menuntut RME diselenggarakan secara elektronik, tetapi juga menuntut adanya mekanisme yang menjamin kerahasiaan dan keutuhan data tersebut sepanjang siklus penyelenggaraannya, sebuah kebutuhan yang menjadi dasar bagi berbagai penelitian pengembangan sistem manajemen RME yang berfokus pada keamanan data, salah satunya DecMed (\cite{DecMed}).
+
+\subsection{Kebutuhan Keamanan dan Akuntabilitas Data RME}
+\label{subsec:keamanan-akuntabilitas-rme}
+
+Data RME tergolong sebagai data yang sensitif karena memuat informasi identitas dan kondisi kesehatan pasien, sehingga keamanan dan kerahasiaannya menjadi perhatian utama dalam berbagai penelitian sistem informasi kesehatan. Tinjauan sistematis terhadap implementasi RME menunjukkan bahwa aspek keamanan dan kerahasiaan data medis pasien secara konsisten menjadi isu sentral, dan kegagalan menjaga aspek tersebut berdampak langsung pada menurunnya kepercayaan pasien terhadap sistem pelayanan kesehatan yang digunakan (\cite{pramesti2024keamanan}). Kerahasiaan data RME tidak dapat dijaga hanya dengan membatasi siapa saja yang boleh mengakses data (kontrol akses), tetapi juga membutuhkan mekanisme yang dapat menunjukkan bahwa pembatasan tersebut benar-benar dipatuhi dan dapat ditelusuri kembali ketika terjadi insiden.
+
+Kebutuhan penelusuran kembali (\textit{traceability}) inilah yang menjadikan akuntabilitas sebagai aspek keamanan yang tidak dapat dipisahkan dari kerahasiaan dan integritas data RME. Akuntabilitas dalam konteks ini merujuk pada kemampuan suatu sistem untuk menghubungkan setiap tindakan yang dilakukan terhadap data dengan identitas pihak yang melakukannya, sehingga setiap pihak yang mengakses maupun mengubah data RME dapat dimintai pertanggungjawaban atas tindakannya. Sebagai contoh, kerangka kerja DecMed yang menjadi basis pengembangan pada Tugas Akhir ini dirancang agar seluruh akses terhadap data RME hanya dapat dilakukan atas persetujuan aktif pasien melalui mekanisme kontrol akses berbasis \textit{capability} (\cite{DecMed}). Namun demikian, tanpa mekanisme yang menjamin akuntabilitas, kontrol akses yang ketat sekalipun tidak dapat membuktikan bahwa suatu pelanggaran keamanan benar-benar terjadi, siapa pihak yang bertanggung jawab, maupun bagaimana kronologi pelanggaran tersebut (\cite{DecMed}). Kebutuhan inilah yang menjadi latar belakang pentingnya mekanisme audit trail sebagai pelengkap dari kontrol akses pada sistem manajemen RME, yang akan dibahas lebih lanjut pada Subbab~\ref{sec:audit-trail}.
+
+\section{Audit Trail}
+\label{sec:audit-trail}
+
+\subsection{Definisi dan Konsep Audit Trail}
+\label{subsec:definisi-audit-trail}
+
+Audit trail didefinisikan sebagai rekaman kronologis atas aktivitas sistem yang cukup untuk memungkinkan rekonstruksi, peninjauan, dan pemeriksaan urutan kejadian yang mengelilingi atau menyebabkan suatu operasi, prosedur, atau peristiwa dalam suatu transaksi, sejak awal hingga hasil akhirnya (\cite{iso27789_2021}). Definisi ini menegaskan bahwa audit trail bukan sekadar kumpulan catatan yang berdiri sendiri, melainkan suatu rangkaian catatan yang secara kolektif membentuk kronologi yang dapat ditelusuri ulang, sehingga setiap catatan di dalamnya perlu memiliki keterkaitan yang jelas dengan catatan lain dari kejadian yang sama. Standar yang sama juga membedakan secara eksplisit antara \textit{audit record} sebagai catatan satu peristiwa tunggal dalam siklus hidup suatu rekam medis elektronik, \textit{audit log} sebagai kumpulan audit record yang tersusun secara kronologis, dan \textit{audit trail} sebagai kumpulan audit log yang secara keseluruhan membentuk riwayat lengkap suatu entitas (\cite{iso27789_2021}).
+
+Konsep audit trail perlu dibedakan secara tegas dari konsep kontrol akses maupun pencatatan izin akses (\textit{access grant log}). Audit trail bersifat komplementer terhadap kontrol akses, bukan pengganti maupun bagian dari kontrol akses itu sendiri: kontrol akses menentukan kebijakan mengenai siapa \textit{berhak} mengakses data, sedangkan audit trail mencatat apa yang \textit{benar-benar terjadi} pada sistem, termasuk apabila terjadi penyimpangan dari kebijakan tersebut (\cite{iso27789_2021}). Perbedaan ini penting untuk digarisbawahi karena suatu sistem dapat saja memiliki kontrol akses yang ketat dan mencatat metadata pemberian izin secara lengkap, namun tetap tidak memiliki audit trail yang memadai apabila tidak ada catatan terpisah mengenai peristiwa akses aktual (\textit{access event}) yang terjadi setelah izin tersebut diberikan. Dengan kata lain, audit trail idealnya mencatat peristiwa (\textit{event}) sebagai representasi dari tindakan nyata yang terjadi pada sistem, bukan semata representasi dari kebijakan atau otorisasi yang berlaku.
+
+\subsection{Karakteristik Audit Trail yang Baik}
+\label{subsec:karakteristik-audit-trail}
+
+Agar dapat berfungsi sebagai bukti yang dapat diandalkan, audit trail perlu memenuhi sejumlah karakteristik tertentu. Karakteristik pertama adalah kemampuan mengidentifikasi pengguna secara tidak ambigu (\textit{unambiguous identification}), yaitu audit trail harus menyediakan data yang cukup untuk mengidentifikasi secara pasti setiap pengguna maupun sistem eksternal yang telah mengakses atau menerima data rekam medis (\cite{iso27789_2021}). Karakteristik kedua adalah integritas (\textit{integrity}) dan kerahasiaan (\textit{confidentiality}) dari audit trail itu sendiri, yaitu jaminan bahwa catatan yang telah dibuat terlindungi dari upaya perusakan (\textit{tampering}), termasuk perlunya audit trail mencatat setiap tindakan yang dilakukan terhadap audit trail itu sendiri, seperti kapan sistem audit tidak berfungsi atau dinonaktifkan (\cite{iso27789_2021}).
+
+Karakteristik lain yang tidak kalah penting adalah kelengkapan (\textit{completeness}) dan ketersediaan (\textit{availability}). Kelengkapan berarti audit trail harus mencatat seluruh tindakan yang relevan terhadap data -- termasuk pembuatan, pembacaan, pembaruan, maupun pengarsipan -- setiap kali tindakan tersebut dilakukan terhadap data kesehatan pribadi (\cite{iso27789_2021}), sedangkan ketersediaan berarti sistem audit harus memastikan entri tercatat setiap kali sistem informasi kesehatan sedang beroperasi (\cite{iso27789_2021}). Selain keempat karakteristik tersebut, audit trail yang baik juga perlu mendukung kemampuan deteksi terhadap potensi penyalahgunaan oleh pihak internal (\textit{insider threat}), mengingat pelaku insider pada umumnya memiliki akses sah terhadap sistem sehingga satu-satunya cara untuk mendeteksi maupun membuktikan penyalahgunaan tersebut adalah melalui pencatatan aktivitas yang menyeluruh dan tidak dapat dimanipulasi oleh pelaku itu sendiri (\cite{cert2022insiderthreat}). Karakteristik-karakteristik tersebut menjadi acuan utama dalam menilai apakah suatu mekanisme pencatatan pada sistem informasi, termasuk pada DecMed, telah dapat disebut sebagai audit trail yang memadai.
+
+\subsection{Komponen Audit Trail}
+\label{subsec:komponen-audit-trail}
+
+Untuk dapat berfungsi secara menyeluruh, suatu sistem audit trail perlu dibangun melalui beberapa komponen fungsional yang saling berurutan. Kerangka kerja audit trail untuk rekam medis elektronik membagi persoalan menjadi penentuan peristiwa apa saja yang perlu dipicu untuk dicatat (\textit{trigger events}), format dan isi dari setiap catatan yang dihasilkan, hingga bagaimana catatan tersebut dikelola secara aman sepanjang siklus hidupnya (\cite{iso27789_2021}). Pembagian yang serupa juga ditemukan pada kerangka manajemen log komputer secara umum, yang memandang manajemen log sebagai suatu infrastruktur yang terdiri atas perangkat keras, perangkat lunak, jaringan, dan media yang digunakan untuk menghasilkan (\textit{generate}), mengirimkan (\textit{transmit}), menyimpan (\textit{store}), serta menganalisis (\textit{analyze}) data log (\cite{nist80092}). Berdasarkan kedua kerangka tersebut, komponen audit trail pada Tugas Akhir ini dikelompokkan menjadi empat bagian, yaitu penentuan event, pengumpulan event, penyimpanan event, dan pembacaan event, sebagaimana diuraikan pada subbagian berikut.
+
+\subsubsection{Penentuan Event}
+\label{subsubsec:penentuan-event}
+
+Komponen pertama adalah penentuan peristiwa (\textit{event}) apa saja yang perlu memicu pencatatan audit trail. Peristiwa pemicu (\textit{trigger events}) pada sistem rekam medis elektronik pada umumnya ditentukan berdasarkan skala, tujuan, serta kebijakan privasi dan keamanan dari masing-masing sistem informasi kesehatan, dengan cakupan minimal berupa peristiwa akses (\textit{access events}) dan peristiwa kueri (\textit{query events}) terhadap data kesehatan pribadi (\cite{iso27789_2021}). Standar tersebut turut memberikan contoh peristiwa yang secara eksplisit berada di luar cakupan audit trail rekam medis, seperti peristiwa mulai/berhenti aplikasi, peristiwa autentikasi pengguna, maupun peristiwa yang dihasilkan oleh sistem operasi (\cite{iso27789_2021}).
+
+Di luar peristiwa akses dan kueri, penentuan trigger events pada suatu sistem juga dapat diturunkan melalui pendekatan pemodelan ancaman (\textit{threat modeling}), seperti metode STRIDE, yang mengidentifikasi ancaman keamanan pada suatu sistem secara sistematis dan dapat digunakan sebagai dasar penentuan kebutuhan pencatatan (\cite{laksono2021stride}).
+
+\subsubsection{Konten Wajib dan Konten Tambahan pada Event}
+\label{subsubsec:konten-event}
+
+Setiap audit record, terlepas dari jenis peristiwa apa yang dicatatnya, memuat sekumpulan bidang data minimal yang bersifat wajib (\textit{mandatory}). Terdapat sembilan bidang yang wajib diisi pada setiap event apa pun jenisnya, yaitu identitas unik peristiwa (\textit{EventID}), jenis tindakan yang dilakukan (\textit{EventActionCode}), waktu terjadinya peristiwa (\textit{EventDateTime}), identitas pengguna atau proses pelaku tindakan (\textit{UserID}), identitas sumber audit atau sistem yang menghasilkan catatan tersebut (\textit{AuditSourceID}), serta empat bidang yang secara bersama-sama mengidentifikasi objek data yang menjadi sasaran tindakan (\textit{ParticipantObjectTypeCode}, \textit{ParticipantObjectTypeCodeRole}, \textit{ParticipantObjectIDTypeCode}, dan \textit{ParticipantObjectID}) (\cite{iso27789_2021}).
+
+Di luar konten wajib tersebut, terdapat pula sejumlah bidang bersifat opsional (\textit{optional}) maupun kondisional yang dapat ditambahkan sesuai kebutuhan spesifik dari masing-masing jenis event. Sebagai contoh, pada event akses (\textit{access events}) yang mencakup pembuatan, pembacaan, pembaruan, dan penghapusan data, bidang \textit{EventActionCode} dibatasi pada empat nilai tertentu (\textit{Create}, \textit{Read}, \textit{Update}, \textit{Delete}) dan objek yang diaudit secara spesifik merepresentasikan data pasien (\cite{iso27789_2021}). Sebaliknya, pada event kueri (\textit{query events}), dibutuhkan bidang tambahan yang tidak diperlukan pada event akses, yaitu identitas pihak yang mengajukan kueri (\textit{Questioner related}), pihak yang merespons kueri (\textit{Question ahead related}), serta pihak lain yang turut terlibat (\textit{Alternative participant related}), dan bidang \textit{ParticipantObjectQuery} yang pada event kueri berubah sifatnya dari opsional menjadi kondisional mandatory karena perlu menyimpan isi kueri yang sesungguhnya diajukan (\cite{iso27789_2021}). Bidang opsional lain yang lazim ditambahkan pada berbagai jenis event antara lain indikator keberhasilan tindakan (\textit{EventOutcomeIndicator}), peran pengguna saat melakukan tindakan (\textit{RoleIDCode}), tujuan penggunaan data (\textit{PurposeOfUse}), maupun tingkat sensitivitas objek yang diakses (\textit{ParticipantObjectSensitivity}) (\cite{iso27789_2021}).
+
+\subsubsection{Pengumpulan Event}
+\label{subsubsec:pengumpulan-event}
+
+Komponen kedua adalah pengumpulan event, yaitu bagaimana setiap peristiwa yang terjadi pada sistem direkam menjadi suatu catatan (\textit{audit record}) dengan format dan isi yang konsisten. Format umum suatu audit record pada rekam medis elektronik sekurang-kurangnya memuat identitas unik dari peristiwa yang terjadi (\textit{EventID}), jenis tindakan yang dilakukan (\textit{EventActionCode}), waktu terjadinya peristiwa (\textit{EventDateTime}), identitas pengguna atau proses yang melakukan tindakan (\textit{UserID}), serta identitas objek data yang menjadi sasaran tindakan tersebut (\textit{ParticipantObjectID}) (\cite{iso27789_2021}).
+
+Pengumpulan event pada praktiknya menghadapi tantangan tersendiri, terutama pada sistem dengan banyak sumber log (\textit{log sources}) yang berbeda. Setiap sumber log cenderung mencatat informasi dengan format dan kelengkapan yang berbeda-beda, sehingga menyulitkan proses menghubungkan (\textit{correlate}) peristiwa yang tercatat oleh satu sumber dengan peristiwa yang tercatat oleh sumber lainnya (\cite{nist80092}).
+
+\subsubsection{Penyimpanan Event}
+\label{subsubsec:penyimpanan-event}
+
+Komponen ketiga adalah penyimpanan event, yaitu bagaimana catatan peristiwa yang telah dikumpulkan disimpan dan dikelola secara aman sepanjang siklus hidupnya. Sistem audit trail perlu menyediakan langkah pengamanan yang cukup untuk melindungi audit log dari perusakan (\textit{tampering}), termasuk mengamankan akses terhadap audit record, mengamankan akses terhadap perangkat audit itu sendiri, serta mencatat seluruh tindakan yang dilakukan terhadap audit trail dengan menyertakan waktu, jenis tindakan, dan pelakunya (\cite{iso27789_2021}). Selain itu, audit record juga perlu tunduk pada kebijakan retensi (\textit{retention policy}) yang idealnya disesuaikan dengan masa berlaku data rekam medis yang bersangkutan, mengingat audit record dapat dibutuhkan sebagai bukti dalam jangka waktu yang panjang (\cite{iso27789_2021}).
+
+Pada level infrastruktur, pertimbangan penyimpanan log turut mencakup keseimbangan antara volume data log yang dihasilkan dengan kapasitas penyimpanan yang tersedia, baik untuk penyimpanan daring (\textit{online}) maupun luring (\textit{offline}), serta kebutuhan keamanan atas data tersebut (\cite{nist80092}).
+
+\subsubsection{Pembacaan Event}
+\label{subsubsec:pembacaan-event}
+
+Komponen keempat adalah pembacaan event, yaitu bagaimana catatan peristiwa yang telah tersimpan dapat diakses kembali dan dianalisis oleh pihak yang berwenang. Akses terhadap audit data harus dikendalikan secara ketat dan itu sendiri menjadi objek audit (\textit{itself subject to audit}), dengan akses yang idealnya dilakukan melalui sistem informasi yang dapat menegakkan kontrol tersebut, bukan akses langsung terhadap audit trail (\cite{iso27789_2021}). Fasilitas pembacaan audit trail idealnya juga mendukung analisis berdasarkan kombinasi berbagai bidang data yang tercatat, seperti seluruh akses oleh pengguna tertentu, seluruh tindakan penghapusan yang dilakukan oleh pengguna dengan peran tertentu, atau seluruh peristiwa yang melibatkan data pasien tertentu dalam rentang waktu tertentu (\cite{iso27789_2021}).
+
+Kemampuan pembacaan yang fleksibel semacam ini menjadi penting bagi pihak yang bertanggung jawab atas suatu sistem untuk dapat melakukan investigasi maupun evaluasi kepatuhan kebijakan secara efektif, karena analisis log pada dasarnya merupakan proses berkelanjutan yang perlu dilakukan secara berkala, bukan hanya ketika terjadi insiden (\cite{nist80092}).
+
+% ======================================================================
+% CATATAN REFERENSI UNTUK SUBBAB II.2
+% ======================================================================
+% Key BARU yang perlu kamu tambahkan ke .bib:
+%
+% \begin{verbatim}
+% @misc{iso27789_2021,
+%   title  = {ISO 27789:2021 -- Health Informatics -- Audit Trails for
+%             Electronic Health Records},
+%   author = {{International Organization for Standardization}},
+%   year   = {2021},
+%   edition = {Second edition},
+%   url    = {https://www.iso.org/standard/76028.html}
+% }
+%
+% @techreport{nist80092,
+%   author      = {Kent, Karen and Souppaya, Murugiah},
+%   title       = {Guide to Computer Security Log Management},
+%   institution = {National Institute of Standards and Technology},
+%   year        = {2006},
+%   number      = {NIST Special Publication 800-92},
+%   doi         = {10.6028/NIST.SP.800-92}
+% }
+% \end{verbatim}
+%
+% Key yang SUDAH ADA di .bib kamu dan dipakai lagi di sini:
+%   - cert2022insiderthreat (sudah diusulkan sebelumnya di bab1)
+%   - laksono2021stride
+%
+% CATATAN PENTING:
+%   - Saya sudah baca langsung isi ISO 27789 dan NIST SP 800-92 dari
+%     file yang kamu upload (bukan cuma metadata/abstrak), jadi klaim
+%     di atas relatif lebih terjamin akurat dibanding sumber-sumber
+%     sebelumnya yang cuma saya cari lewat web. NAMUN tetap disarankan
+%     kamu baca ulang klausul yang saya rujuk (terutama Clause 6, 7.1,
+%     9.2-9.5 pada ISO 27789, dan Section 2.3.1 pada NIST SP 800-92)
+%     untuk memastikan parafrase saya akurat.
+%   - Struktur "empat komponen audit trail" (penentuan, pengumpulan,
+%     penyimpanan, pembacaan) adalah SINTESIS saya sendiri dari kedua
+%     standar tersebut, bukan istilah baku yang persis sama di kedua
+%     dokumen aslinya -- ISO 27789 memakai istilah "trigger events",
+%     "audit record details", dan "secure management of audit data /
+%     access to audit data", sedangkan NIST SP 800-92 memakai istilah
+%     "generate, transmit, store, analyze". Kalau dosbing lebih suka
+%     istilah yang persis mengikuti salah satu standar, beri tahu saya.
+%   - Referensi ke \ref{sec:stride} dan \ref{sec:dlt} yang tadinya ada
+%     di draf sebelumnya sudah saya hapus bersama kalimat analisisnya,
+%     karena bagian ini sekarang murni menyatakan fakta dari literatur
+%     saja -- keterkaitan dengan STRIDE/DecMed/DLT akan dibahas di Bab
+%     III sesuai arahanmu.
+
+\section{Threat Modeling dengan STRIDE}
+\label{sec:stride}
+
+\subsection{Konsep dan Kategori STRIDE}
+\label{subsec:konsep-kategori-stride}
+
+Threat modeling (pemodelan ancaman) merupakan proses terstruktur yang digunakan untuk mendeteksi kemungkinan kerentanan dan ancaman keamanan pada suatu sistem, mengukur tingkat keparahan dari setiap potensi risiko, serta memprioritaskan langkah perlindungan terhadap infrastruktur (\cite{laksono2021stride}). Proses threat modeling umumnya terdiri atas tiga tahap utama, yaitu dekomposisi aplikasi (memahami aplikasi dan bagaimana aplikasi tersebut berinteraksi dengan entitas eksternal), klasifikasi ancaman (mengidentifikasi dan menentukan kategori ancaman menggunakan suatu metodologi tertentu), dan penentuan tindakan pencegahan serta mitigasi (\cite{laksono2021stride}).
+
+STRIDE merupakan salah satu metodologi klasifikasi ancaman yang dikembangkan oleh Microsoft, dengan nama yang dibentuk dari huruf pertama masing-masing kategori ancaman, yaitu \textit{Spoofing}, \textit{Tampering}, \textit{Repudiation}, \textit{Information Disclosure}, \textit{Denial of Service}, dan \textit{Elevation of Privilege} (\cite{laksono2021stride}). Keenam kategori tersebut didefinisikan sebagai berikut. \textit{Spoofing} adalah tindak ancaman yang ditujukan untuk mengakses dan menggunakan kredensial pengguna lain secara ilegal, seperti nama dan sandi pengguna. \textit{Tampering} adalah tindak ancaman yang bertujuan mengubah data, baik data yang tersimpan dalam basis data maupun data pada saat transit melalui jaringan. \textit{Repudiation} adalah tindak ancaman berupa perbuatan ilegal dalam suatu sistem yang tidak memiliki kemampuan untuk melacak tindakan yang telah dilakukan. \textit{Information Disclosure} adalah tindak ancaman berupa perbuatan membaca berkas secara tidak sah, atau membaca data pada saat transit. \textit{Denial of Service} adalah tindak ancaman yang bertujuan menolak akses ke pengguna yang valid. \textit{Elevation of Privilege} adalah tindak ancaman yang bertujuan memperoleh hak akses lebih tinggi agar dapat mengakses informasi atau menyusup ke sistem secara tidak sah (\cite{laksono2021stride}).
+
+\subsection{Penurunan Kebutuhan Audit Event dari Analisis Ancaman}
+\label{subsec:penurunan-event-stride}
+
+Hasil klasifikasi ancaman menggunakan STRIDE pada suatu sistem selanjutnya dapat dinilai tingkat risikonya menggunakan metodologi DREAD (\textit{Damage potential}, \textit{Reproducibility}, \textit{Exploitability}, \textit{Affected user}, \textit{Discoverability}), sehingga dapat disusun peringkat ancaman yang menjadi dasar prioritas penyusunan langkah mitigasi (\cite{laksono2021stride}). Setiap kategori ancaman STRIDE pada dasarnya berkaitan dengan bidang keamanan (\textit{security control}) tertentu yang relevan sebagai acuan mitigasinya, misalnya kategori \textit{Spoofing} berkaitan dengan bidang \textit{authentication}, kategori \textit{Tampering} berkaitan dengan bidang \textit{integrity}, dan kategori \textit{Repudiation} berkaitan dengan bidang \textit{non-repudiation} (\cite{laksono2021stride}).
+
+Penerapan STRIDE pada studi kasus sistem informasi akademik menunjukkan keterkaitan langsung antara ancaman kategori \textit{Repudiation} dengan kebutuhan pencatatan log. Salah satu ancaman kategori \textit{Repudiation} yang teridentifikasi pada studi tersebut adalah pencatatan log yang minim sebagai bukti penanganan klaim penyangkalan (\cite{laksono2021stride}). Langkah mitigasi yang diusulkan untuk ancaman kategori \textit{Repudiation} pada studi tersebut mencakup ketentuan bahwa segala tindakan yang dilakukan pada sistem harus dicatat pada log sebagai bahan pembuktian atas terjadinya suatu tindakan, disertai penerapan tanda tangan digital (\textit{digital signature}) yang tercatat secara otomatis pada log setiap kali terjadi perubahan data (\cite{laksono2021stride}).
+
+% ======================================================================
+% CATATAN REFERENSI UNTUK SUBBAB II.3
+% ======================================================================
+% Key yang dipakai: laksono2021stride (sudah ada di .bib kamu).
+%
+% CATATAN PENTING:
+%   - Kali ini saya baca FULL TEXT paper laksono2021stride (bukan cuma
+%     abstrak), termasuk Tabel 1 (definisi 6 kategori STRIDE) dan
+%     bagian 3.4 Mitigasi (yang menunjukkan kaitan Repudiation dengan
+%     kebutuhan logging). Kutipan di atas relatif akurat terhadap isi
+%     aslinya, tapi tetap baca ulang paper-nya sendiri untuk validasi.
+%   - Paper ini menyebut STRIDE "dikembangkan oleh Microsoft" dengan
+%     mengutip sumber sekunder (Jouini, Rabai, dan Aissa, 2014) --
+%     saya ikut menuliskan itu karena memang begitu yang tertulis di
+%     paper, TAPI saya tidak menambahkan Jouini et al. sebagai
+%     referensi terpisah karena kamu tidak punya itu di .bib. Kalau
+%     dosbing ingin rujukan primer langsung ke penemu STRIDE
+%     (Loren Kohnfelder & Praerit Garg / Microsoft, atau buku Shostack
+%     2014), beri tahu saya untuk saya carikan.
+%   - Sesuai arahanmu, saya TIDAK menambahkan kalimat analisis yang
+%     mengaitkan STRIDE dengan DecMed di sini -- itu akan menjadi
+%     bagian Bab III.
+
+\section{Kontrol Akses}
+\label{sec:kontrol-akses}
+
+\subsection{Definisi dan Jenis Kontrol Akses}
+\label{subsec:definisi-jenis-kontrol-akses}
+
+Kontrol akses merupakan mekanisme yang bertujuan membatasi tindakan atau operasi yang dapat dilakukan oleh pengguna sah dalam suatu sistem komputer, termasuk mengatur tindakan dari program yang berjalan atas nama pengguna tersebut. Terdapat beberapa model kontrol akses yang umum digunakan, di antaranya Role-Based Access Control (RBAC), yang mengatur akses pengguna berdasarkan peran (\textit{role}) yang dimilikinya, dan Attribute-Based Access Control (ABAC), yang mengatur akses dengan menilai atribut yang melekat pada subjek, objek, serta kondisi lingkungan yang relevan (\cite{DecMed}).
+
+Model kontrol akses lain yang relevan dengan Tugas Akhir ini adalah Capability-Based Access Control (CapBAC). Konsep utama CapBAC adalah \textit{capability}, yaitu suatu objek yang berisi hak akses dan dapat diberikan kepada suatu entitas sehingga entitas tersebut dapat mengakses data milik entitas lain (\cite{hernandezramos2013capbac}). Setiap entitas pemilik data dapat membuat capability dan mendistribusikannya secara langsung kepada penerima yang dituju, maupun menyimpannya pada suatu lokasi yang menjamin integritasnya (\cite{DecMed}). CapBAC menawarkan kontrol akses dengan granularitas tinggi, karena setiap capability dapat memuat berbagai atribut akses seperti metadata pemberi akses, bagian data yang dapat diakses, jenis akses, dan waktu kedaluwarsa akses, serta cocok digunakan pada lingkungan terdesentralisasi karena tidak membutuhkan otoritas terpusat untuk memvalidasi maupun memberikan akses (\cite{DecMed}).
+
+\subsection{Keterkaitan Kontrol Akses dan Audit Trail dalam Tata Kelola Akses}
+\label{subsec:keterkaitan-kontrol-akses-audit-trail}
+
+Kontrol akses dan audit trail merupakan dua mekanisme yang berbeda secara konseptual namun saling melengkapi dalam tata kelola akses terhadap suatu sistem. Otorisasi (\textit{authorization}) didefinisikan sebagai pemberian hak, termasuk pemberian akses berdasarkan hak akses (\textit{access rights}) yang dimiliki (\cite{iso27789_2021}), sedangkan audit trail -- sebagaimana telah dibahas pada Subbab~\ref{subsec:definisi-audit-trail} -- merupakan rekaman kronologis atas aktivitas yang benar-benar terjadi pada sistem. Kedua konsep tersebut saling terhubung melalui kebijakan akses (\textit{access policy}), yaitu bahwa audit trail dari suatu rekam medis elektronik disyaratkan untuk dapat mendukung kesesuaian terhadap etika profesi, kebijakan organisasi, dan regulasi yang berlaku, meskipun audit trail semata tidak cukup untuk menilai kelengkapan suatu rekam medis elektronik (\cite{iso27789_2021}).
+
+Keterkaitan antara kontrol akses dan audit trail juga tercermin pada tingkat akses terhadap audit trail itu sendiri. Akses terhadap audit trail disyaratkan untuk diatur oleh suatu kebijakan akses tersendiri, yang ditetapkan oleh organisasi yang bertanggung jawab atas pengelolaan audit log (\cite{iso27789_2021}). Standar yang sama turut mendefinisikan bidang \textit{Participant Object Permission PolicySet} pada format audit record, yang berfungsi untuk merujuk kebijakan akses aktual yang berlaku pada suatu peristiwa (\cite{iso27789_2021}), yang menunjukkan bahwa kebijakan kontrol akses dan catatan audit trail pada praktiknya perlu saling terhubung dan tidak dirancang sebagai dua mekanisme yang terpisah sepenuhnya.
+
+% ======================================================================
+% CATATAN REFERENSI UNTUK SUBBAB II.4
+% ======================================================================
+% Key yang SUDAH ADA di .bib kamu dan dipakai lagi di sini:
+%   - DecMed
+%   - iso27789_2021
+%
+% Key BARU yang saya usulkan:
+%
+% \begin{verbatim}
+% @article{hernandezramos2013capbac,
+%   author       = {Hern{\'a}ndez-Ramos, Jos{\'e} L. and Jara, Antonio J.
+%                   and Marin, Leandro and Skarmeta, Antonio F.},
+%   title        = {Distributed Capability-Based Access Control for the
+%                   Internet of Things},
+%   journaltitle = {Journal of Internet Services and Information
+%                   Security (JISIS)},
+%   volume       = {3},
+%   number       = {3/4},
+%   pages        = {1--16},
+%   year         = {2013}
+% }
+% \end{verbatim}
+%
+% Ini adalah referensi [25] pada final.pdf dan referensi [22] pada
+% paper Sensors DecMed, jadi sudah dua kali dipakai sebagai sumber
+% primer definisi CapBAC pada penelitian sebelumnya -- risikonya
+% relatif kecil, tapi tetap baca ulang paper aslinya untuk validasi
+% definisi yang saya parafrasekan.
+%
+% CATATAN:
+%   - Definisi RBAC dan ABAC di atas SENGAJA saya buat sangat ringkas
+%     dan hanya bersandar pada DecMed (\cite{DecMed}), bukan pada
+%     sumber primer keduanya (mis. Ferraiolo et al. untuk RBAC, NIST
+%     SP 800-162 untuk ABAC seperti pada final.pdf referensi [22] dan
+%     [24]), karena kamu memilih untuk mempersingkat subbab ini. Kalau
+%     kamu ingin definisi RBAC/ABAC yang lebih dalam dengan sumber
+%     primernya sendiri, beri tahu saya untuk saya carikan referensi
+%     tambahan.
+%   - Tidak ada kalimat analisis yang mengaitkan ke DecMed secara
+%     spesifik pada subbab II.4.2 -- murni pernyataan fakta dari
+%     ISO 27789.
+
+\section{Distributed Ledger Technology dan Immutability}
+\label{sec:dlt}
+
+\subsection{DLT sebagai Basis Pencatatan Tidak Berubah}
+\label{subsec:dlt-umum}
+
+Distributed Ledger Technology (DLT) merupakan sistem terdesentralisasi yang memungkinkan data direkam dan disimpan pada sejumlah \textit{node} dalam suatu jaringan, sehingga seluruh salinan \textit{ledger} tetap tersinkronisasi dan konsisten satu sama lain (\cite{DecMed}). Karakteristik desentralisasi ini menghilangkan kebutuhan akan otoritas terpusat, sehingga meningkatkan transparansi dalam sistem, dan menjadikan DLT banyak digunakan di berbagai sektor, termasuk keuangan, \textit{supply chain}, kesehatan, dan energi (\cite{DecMed}).
+
+Salah satu karakteristik utama DLT yang relevan bagi kebutuhan audit trail adalah \textit{immutability}, yaitu sifat data yang telah tersimpan pada \textit{ledger} tidak dapat diubah maupun dihapus setelah tercatat. Karakteristik ini menjadikan DLT sebagai salah satu teknologi yang cocok untuk diintegrasikan dengan mekanisme kontrol akses berbasis \textit{capability} (CapBAC), karena DLT dapat berfungsi sebagai media penyimpanan bagi \textit{capability} yang membutuhkan jaminan integritas (\cite{DecMed}).
+
+\subsection{IOTA}
+\label{subsec:iota}
+
+IOTA merupakan salah satu jenis DLT yang mengadopsi struktur jaringan berbasis \textit{Directed Acyclic Graph} (DAG). Struktur jaringan DAG memungkinkan IOTA mendukung \textit{throughput} yang tinggi, karena mampu memvalidasi transaksi baru secara lebih cepat dibandingkan \textit{blockchain} konvensional seperti Bitcoin maupun Ethereum (\cite{DecMed}). Pada versi awalnya (IOTA 2.0), IOTA tidak membebankan biaya transaksi (\textit{zero-cost transactions}), sehingga cocok digunakan untuk transaksi mikro maupun pada lingkungan ringan seperti perangkat Internet of Things (IoT). Namun, pada IOTA Rebased, model transaksi tanpa biaya tersebut tidak lagi berlaku, dan setiap transaksi dikenakan biaya (\textit{gas fee}) (\cite{DecMed}).
+
+IOTA Rebased menandai evolusi signifikan dari protokol IOTA, bertransisi dari struktur Tangle yang mendukung transaksi tanpa biaya dan bergantung pada \textit{coordinator} terpusat, menuju \textit{object-based ledger} yang dibangun di atas DAG. Berbeda dari IOTA 2.0 yang berbasis model \textit{Unspent Transaction Output} (UTXO), IOTA Rebased mengadopsi DAG berbasis objek yang terinspirasi dari arsitektur Sui Network, sehingga memungkinkan pemrosesan transaksi secara paralel dan mendukung pola transaksi yang kompleks melalui kontrol akses \textit{fine-grained} (\cite{DecMed}). \textit{Ledger} pada IOTA Rebased membedakan antara \textit{shared objects}, yang dapat diakses dan dimodifikasi oleh banyak entitas berdasarkan aturan yang telah ditentukan, dengan \textit{owned objects}, yang sepenuhnya dikontrol oleh satu entitas (\cite{DecMed}). Konsensus pada IOTA Rebased ditenagai oleh protokol Mysticeti, sebuah sistem \textit{Byzantine Fault Tolerant} (BFT) yang mengimplementasikan \textit{Delegated Proof-of-Stake} (DPoS) untuk mencapai \textit{throughput} tinggi dan \textit{latency} rendah, dengan \textit{finality} dalam waktu sekitar 500 milidetik dan mendukung lebih dari 50.000 transaksi per detik (\cite{DecMed}).
+
+Untuk menyederhanakan interaksi pengguna dengan jaringan IOTA, tersedia IOTA Gas Station yang memungkinkan transaksi bersponsor (\textit{sponsored transactions}), sehingga pengguna tidak perlu mengelola \textit{token} untuk membayar biaya transaksi (\cite{DecMed}). Arsitektur IOTA Gas Station terdiri atas tiga komponen, yaitu Gas Station Server sebagai komponen utama yang menyediakan API untuk mereservasi \textit{gas object} dan mengeksekusi transaksi, Gas Station Storage sebagai penyimpanan persisten untuk \textit{gas object} dan status transaksi bersponsor, serta Key Store Manager (KSM) yang mengelola kunci untuk menandatangani transaksi, baik melalui layanan eksternal (\textit{External Key Management Service}) maupun penyimpanan kunci dalam memori (\cite{DecMed}).
+
+% ======================================================================
+% CATATAN REFERENSI UNTUK SUBBAB II.5
+% ======================================================================
+% Key yang dipakai: DecMed (satu-satunya key, sudah ada di .bib kamu).
+%
+% CATATAN PENTING:
+%   - Seluruh isi II.5.1 dan II.5.2 saya parafrasekan langsung dari
+%     paper Sensors (DecMed), khususnya Bagian 2.1/2.4-2.8, BUKAN dari
+%     final.pdf -- karena paper Sensors adalah versi yang sudah
+%     dipublikasi/lebih baru dan sudah ada di .bib kamu sebagai satu
+%     key. Saya sengaja tidak menambahkan key .bib baru untuk sumber
+%     primer DLT/IOTA yang aslinya dikutip DecMed (mis. Bellaj et al.
+%     untuk definisi DLT, Popov untuk IOTA, IOTA Foundation blog untuk
+%     Rebased, dsb.) supaya subbab ini tetap ringkas sesuai instruksi
+%     kamu -- tapi konsekuensinya adalah SELURUH klaim teknis di sini
+%     hanya bersandar pada satu sumber (DecMed). Kalau dosbing merasa
+%     ini kurang kuat secara akademis (karena idealnya definisi teknis
+%     sebaiknya merujuk sumber primer, bukan cuma karya sebelumnya di
+%     lab yang sama), beri tahu saya untuk saya tambahkan sumber primer
+%     yang sesuai.
+%   - Saya TIDAK menuliskan subbab "Batasan Immutability On-Chain untuk
+%     Kebutuhan Audit Trail" (II.5.3 pada kerangka awal) karena bersifat
+%     analitis dan akan lebih tepat dibahas di Bab III sesuai arahanmu
+%     sebelumnya.
+
+\section{Arsitektur Layanan Pendukung dalam Sistem Terdesentralisasi}
+\label{sec:arsitektur-layanan-pendukung}
+
+\subsection{Pola Layanan Terpisah dalam Arsitektur DecMed}
+\label{subsec:pola-layanan-decmed}
+
+Arsitektur DecMed dirancang mengikuti pola tiga lapis (\textit{three-tier architecture}), yang terdiri atas \textit{Client Layer}, \textit{Proxy Layer}, dan \textit{Storage Layer} (\cite{DecMed}). \textit{Client Layer} berfungsi sebagai antarmuka utama bagi seluruh aktor untuk berinteraksi dengan sistem, dengan tiga aplikasi klien berbeda yang disesuaikan dengan kebutuhan masing-masing peran. \textit{Proxy Layer} berperan sebagai \textit{middleware} keamanan yang menegakkan kebijakan kontrol akses dan mengelola operasi kriptografi seperti Proxy Re-Encryption (PRE), sedangkan \textit{Storage Layer} terbagi menjadi penyimpanan \textit{on-chain} yang menjamin keutuhan \textit{capability} akses, dan penyimpanan \textit{off-chain} yang menangani data klinis terenkripsi dalam volume besar (\cite{DecMed}).
+
+Lapisan \textit{Proxy} dan \textit{Storage} pada DecMed diimplementasikan melalui beberapa layanan (\textit{server}) yang terpisah satu sama lain, masing-masing dengan tanggung jawab yang spesifik. Layanan \textit{PRE Server} bertanggung jawab menangani proses \textit{re-encryption}, di mana setiap kali menerima permintaan data, \textit{server} tersebut terlebih dahulu memverifikasi entri \textit{capability} pada jaringan IOTA sebelum melakukan \textit{re-encryption} terhadap data yang diambil dari IPFS untuk pemohon, dengan Redis digunakan untuk menyimpan data sementara seperti \textit{nonce} guna mencegah \textit{replay attack} (\cite{DecMed}). Layanan \textit{Gas Station Server} bertanggung jawab mensponsori transaksi pada jaringan IOTA, sehingga aktor yang tidak memiliki kepentingan finansial dapat berinteraksi dengan \textit{ledger} tanpa perlu memiliki \textit{token} (\cite{DecMed}). Kedua layanan tersebut berkomunikasi dengan jaringan IOTA maupun IPFS sesuai kebutuhannya masing-masing, sementara lapisan penyimpanan sendiri terbagi menjadi IOTA Tangle sebagai \textit{trust anchor} yang immutable untuk kebijakan kontrol akses (CapBAC), dan IPFS Cluster sebagai penyimpanan \textit{content-addressable} yang terdesentralisasi untuk berkas RME terenkripsi (\cite{DecMed}).
+
+\subsection{Proxy Re-Encryption dan IPFS}
+\label{subsec:pre-ipfs}
+
+Proxy Re-Encryption (PRE) memanfaatkan \textit{proxy} yang bersifat \textit{semi-trusted} untuk mentransformasikan suatu \textit{ciphertext} menjadi \textit{ciphertext} baru yang isinya tetap sama, namun hanya dapat didekripsi menggunakan \textit{secret key} milik subjek yang dituju (\cite{DecMed}). \textit{Ciphertext} awal dihasilkan dari enkripsi data menggunakan \textit{public key} milik \textit{delegator} (pemilik data), dan dapat disimpan pada suatu lokasi penyimpanan seperti \textit{cloud storage} maupun sistem DLT. Ketika \textit{delegatee} (penerima akses) meminta akses terhadap data terenkripsi tersebut, \textit{delegator} membuat \textit{re-encryption key} menggunakan \textit{secret key} miliknya dan \textit{public key} milik \textit{delegatee}; \textit{re-encryption key} tersebut dikirimkan kepada \textit{proxy}, yang kemudian menggunakannya bersama \textit{ciphertext} awal dan \textit{public key} kedua belah pihak untuk menghasilkan \textit{ciphertext} baru yang hanya dapat didekripsi oleh \textit{delegatee} (\cite{DecMed}). Meskipun PRE membatasi kemampuan \textit{proxy} untuk mengetahui isi data asli (\textit{plaintext}), arsitektur ini tetap memusatkan fungsi \textit{re-encryption} pada satu entitas \textit{semi-trusted}, sehingga menciptakan \textit{single point of failure}: apabila \textit{proxy} mengalami gangguan atau menjadi target serangan \textit{denial-of-service}, seluruh proses \textit{re-encryption} akan terhenti dan alur otorisasi maupun distribusi kunci menjadi tidak tersedia bagi seluruh subjek yang bergantung padanya (\cite{DecMed}).
+
+InterPlanetary File System (IPFS) adalah suatu sistem berkas terdistribusi \textit{peer-to-peer} yang bertujuan menghubungkan seluruh perangkat komputasi ke dalam satu sistem berkas (\cite{benet2014ipfscontentaddressed}). Berbeda dengan protokol Hypertext Transfer Protocol (HTTP) konvensional yang menggunakan pengalamatan berbasis lokasi (\textit{location-based addressing}), IPFS menggunakan pengalamatan berbasis konten (\textit{content-based addressing}), yaitu data diidentifikasi dan diambil berdasarkan \textit{hash} kriptografisnya yang disebut \textit{Content Identifier} (CID) (\cite{DecMed}). Ketika suatu berkas ditambahkan ke jaringan IPFS, berkas tersebut dipecah menjadi bagian-bagian kecil, di-\textit{hash} secara kriptografis, dan diberikan CID yang unik sebagai penanda permanen dan \textit{immutable} dari data tersebut; apabila isi berkas berubah, \textit{hash} kriptografisnya turut berubah dan menghasilkan CID yang sepenuhnya baru, sehingga karakteristik \textit{immutability} ini menjadikan IPFS sangat kompatibel dengan DLT dalam menjaga integritas data (\cite{DecMed}). Dalam konteks penyimpanan data kesehatan, IPFS memungkinkan penyimpanan \textit{off-chain} untuk berkas medis terenkripsi berukuran besar, sementara hanya CID berukuran kecil yang perlu disimpan pada \textit{ledger} yang \textit{immutable} (\textit{on-chain}), sehingga mengatasi keterbatasan ukuran penyimpanan yang umum ditemukan pada jaringan DLT maupun \textit{blockchain} tanpa mengorbankan arsitektur terdesentralisasi yang bebas dari \textit{single point of failure} (\cite{DecMed}).
+
+% ======================================================================
+% CATATAN REFERENSI UNTUK SUBBAB II.6
+% ======================================================================
+% Key yang dipakai: DecMed dan benet2014ipfscontentaddressed (keduanya
+% sudah ada di .bib kamu, tidak ada key baru yang perlu ditambahkan).
+%
+% CATATAN PENTING:
+%   - Seluruh isi subbab ini saya parafrasekan langsung dari paper
+%     Sensors (DecMed), terutama Bagian 2.4-2.5 (definisi PRE dan IPFS)
+%     dan Bagian 4.2 (arsitektur tiga lapis, PRE Server, Gas Station
+%     Server). Sama seperti catatan di II.5, definisi primer PRE
+%     (Blaze et al. 1998) dan IPFS content-addressing di luar definisi
+%     dasar hanya dikutip via DecMed, bukan sumber primernya sendiri,
+%     kecuali definisi dasar IPFS peer-to-peer yang saya kutip langsung
+%     dari benet2014ipfscontentaddressed.
+%   - Poin soal PRE sebagai single point of failure (rentan terhadap
+%     DoS/gangguan pada satu entitas semi-trusted) adalah temuan
+%     literatur yang genuinely baru dan relevan -- ini bisa jadi bahan
+%     pertimbangan penting ketika kamu merancang audit trail service
+%     baru di Bab III/IV (apakah service tersebut juga akan punya
+%     kelemahan single point of failure yang serupa), tapi saya
+%     sengaja TIDAK menuliskan kaitan itu di sini karena bersifat
+%     analisis -- silakan diangkat sendiri nanti di bab rancangan.
+
+\section{Penelitian Terkait}
+\label{sec:penelitian-terkait}
+
+DecMed, sebagai kerangka kerja manajemen RME yang menjadi basis pengembangan Tugas Akhir ini, mengklaim menghasilkan mekanisme kontrol akses yang didukung oleh audit trail yang tahan terhadap perusakan (\textit{tamper-evident audit trails}) (\cite{DecMed}). Klaim tersebut didasarkan pada mekanisme bahwa setiap akses yang diberikan oleh pasien dicatat sebagai entri \textit{capability} pada penyimpanan \textit{on-chain} di jaringan IOTA, dan sifat \textit{immutability} dari penyimpanan \textit{on-chain} tersebut menjamin bahwa entri tidak dapat diubah oleh pihak lain, dengan setiap permintaan akses divalidasi terhadap keberadaan entri yang bersesuaian melalui \textit{smart contract} (\cite{DecMed}). Peristiwa akses, pemberian persetujuan (\textit{consent}), dan pelanggaran kebijakan pada DecMed dinyatakan tercatat secara \textit{tamper-evident}, sehingga menyediakan audit trail yang dapat diandalkan untuk mendukung akuntabilitas lintas batas organisasi (\cite{DecMed}).
+
+Salah satu contoh sistem audit trail yang secara khusus dibangun dengan memanfaatkan kombinasi DLT dan IPFS adalah LogStamping (\cite{islam2025logstamping}). Sistem tersebut menggunakan Ethereum sebagai platform \textit{blockchain} dengan konsensus \textit{Proof of Authority}, di mana log dikelompokkan menjadi beberapa \textit{chunk} berdasarkan jumlah baris maupun interval waktu, kemudian dihitung \textit{hash} SHA-256 dari setiap \textit{chunk} tersebut dan disimpan pada \textit{blockchain}, sementara berkas log asli yang telah terenkripsi dan terverifikasi diarsipkan secara terpisah pada IPFS untuk menjamin keberadaannya secara \textit{tamper-proof} dan persisten (\cite{islam2025logstamping}). Pendekatan tersebut menghasilkan audit trail yang ringan (\textit{lightweight}) dan dapat diverifikasi, karena \textit{blockchain} hanya menyimpan \textit{hash} sebagai bukti integritas alih-alih menyimpan seluruh data log secara langsung, sedangkan mekanisme verifikasi bekerja dengan menghitung ulang \textit{hash} dari suatu kelompok log dan membandingkannya dengan \textit{hash} yang tersimpan pada \textit{blockchain} untuk mendeteksi adanya perubahan (\cite{islam2025logstamping}). Hasil pengujian pada sistem tersebut menunjukkan tingkat deteksi perusakan (\textit{tamper detection}) sebesar 100\% terhadap simulasi injeksi log palsu, serta pengurangan kebutuhan penyimpanan hingga 92\% dibandingkan penyimpanan log mentah secara langsung pada \textit{blockchain} (\cite{islam2025logstamping}).
+
+% ======================================================================
+% CATATAN REFERENSI UNTUK SUBBAB II.7
+% ======================================================================
+% Key yang SUDAH ADA di .bib kamu dan dipakai lagi di sini:
+%   - DecMed
+%
+% Key BARU yang saya usulkan:
+%
+% \begin{verbatim}
+% @misc{islam2025logstamping,
+%   title  = {LogStamping: A Blockchain-Based Log Auditing Approach for
+%             Large-Scale Systems},
+%   author = {Islam, Md Shariful and Rahman, M. Sohel},
+%   year   = {2025},
+%   eprint = {2505.17236},
+%   archiveprefix = {arXiv},
+%   primaryclass  = {cs.CR},
+%   url    = {https://arxiv.org/abs/2505.17236}
+% }
+% \end{verbatim}
+%
+% CATATAN PENTING:
+%   - Saya baca FULL TEXT paper LogStamping (bukan cuma abstrak),
+%     termasuk bagian metodologi (5.1-5.5) dan hasil evaluasi (7.1-7.5),
+%     jadi detail teknis di atas (Ethereum PoA, SHA-256, chunking,
+%     100% tamper detection, 92% storage reduction) relatif akurat.
+%     Tetap baca ulang papernya sendiri untuk validasi, terutama karena
+%     ini masih berstatus PREPRINT arXiv (belum melalui peer review di
+%     jurnal/konferensi), yang mungkin jadi pertimbangan dosbing soal
+%     kredibilitasnya dibanding sumber lain yang sudah published.
+%   - Paper ini TIDAK menggunakan IOTA (memakai Ethereum), tapi tetap
+%     relevan sebagai contoh pola arsitektur "DLT untuk hash/metadata +
+%     IPFS untuk penyimpanan log utama" yang bisa dijadikan pembanding,
+%     sesuai konfirmasimu bahwa belum ada penelitian audit trail yang
+%     spesifik menggunakan kombinasi IOTA+IPFS.
+%   - Paragraf pertama (DecMed) murni menyatakan ulang klaim yang ada
+%     di paper Sensors tanpa kritik/analisis -- kesenjangan antara
+%     klaim ini dengan implementasi aktualnya (yang sudah kita bahas di
+%     Bab I) sengaja tidak diulang di sini karena sudah dibahas di
+%     tempat lain.

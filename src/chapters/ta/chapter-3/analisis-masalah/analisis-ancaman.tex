@@ -1,9 +1,369 @@
 \subsection{Analisis Ancaman DecMed}
 
-\input{chapters/ta/chapter-3/analisis-masalah/analisis-ancaman/dekomposisi-decmed.tex}
+\subsubsection{Dekomposisi Aplikasi}
 
-% \input{chapters/ta/chapter-3/analisis-masalah/analisis-ancaman/stride-threat-modeling.tex}
+Dekomposisi aplikasi merupakan tahap awal proses \textit{threat modeling} yang bertujuan memperoleh pemahaman menyeluruh mengenai sistem DecMed dan bagaimana sistem tersebut berinteraksi dengan entitas eksternal. Dekomposisi ini terdiri atas deskripsi sistem, dependensi eksternal, titik masuk, aset, dan level kepercayaan, yang selanjutnya menjadi dasar bagi proses klasifikasi ancaman menggunakan metode STRIDE.
 
-\input{chapters/ta/chapter-3/analisis-masalah/analisis-ancaman/klasifikasi-ancaman.tex}
+\paragraph{Deskripsi Sistem}
 
-\input{chapters/ta/chapter-3/analisis-masalah/analisis-ancaman/dread-scoring.tex}
+DecMed adalah kerangka kerja manajemen Rekam Medis Elektronik (RME) terdesentralisasi yang dibangun di atas Distributed Ledger Technology (DLT) IOTA. Sistem ini mengimplementasikan Capability-Based Access Control (CapBAC), Proxy Re-Encryption (PRE), dan InterPlanetary File System (IPFS) untuk menjamin kepemilikan data medis oleh pasien. Pasien secara aktif memberikan atau mencabut akses, menentukan durasi akses, dan berbagi data secara selektif dengan tenaga kesehatan. Sistem diimplementasikan menggunakan \textit{smart contract} berbahasa Move pada ledger IOTA, sementara data klinis terenkripsi disimpan pada IPFS.
+
+Arsitektur sistem terdiri atas tiga lapisan (\textit{tiers}):
+\begin{itemize}
+    \item \textbf{Client Layer} -- antarmuka utama bagi seluruh aktor, dengan aplikasi \textit{client} yang disesuaikan per peran (mobile untuk pasien, desktop untuk tenaga fasyankes dan Kementerian Kesehatan), dibangun menggunakan \textit{framework} Tauri (Rust + SvelteKit/TypeScript).
+    \item \textbf{Proxy Layer} -- middleware keamanan yang menegakkan kebijakan akses dan menangani operasi kriptografis (PRE), terdiri atas PRE Server (Rust, Axum) dan Gas Station Server.
+    \item \textbf{Storage Layer} -- terbagi menjadi penyimpanan \textit{on-chain} (IOTA ledger, untuk metadata dan \textit{capability} akses) dan \textit{off-chain} (IPFS untuk data klinis terenkripsi, Redis untuk data sementara seperti \textit{nonce} dan \textit{kfrag}).
+\end{itemize}
+
+Seluruh akses terhadap data RME pasien oleh pihak lain wajib melalui Proxy, dan setiap pemberian akses oleh pasien dicatat sebagai entri \textit{capability} pada penyimpanan \textit{on-chain} yang bersifat \textit{immutable}, membentuk fondasi model CapBAC pada sistem DecMed.
+
+\paragraph{Dependensi Eksternal}
+
+Dependensi eksternal merupakan objek di luar kode aplikasi yang keberadaannya dapat menimbulkan ancaman terhadap sistem. Setiap dependensi diberi nomor unik dan deskripsi.
+
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{1.2cm}|X|}
+    \caption{Dependensi Eksternal Sistem DecMed}
+    \label{tab:dependensi-eksternal} \\
+    \hline
+    \textbf{ID} & \textbf{Deskripsi} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Deskripsi} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+    \hline
+    \endlastfoot
+
+    DE-01 & IOTA Rebased -- DLT berbasis Directed Acyclic Graph (DAG) dengan konsensus Mysticeti (Byzantine Fault Tolerant, Delegated Proof-of-Stake), finalitas transaksi $\sim$500 ms, mendukung lebih dari 50.000 TPS. \\
+    \hline
+
+    DE-02 & Smart Contract Move -- \textit{package} \texttt{decmed} yang dipublikasikan pada IOTA Layer 1, terdiri atas modul \texttt{patient}, \texttt{admin}, \texttt{hospital\_personnel}, \texttt{proxy}, \texttt{shared}, serta modul struktur data \texttt{std\_struct\_*} dan \texttt{std\_enum\_*}. \\
+    \hline
+
+    DE-03 & PRE Server -- diimplementasikan dengan Rust dan \textit{framework} Axum, menyediakan endpoint REST untuk proses autentikasi, pertukaran kunci, dan operasi RME. \\
+    \hline
+
+    DE-04 & IOTA Gas Station -- terdiri atas Gas Station Server (endpoint reservasi dan eksekusi \textit{gas object}), Gas Station Storage (berbasis Redis dengan skrip LUA untuk akses konkuren), dan Key Store Manager/KSM (KMS eksternal atau penyimpanan kunci \textit{in-memory}). \\
+    \hline
+
+    DE-05 & Redis -- digunakan oleh PRE Server untuk menyimpan data sementara seperti \textit{nonce} autentikasi (TTL 3 menit) dan material PRE seperti \textit{kfrag} (TTL 2 jam); juga digunakan oleh Gas Station sebagai \textit{storage} \textit{gas object}. \\
+    \hline
+
+    DE-06 & IPFS Cluster -- penyimpanan \textit{off-chain} terdesentralisasi berbasis \textit{content-addressing} (CID) untuk data klinis pasien yang telah dienkripsi, digunakan karena ukuran data klinis dapat melebihi batas objek IOTA (250 KB). \\
+    \hline
+
+    DE-07 & Client Application Framework -- Tauri (Rust + SvelteKit/TypeScript), dengan tiga varian: Patient Client (mobile), Hospital Client (desktop), dan Ministry Client (desktop). \\
+    \hline
+
+    DE-08 & Skema BIP39 -- standar \textit{mnemonic} 12 kata untuk pembuatan dan pemulihan kunci kriptografis pasien dan tenaga fasyankes secara \textit{non-custodial}. \\
+    \hline
+
+    DE-09 & Mekanisme kriptografis Proxy Re-Encryption (PRE) dan AES-GCM -- digunakan untuk enkripsi data administratif dan klinis serta proses re-enkripsi \textit{ciphertext} bagi penerima yang berwenang. \\
+    \hline
+
+\end{xltabular}
+
+\paragraph{Titik Masuk}
+
+Titik masuk merupakan antarmuka pada aplikasi yang menjadi media interaksi antara pengguna (atau penyerang) dengan aplikasi maupun data. Setiap titik masuk diberi nomor unik, deskripsi, dan level kepercayaan minimum yang mengacu pada Tabel~\ref{tab:trust-level}.
+
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{1.4cm}|>{\raggedright\arraybackslash}p{4.2cm}|X|>{\centering\arraybackslash}p{2cm}|}
+    \caption{Titik Masuk Sistem DecMed}
+    \label{tab:titik-masuk} \\
+    \hline
+    \textbf{ID} & \textbf{Nama} & \textbf{Deskripsi} & \textbf{Level Kepercayaan} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Nama} & \textbf{Deskripsi} & \textbf{Level Kepercayaan} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+    \hline
+    \endlastfoot
+
+    TM-01 & \texttt{POST /nonce} & Endpoint PRE Server untuk memperoleh \textit{nonce} autentikasi 64-byte, divalidasi melalui \textit{Move call} \texttt{is\_account\_registered}. & LK1--LK2 \\
+    \hline
+
+    TM-02 & \texttt{POST /keys} & Endpoint PRE Server untuk menyimpan material PRE (\textit{kfrag}, kunci publik) dan menerbitkan token akses JWT bagi tenaga fasyankes. & LK2 \\
+    \hline
+
+    TM-03 & \texttt{GET /medical-record} & Endpoint PRE Server untuk mengambil metadata administratif dan klinis pasien beserta proses re-enkripsi, memerlukan token akses \textit{read} yang valid. & LK4 \\
+    \hline
+
+    TM-04 & \texttt{POST /medical-record} & Endpoint PRE Server untuk membuat entri RME klinis baru, memerlukan token akses \textit{update}. & LK4 \\
+    \hline
+
+    TM-05 & \texttt{PUT /medical-record} & Endpoint PRE Server untuk mengubah entri RME klinis yang sudah ada pada kunjungan yang sama. & LK4 \\
+    \hline
+
+    TM-06 & \texttt{GET /medical-record/update} & Endpoint PRE Server untuk mengambil metadata RME sebelum proses pengubahan (edit). & LK4 \\
+    \hline
+
+    TM-07 & \texttt{GET /administrative} & Endpoint PRE Server untuk mengambil metadata administratif pasien, dapat diakses oleh admin fasyankes maupun tenaga administratif. & LK3, LK5 \\
+    \hline
+
+    TM-08 & Modul \texttt{decmed::patient} & Kumpulan \textit{method on-chain} yang dapat dieksekusi pasien: \texttt{signup}, \texttt{create\_access}, \texttt{revoke\_access}, \texttt{update\_administrative\_metadata}, \texttt{get\_medical\_record(s)}, \texttt{get\_access\_log}, dan sejenisnya. & LK1--LK2 \\
+    \hline
+
+    TM-09 & Modul \texttt{decmed::hospital\_personnel} & Kumpulan \textit{method on-chain} bagi tenaga fasyankes: \texttt{signup}, \texttt{use\_activation\_key}, \texttt{create\_activation\_key}, \texttt{cleanup\_read/update\_access}, \texttt{get\_read/update\_access}, dan sejenisnya. & LK3--LK5 \\
+    \hline
+
+    TM-10 & Modul \texttt{decmed::admin} & Kumpulan \textit{method on-chain} bagi Kementerian Kesehatan: \texttt{create\_activation\_key} (registrasi fasyankes), \texttt{update\_activation\_key}, \texttt{get\_hospitals}. & LK6 \\
+    \hline
+
+    TM-11 & Modul \texttt{decmed::proxy} & Kumpulan \textit{method on-chain} yang dieksekusi oleh PRE Server: \texttt{create\_capability}, \texttt{create/update\_medical\_record}, \texttt{get\_administrative\_data}, \texttt{get\_hospital\_personnel\_role}, dan sejenisnya. & LK7 \\
+    \hline
+
+    TM-12 & Gas Station endpoint (\textit{reserve} \& \textit{execute}) & Dua endpoint utama Gas Station Server untuk mencadangkan objek \textit{gas} dan mengeksekusi transaksi tersponsori atas nama \textit{client}. & LK7, LK8 \\
+    \hline
+
+    TM-13 & QR Code Delegasi Akses & Antarmuka fisik/visual berisi \texttt{iota\_address} dan \texttt{pre\_public\_key} tenaga medis, dipindai oleh Patient Client untuk memulai proses delegasi akses. & LK2, LK4 \\
+    \hline
+
+    TM-14 & Sign-in lokal (PIN/biometrik) & Mekanisme autentikasi harian pasien/tenaga fasyankes menggunakan PIN atau biometrik terhadap kunci privat yang tersimpan terenkripsi di perangkat. & LK1--LK5 \\
+    \hline
+
+\end{xltabular}
+
+\paragraph{Aset}
+
+Aset merupakan hal fisik maupun abstrak yang dimiliki sistem dan menjadi target ketertarikan penyerang. Setiap aset diberi nomor unik, deskripsi, dan level kepercayaan yang mengacu pada Tabel~\ref{tab:trust-level}.
+
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{1.2cm}|>{\raggedright\arraybackslash}p{3.5cm}|X|}
+    \caption{Aset Sistem DecMed}
+    \label{tab:aset} \\
+    \hline
+    \textbf{ID} & \textbf{Nama} & \textbf{Deskripsi} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Nama} & \textbf{Deskripsi} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+    \hline
+    \endlastfoot
+
+    A-01 & Data administratif RME & Identitas dan data sosial pasien (NIK, nama, dsb.), terenkripsi AES-GCM sebelum disimpan \textit{on-chain}. \\
+    \hline
+
+    A-02 & Data klinis RME & Data pemeriksaan, diagnosis, dan tindakan medis, terenkripsi AES-GCM dan disimpan pada IPFS sebagai \texttt{enc\_medical\_data}. \\
+    \hline
+
+    A-03 & Entri \textit{capability} akses (\textit{on-chain}) & Struktur data \texttt{hospital\_personnel\_access\_data} berisi \texttt{access\_data\_types}, \texttt{exp} (durasi kedaluwarsa), \texttt{metadata}, dan \texttt{medical\_metadata\_index} -- fondasi model CapBAC. \\
+    \hline
+
+    A-04 & \textit{Recovery phrase} (BIP39) \& kunci privat pasien/personel & \textit{Mnemonic} 12 kata dan kunci privat turunannya, disimpan terenkripsi pada perangkat menggunakan \textit{secure hardware}. \\
+    \hline
+
+    A-05 & Material PRE (\texttt{kfrag}, \texttt{cfrag}, \textit{pre\_secret/public\_key}) & Komponen kriptografis yang memungkinkan proses re-enkripsi data pasien kepada penerima yang berwenang. \\
+    \hline
+
+    A-06 & \textit{Nonce} autentikasi & Nilai acak 64-byte, TTL 3 menit, disimpan di Redis untuk mencegah serangan \textit{replay} pada proses autentikasi pasien. \\
+    \hline
+
+    A-07 & Token akses JWT & Token dengan klaim \textit{role} dan \textit{access type} (Read/Update); durasi berbeda antara tenaga medis (15 menit baca, 2 jam tulis) dan tenaga administratif. \\
+    \hline
+
+    A-08 & \textit{Activation key} & Kredensial sekali pakai yang diterbitkan Kementerian Kesehatan (untuk admin fasyankes) dan admin fasyankes (untuk personel), berfungsi sebagai \textit{cryptographic witness} atas tindakan yang diotorisasi. \\
+    \hline
+
+    A-09 & \texttt{GlobalAdminCap} \& \texttt{ProxyCapEnum} & Representasi \textit{capability} tertinggi pada sistem -- masing-masing untuk Kementerian Kesehatan dan PRE Server; kompromi terhadap aset ini setara dengan eskalasi privilese total. \\
+    \hline
+
+    A-10 & CID data klinis (IPFS) & \textit{Content Identifier} yang menjadi referensi lokasi dan \textit{fingerprint} integritas data klinis terenkripsi pada IPFS. \\
+    \hline
+
+    A-11 & \textit{Gas object} \& kunci penandatanganan Gas Station & Token IOTA yang dipecah menjadi objek \textit{gas} untuk mensponsori transaksi, beserta kunci penandatanganan yang dikelola KSM. \\
+    \hline
+
+    A-12 & Log akses RME & Catatan riwayat akses terhadap data RME pasien, dapat dilihat pasien melalui \texttt{get\_access\_log}. \\
+    \hline
+
+\end{xltabular}
+
+\paragraph{Level Kepercayaan}
+
+Level kepercayaan merepresentasikan hak akses yang diberikan sistem kepada suatu entitas eksternal maupun proses internal. Penentuan level kepercayaan pada sistem DecMed menggunakan pendekatan gabungan (\textit{hybrid}) antara \textit{role} untuk entitas eksternal (manusia) dan \textit{capability} untuk proses/entitas internal, mengingat sistem DecMed secara eksplisit mengimplementasikan model Capability-Based Access Control (CapBAC).
+
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{1.2cm}|>{\raggedright\arraybackslash}p{3.3cm}|X|}
+    \caption{Level Kepercayaan Sistem DecMed}
+    \label{tab:trust-level} \\
+    \hline
+    \textbf{ID} & \textbf{Nama} & \textbf{Deskripsi} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Nama} & \textbf{Deskripsi} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+    \hline
+    \endlastfoot
+
+    LK1 & Aktor belum teraktivasi/teregistrasi & Pengguna yang belum menyelesaikan proses \textit{signup} atau aktivasi \textit{client}; tidak memiliki \textit{capability} apa pun pada sistem. \\
+    \hline
+
+    LK2 & Pasien (teraktivasi) & Pasien yang telah teregistrasi; memiliki \textit{capability} membaca RME sendiri, memberi dan mencabut akses, serta melihat log akses. \\
+    \hline
+
+    LK3 & Administrative Personnel (dengan \textit{capability} aktif) & Tenaga administratif fasyankes yang telah diberi akses oleh pasien; \textit{scope} akses terbatas pada data administratif saja. \\
+    \hline
+
+    LK4 & Medical Personnel (dengan \textit{capability} aktif) & Tenaga medis fasyankes yang telah diberi akses oleh pasien; \textit{scope} akses mencakup data administratif dan klinis, termasuk hak tulis (tambah/ubah) data klinis. \\
+    \hline
+
+    LK5 & Hospital Admin & Administrator fasyankes; berwenang menambah personel dan menerbitkan \textit{activation key} pada lingkup fasyankesnya. \\
+    \hline
+
+    LK6 & Ministry of Health & Administrator Kementerian Kesehatan; berwenang meregistrasi fasyankes baru beserta admin-nya, otoritas tertinggi di antara aktor manusia. \\
+    \hline
+
+    LK7 & PRE Server (Proxy) & Proses \textit{backend} dengan \textit{capability} \texttt{ProxyCapEnum}; berwenang memverifikasi entri \textit{capability on-chain} dan melakukan re-enkripsi data. \\
+    \hline
+
+    LK8 & Gas Station Server & Proses \textit{backend} yang mensponsori dan mengeksekusi transaksi atas nama \textit{client}, memiliki akses terhadap kunci penandatanganan (KSM). \\
+    \hline
+
+    LK9 & IOTA Network Validator & Node jaringan yang berpartisipasi dalam konsensus Mysticeti untuk memvalidasi dan memfinalisasi transaksi pada ledger IOTA. \\
+    \hline
+
+\end{xltabular}
+
+Catatan: LK3 dan LK4 bersifat \textit{paralel}, bukan hierarkis -- keduanya diberikan \textit{capability} oleh pasien secara independen dengan cakupan data yang berbeda (administratif saja vs. administratif dan klinis), sehingga tidak dapat diasumsikan LK4 selalu memiliki privilese lebih tinggi dari LK3 di seluruh konteks ancaman.
+
+\paragraph{Data Flow Diagram}
+
+Data Flow Diagram (DFD) digunakan untuk menggambarkan aliran data antara entitas eksternal, proses, dan penyimpanan data pada sistem DecMed secara visual, sebagai dasar identifikasi elemen yang akan diklasifikasikan ancamannya menggunakan metode STRIDE pada subbab berikutnya. DFD sistem DecMed digambarkan pada Gambar~\ref{fig:decmed-dfd}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{resources/chapter-3/final-decmed-dfd.png}
+    \caption{Data Flow Diagram Sistem DecMed}
+    \label{fig:decmed-dfd}
+\end{figure}
+
+DFD tersebut menggambarkan interaksi antara entitas eksternal (aktor), proses, dan penyimpanan data yang telah diidentifikasi pada dependensi eksternal (Tabel~\ref{tab:dependensi-eksternal}), titik masuk (Tabel~\ref{tab:titik-masuk}), aset (Tabel~\ref{tab:aset}), dan level kepercayaan (Tabel~\ref{tab:trust-level}) pada subbab sebelumnya. Elemen-elemen pada DFD tersebut menjadi dasar penomoran dan referensi pada proses klasifikasi ancaman menggunakan metode STRIDE (III.1.2.2).
+
+\subsubsection{Klasifikasi Ancaman}
+
+Klasifikasi ancaman dilakukan menggunakan pendekatan \textit{STRIDE-per-Interaction}. Setiap interaksi antar elemen pada Data Flow Diagram (Gambar~\ref{fig:decmed-dfd}) diperiksa berdasarkan arah dan tipe interaksinya (\textit{process} ke \textit{data store}, \textit{process} ke \textit{process}, \textit{data flow} yang melintasi \textit{machine boundary}, dsb.), kemudian kategori STRIDE yang dianalisis dibatasi hanya pada kategori yang relevan bagi tipe interaksi tersebut, mengacu pada Tabel~\ref{tab:stride-per-interaction}. Pendekatan ini memberikan justifikasi eksplisit atas kategori yang dipilih maupun yang tidak dianalisis untuk setiap ancaman.
+
+Elemen \texttt{E6 IOTA Network} dan \texttt{E7 IOTA Gas Station} pada \texttt{TB5 External Provider} diperlakukan sebagai infrastruktur eksternal tepercaya yang berada di luar kendali sistem DecMed; ancaman terhadap operasional internal keduanya berada di luar cakupan \textit{threat model} ini, dan hanya interaksinya dengan sistem (melalui P8, sebagai \textit{process} yang mengirim output ke \textit{external interactor}) yang dianalisis.
+
+Hasil klasifikasi ancaman disajikan pada Tabel~\ref{tab:klasifikasi-ancaman}, dengan kolom \textbf{Tipe Interaksi} merujuk pada nomor baris interaksi di Tabel~\ref{tab:stride-per-interaction} yang menjadi dasar penentuan kategori STRIDE bagi ancaman terkait.
+
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{0.8cm}|X|>{\centering\arraybackslash}p{1.3cm}|>{\centering\arraybackslash}p{1.5cm}|>{\centering\arraybackslash}p{1.5cm}|>{\centering\arraybackslash}p{1.5cm}|}
+    \caption{Klasifikasi Ancaman Sistem DecMed} 
+    \label{tab:klasifikasi-ancaman} \\
+    
+    \hline
+    \textbf{ID} & \textbf{Deskripsi Ancaman} & \textbf{Elemen DFD} & \textbf{Level Kepercayaan} & \textbf{Tipe Interaksi} & \textbf{STRIDE} \\
+    \hline
+    \endfirsthead
+
+    \hline
+    \textbf{ID} & \textbf{Deskripsi Ancaman} & \textbf{Elemen DFD} & \textbf{Level Kepercayaan} & \textbf{Tipe Interaksi} & \textbf{STRIDE} \\
+    \hline
+    \endhead
+
+    \hline
+    \endfoot
+
+    \hline
+    \endlastfoot
+
+    T1 & Penyerang mendapatkan kredensial atau membajak sesi lokal milik pengguna untuk berpura-pura menjadi pemilik identitas sah saat \textit{sign-in}. & E1--E5, P1, P2, P3 & LK1--LK6 & 7, 11 & S \\
+    \hline
+
+    T2 & Kredensial \textit{sign-in} (PIN) tersadap atau terekam melalui \textit{shoulder surfing}, \textit{keylogger}, atau malware pada perangkat saat dimasukkan ke Client. & E1--E5, P1, P2, P3 & LK1--LK6 & 7, 11 & I \\
+    \hline
+
+    T3 & Percobaan \textit{sign-in} berulang secara masif menghabiskan sumber daya Client (\textit{local resource exhaustion}). & E1--E5, P1, P2, P3 & LK1 & 7 & D \\
+    \hline
+
+    T4 & Payload QR Access Delegation dipalsukan sebelum dipindai oleh Patient Client. & P2, F2 & LK2, LK4 & 7 & S \\
+    \hline
+
+    T5 & Payload QR Access Delegation disadap sehingga informasi delegasi akses bocor kepada pihak tidak berwenang. & P2, F2 & LK2, LK4 & 7 & I \\
+    \hline
+
+    T6 & Pasien menyangkal pernah memberikan akses (\texttt{create\_access}) kepada tenaga medis tertentu. & E1, P2, P8 & LK2 & 11 & R \\
+    \hline
+
+    T7 & Tenaga medis atau tenaga administratif menyangkal pernah mengakses maupun mengubah data pasien tertentu. & E2, E3, P1, P6 & LK3, LK4 & 11 & R \\
+    \hline
+
+    T8 & Admin fasyankes menyangkal pernah menerbitkan \textit{activation key} kepada personel tertentu. & E4, P1 & LK5 & 11 & R \\
+    \hline
+
+    T9 & Ministry Administrator menyangkal pernah meregistrasi fasyankes tertentu beserta admin-nya. & E5, P3 & LK6 & 11 & R \\
+    \hline
+
+    T10 & Penyerang menyamar sebagai Proxy Re-encryption API (P4) yang sah (\textit{man-in-the-middle}) saat Client mengirim permintaan, karena flow melintasi batas perangkat (\textit{client}--\textit{backend}). & P1, P2, P4, F7, F8 & LK2--LK4 & 2, 8 & S \\
+    \hline
+
+    T11 & Penyerang menyadap komunikasi Client--PRE Server yang melintasi batas perangkat, mengungkap token JWT maupun data administratif. & P1, P2, P4, F7, F8, F15 & LK2--LK4 & 8 & I \\
+    \hline
+
+    T12 & Pihak eksternal membanjiri \textit{endpoint} \texttt{POST /nonce} atau \texttt{POST /keys} dengan permintaan palsu untuk menghabiskan sumber daya PRE Server. & P4, P5, F7, F8 & LK1 & 7 & D \\
+    \hline
+
+    T13 & Token JWT dipalsukan atau diputar ulang (\textit{replay}) pada permintaan dari Proxy Re-encryption API ke Medical Record Management. & P4, P6, F12 & LK3, LK4 & 2 & S \\
+    \hline
+
+    T14 & Penyadapan jalur \textit{dispatch} internal dari Proxy Re-encryption API ke Authentication/Medical Record Management mengungkap data yang sedang diproses. & P4, P5, P6, F11, F12 & LK7 & 2 & I \\
+    \hline
+
+    T15 & Penyerang memodifikasi \textit{Move transaction} pada jalur dari IOTA Transaction Client menuju IOTA Network, karena flow melintasi batas sistem DecMed dengan infrastruktur eksternal. & P8, F23 & LK7, LK8 & 3, 8 & T \\
+    \hline
+
+    T16 & Penyerang menyamar sebagai IOTA Transaction Client (P8) yang sah saat berinteraksi dengan Gas Station untuk mengajukan sponsorship transaksi palsu. & P8, F24 & LK7, LK8 & 3 & S \\
+    \hline
+
+    T17 & PRE Server (P8) menyangkal telah mengajukan atau menerima keputusan sponsorship transaksi tertentu dari Gas Station. & P8, F24, F25 & LK7, LK8 & 3 & R \\
+    \hline
+
+    T18 & Penyerang mengajukan permintaan sponsorship \textit{gas} secara berulang sehingga \textit{gas object} habis dan transaksi sah pengguna lain gagal tersponsori. & P8, F24, F25 & LK1--LK4 & 3 & D \\
+    \hline
+
+    T19 & Penyerang dengan akses tidak sah memodifikasi kunci privat atau material PRE yang tersimpan pada Client Key Store. & D3, P1, P2, F5, F6 & LK1 & 5, 10 & T \\
+    \hline
+
+    T20 & Penyerang dengan akses fisik ke perangkat yang tidak terkunci membaca kunci privat pada Client Key Store. & D3, F5, F6 & LK1 & 10 & I \\
+    \hline
+
+    T21 & Pihak dengan akses tidak sah ke Redis memodifikasi nilai \textit{nonce} autentikasi atau \texttt{kfrag} sebelum digunakan. & D1, P4, P5, P7, F13, F14 & LK7 & 5, 10 & T \\
+    \hline
+
+    T22 & Pihak dengan akses tidak sah ke Redis membaca \texttt{kfrag} atau \textit{nonce} sebelum masa berlakunya (TTL) berakhir. & D1 & LK7 & 10 & I \\
+    \hline
+
+    T23 & Redis dipenuhi (\textit{memory exhaustion}) melalui permintaan \textit{nonce} baru secara berulang sehingga proses autentikasi pengguna sah terganggu. & D1, F13 & LK1 & 5 & D \\
+    \hline
+
+    T24 & Data klinis terenkripsi diunduh dari IPFS Cluster Storage oleh pihak tidak berwenang; risiko pengungkapan tetap ada apabila kunci enkripsi terkait bocor atau lemah. & D2, F18, F19 & LK1, publik & 10 & I \\
+    \hline
+
+    T25 & IPFS Cluster dibanjiri permintaan \textit{fetch}/\textit{pin} berukuran besar sehingga mengganggu ketersediaan data klinis bagi pengguna sah. & D2 & publik & 5 & D \\
+    \hline
+
+    T26 & Metadata \textit{on-chain} yang tersimpan pada IOTA On-Chain State bersifat publik sehingga pola transaksi berpotensi dianalisis untuk mengungkap informasi tidak langsung mengenai pasien. & D4, F21, F22 & LK9, publik & 10 & I \\
+    \hline
+
+    T27 & Kelemahan validasi \textit{capability on-chain} memungkinkan pembacaan atau pembuatan \texttt{ProxyCapEnum}/\texttt{GlobalAdminCap} tanpa otorisasi sah, setara privilese tertinggi PRE Server/Kementerian Kesehatan. & P7, D4 & LK2/LK4 $\rightarrow$ LK6/LK7 & 5 & E \\
+    \hline
+
+    T28 & Kegagalan validasi otorisasi pada Authentication \& Access Control memungkinkan Medical Record Management memproses permintaan dengan \textit{scope} lebih tinggi dari yang seharusnya (administratif $\rightarrow$ klinis). & P5, P6, F26 & LK3 $\rightarrow$ LK4 & 2 & E \\
+    \hline
+
+\end{xltabular}
+
+% \input{chapters/ta/chapter-3/analisis-masalah/analisis-ancaman/dread-scoring.tex}

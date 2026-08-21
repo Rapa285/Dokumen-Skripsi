@@ -2,33 +2,7 @@
 
 Sistem audit trail merupakan komponen tambahan pada arsitektur DecMed yang bertugas mengumpulkan aktivitas yang terjadi pada komponen \textit{Client}, \textit{Proxy}, maupun \textit{Storage} (\textit{on-chain} dan \textit{off-chain}), kemudian menyimpannya sebagai audit record yang bersifat \textit{append-only} dan dapat diverifikasi integritasnya. Audit record yang tersimpan selanjutnya dapat diakses melalui antarmuka pencarian oleh pihak yang berwenang untuk keperluan audit maupun investigasi insiden keamanan. Ilustrasi sederhana mengenai alur kerja sistem audit trail terhadap arsitektur DecMed digambarkan pada Gambar~\ref{fig:ilustrasi-audit-trail}.
 
-% \begin{figure}[h]
-% \centering
-% \begin{tikzpicture}[
-%     box/.style={draw, rectangle, minimum width=3.2cm, minimum height=1cm, align=center},
-%     node distance=1.3cm and 1.6cm
-% ]
-%     \node[box, fill=orange!20] (client) {Client};
-%     \node[box, fill=blue!15, right=of client] (proxy) {Proxy};
-%     \node[box, fill=green!15, below=of client] (storage) {Storage\\(\textit{On-chain}/\textit{Off-chain})};
-%     \node[box, fill=yellow!20, below=1.6cm of $(client)!0.5!(proxy)$] (collector) {Audit Trail Collector};
-%     \node[box, fill=yellow!30, below=of collector] (store) {Audit Trail Store\\(\textit{append-only})};
-%     \node[box, fill=purple!15, below=of store] (interface) {Antarmuka Audit Trail};
-%     \node[box, fill=gray!15, below=of interface] (user) {Auditor / Pengguna};
-
-%     \draw[->] (client) -- node[above]{HTTP request} (proxy);
-%     \draw[->] (client) |- (collector);
-%     \draw[->] (proxy) |- (collector);
-%     \draw[->] (storage) |- (collector);
-%     \draw[->] (client) -- (storage);
-%     \draw[->] (proxy) -- (storage);
-%     \draw[->] (collector) -- node[right]{Simpan \textit{event}} (store);
-%     \draw[->] (store) -- node[right]{Kueri} (interface);
-%     \draw[->] (interface) -- node[right]{Akses hasil} (user);
-% \end{tikzpicture}
-% \caption{Ilustrasi Alur Kerja Sistem Audit Trail}
-% \label{fig:ilustrasi-audit-trail}
-% \end{figure}
+% insert figure disini
 
 Berdasarkan alur kerja tersebut, ditentukan aktor yang terlibat pada sistem audit trail beserta \textit{privileges} yang dimiliki masing-masing aktor, sebagaimana disajikan pada Tabel~\ref{tab:aktor-privileges-audit-trail}.
 

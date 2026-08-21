@@ -1,0 +1,97 @@
+\subsubsection{Ringkasan Kebutuhan Sistem Audit Trail}
+
+Berdasarkan hasil analisis yang telah dilakukan pada subbab sebelumnya, diperoleh kebutuhan sistem \textit{audit trail} yang akan digunakan sebagai dasar dalam proses perancangan sistem. Kebutuhan tersebut disusun berdasarkan hasil identifikasi \textit{audit event}, analisis komponen infrastruktur berdasarkan ISO 27789, analisis kesenjangan terhadap arsitektur DecMed, serta analisis kebutuhan keamanan berdasarkan keluarga kontrol \textit{Audit and Accountability} pada NIST SP 800-53 Revision 5.
+
+Kebutuhan sistem dibagi menjadi dua kategori, yaitu kebutuhan fungsional dan kebutuhan non-fungsional. Kebutuhan fungsional mendeskripsikan kemampuan yang harus dimiliki oleh sistem \textit{audit trail}, sedangkan kebutuhan non-fungsional menjelaskan karakteristik kualitas dan keamanan yang harus dipenuhi oleh sistem.
+
+\begin{xltabular}{\textwidth}{|p{2cm}|X|}
+\caption{Kebutuhan Fungsional Sistem Audit Trail}
+\label{tab:kebutuhan_fungsional}\\
+
+\hline
+\textbf{ID} & \textbf{Kebutuhan}\\
+\hline
+\endfirsthead
+
+\hline
+\textbf{ID} & \textbf{Kebutuhan}\\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+FR-01 &
+Sistem harus mampu menerima seluruh \textit{audit event} yang dihasilkan oleh komponen-komponen DecMed sesuai dengan daftar \textit{audit event} yang telah ditentukan.\\
+\hline
+
+FR-02 &
+Sistem harus secara otomatis membangkitkan \textit{audit record} setiap kali terjadi \textit{audit event}.\\
+\hline
+
+FR-03 &
+Setiap \textit{audit record} harus memiliki struktur dan atribut yang konsisten sesuai dengan skema audit yang telah ditentukan.\\
+\hline
+
+FR-04 &
+Sistem harus menyimpan seluruh \textit{audit record} pada repositori audit yang terdedikasi.\\
+\hline
+
+FR-05 &
+Sistem harus menyediakan mekanisme untuk mengambil audit record berdasarkan parameter tertentu sebagai kebutuhan proses audit dan investigasi.\\
+\hline
+
+FR-06 &
+Sistem harus mampu mendeteksi kegagalan pada proses pembangkitan maupun penyimpanan \textit{audit record}.\\
+\hline
+
+FR-07 &
+Sistem harus menyediakan mekanisme pengelolaan retensi \textit{audit record} sesuai dengan kebijakan yang ditetapkan.\\
+\hline
+
+\end{xltabular}
+
+\begin{xltabular}{\textwidth}{|p{2cm}|X|}
+\caption{Kebutuhan Non-Fungsional Sistem Audit Trail}
+\label{tab:kebutuhan_non_fungsional}\\
+
+\hline
+\textbf{ID} & \textbf{Kebutuhan}\\
+\hline
+\endfirsthead
+
+\hline
+\textbf{ID} & \textbf{Kebutuhan}\\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+NFR-01 &
+Sistem harus menjamin integritas setiap \textit{audit record} sehingga tidak dapat dimodifikasi secara tidak sah.\\
+\hline
+
+NFR-02 &
+Sistem harus menjamin keaslian (\textit{authenticity}) setiap \textit{audit record}.\\
+\hline
+
+NFR-03 &
+Sistem harus memberikan \textit{timestamp} yang akurat dan konsisten pada setiap \textit{audit record}.\\
+\hline
+
+NFR-04 &
+Sistem harus menerapkan mekanisme \textit{append-only} sehingga \textit{audit record} yang telah tersimpan tidak dapat diubah ataupun dihapus.\\
+\hline
+
+NFR-05 &
+Sistem harus mempertahankan \textit{audit record} selama periode retensi yang ditentukan.\\
+\hline
+
+NFR-06 &
+Sistem harus mendukung \textit{non-repudiation} sehingga \textit{audit record} dapat digunakan sebagai bukti bahwa suatu aktivitas benar-benar dilakukan oleh entitas yang tercatat. \\ 
+\hline
+
+\end{xltabular}
+
+Kebutuhan fungsional dan non-fungsional yang telah dirumuskan menjadi acuan dalam tahap perancangan sistem \textit{audit trail}. Pada tahap selanjutnya, setiap kebutuhan tersebut dipetakan ke dalam rancangan arsitektur, komponen, serta mekanisme implementasi yang sesuai dengan karakteristik arsitektur DecMed. Dengan demikian, rancangan sistem yang dihasilkan tidak hanya memenuhi kebutuhan fungsional pencatatan \textit{audit trail}, tetapi juga memenuhi kebutuhan keamanan, integritas, dan akuntabilitas sebagaimana direkomendasikan oleh standar ISO 27789 dan NIST SP 800-53 Revision 5.

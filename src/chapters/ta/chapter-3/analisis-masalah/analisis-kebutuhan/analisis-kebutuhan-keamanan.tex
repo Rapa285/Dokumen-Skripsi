@@ -1,0 +1,106 @@
+\subsubsection{Analisis Kebutuhan Keamanan Infrastruktur Audit Trail}
+
+Selain kebutuhan terhadap komponen infrastruktur, sistem \textit{audit trail} juga harus memenuhi kebutuhan keamanan agar informasi audit yang dihasilkan dapat digunakan sebagai bukti yang valid dalam proses audit maupun investigasi. Untuk mengidentifikasi kebutuhan tersebut, penelitian ini mengacu pada keluarga kontrol \textit{Audit and Accountability} (AU) pada NIST SP 800-53 Revision 5. Kontrol-kontrol tersebut dianalisis untuk menentukan kebutuhan fungsional maupun non-fungsional yang harus dipenuhi oleh setiap komponen infrastruktur \textit{audit trail} yang telah diidentifikasi sebelumnya.
+
+Tidak seluruh kontrol pada keluarga AU dianalisis dalam penelitian ini. Analisis difokuskan pada kontrol yang memiliki keterkaitan langsung dengan perancangan infrastruktur \textit{audit trail} pada DecMed. Hasil analisis kebutuhan keamanan berdasarkan kontrol NIST SP 800-53 Revision 5 ditunjukkan pada Tabel \ref{tab:analisis_kontrol_nist}.
+
+\begin{xltabular}{\textwidth}{|p{1.8cm}|p{3.5cm}|X|X|}
+\caption{Analisis Kebutuhan Infrastruktur Audit Trail berdasarkan NIST SP 800-53 Rev. 5}
+\label{tab:analisis_kontrol_nist}\\
+
+\hline
+\textbf{Kontrol} &
+\textbf{Nama Kontrol} &
+\textbf{Analisis} &
+\textbf{Kebutuhan Sistem}\\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Kontrol} &
+\textbf{Nama Kontrol} &
+\textbf{Analisis} &
+\textbf{Kebutuhan Sistem}\\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+AU-2 &
+Event Logging &
+Sistem harus menentukan aktivitas yang perlu dicatat sebagai audit trail berdasarkan kebutuhan organisasi dan risiko keamanan. &
+Sistem harus mampu mencatat seluruh audit event yang telah diidentifikasi pada tahap analisis audit event.\\
+\hline
+
+AU-3 &
+Content of Audit Records &
+Setiap audit record harus memiliki informasi yang cukup untuk mendukung proses identifikasi dan investigasi suatu aktivitas. &
+Sistem harus menghasilkan audit record yang memiliki atribut lengkap seperti identitas pelaku, waktu kejadian, jenis aktivitas, objek yang diakses, dan hasil aktivitas.\\
+\hline
+
+AU-4 &
+Audit Log Storage Capacity &
+Sistem harus menyediakan media penyimpanan yang memadai sehingga audit trail tetap tersedia selama periode retensi yang ditentukan. &
+Sistem harus menyediakan repositori audit yang mampu menyimpan audit trail sesuai kebutuhan retensi.\\
+\hline
+
+AU-5 &
+Response to Audit Logging Process Failures &
+Kegagalan proses pencatatan audit harus dapat dideteksi dan ditangani agar tidak menyebabkan hilangnya audit trail. &
+Sistem harus mampu mendeteksi serta menangani kegagalan proses pencatatan audit.\\
+\hline
+
+AU-6 &
+Audit Record Review, Analysis, and Reporting &
+Audit trail harus dapat ditinjau, dianalisis, dan disajikan untuk mendukung proses audit maupun investigasi. &
+Sistem harus menyediakan mekanisme pencarian, analisis, dan pelaporan audit trail.\\
+\hline
+
+AU-8 &
+Time Stamps &
+Seluruh audit record harus menggunakan informasi waktu yang akurat dan konsisten. &
+Sistem harus memberikan timestamp yang konsisten pada setiap audit record.\\
+\hline
+
+AU-9 &
+Protection of Audit Information &
+Audit trail harus terlindungi dari modifikasi maupun penghapusan yang tidak sah. &
+Sistem harus menjamin integritas dan perlindungan audit trail terhadap perubahan yang tidak sah.\\
+\hline
+
+AU-10 &
+Non-repudiation &
+Audit trail harus mampu mendukung pembuktian bahwa suatu aktivitas benar-benar dilakukan oleh entitas tertentu. &
+Sistem harus mendukung non-repudiation melalui mekanisme yang menjaga keaslian audit record.\\
+\hline
+
+AU-11 &
+Audit Record Retention &
+Audit trail harus dipertahankan selama periode yang telah ditentukan agar tetap tersedia untuk kebutuhan audit maupun investigasi. &
+Sistem harus menyediakan mekanisme retensi audit trail sesuai kebijakan penyimpanan.\\
+\hline
+
+AU-12 &
+Audit Record Generation &
+Sistem harus secara otomatis menghasilkan audit record ketika audit event terjadi. &
+Sistem harus mampu menghasilkan audit record secara otomatis dari seluruh audit event yang telah ditentukan.\\
+\hline
+
+AU-13 &
+Monitoring for Information Disclosure &
+Audit trail harus mendukung pemantauan terhadap aktivitas yang berpotensi menyebabkan pengungkapan informasi yang tidak sah. &
+Sistem harus mendukung pemantauan audit trail untuk mendeteksi aktivitas yang mencurigakan.\\
+\hline
+
+AU-14 &
+Session Audit &
+Apabila diperlukan, sistem harus mampu menghubungkan audit trail dengan suatu sesi pengguna. &
+Sistem harus mendukung pencatatan informasi sesi untuk aktivitas yang memerlukan keterkaitan antar audit event.\\
+\hline
+
+\end{xltabular}
+
+Berdasarkan hasil analisis pada Tabel \ref{tab:analisis_kontrol_nist}, dapat diidentifikasi bahwa kebutuhan keamanan sistem \textit{audit trail} tidak hanya berfokus pada kemampuan mencatat aktivitas, tetapi juga mencakup aspek integritas, ketersediaan, perlindungan, serta kemampuan audit trail dalam mendukung proses investigasi. Kontrol-kontrol tersebut kemudian diterjemahkan menjadi kebutuhan sistem yang harus dipenuhi oleh komponen-komponen infrastruktur \textit{audit trail} yang telah diidentifikasi sebelumnya.
+
+Hasil analisis ini menjadi dasar dalam penyusunan kebutuhan fungsional dan non-fungsional sistem \textit{audit trail}. Kebutuhan tersebut selanjutnya digunakan sebagai acuan pada tahap perancangan arsitektur dan implementasi sistem yang diusulkan.

@@ -1,7 +1,340 @@
 \subsection{Analisis Kebutuhan Sistem}
 
-\input{chapters/ta/chapter-3/analisis-masalah/analisis-kebutuhan/klasifikasi-event.tex}
+\subsubsection{Analisis Komponen Infrastruktur Audit Trail}
 
-\input{chapters/ta/chapter-3/analisis-masalah/analisis-kebutuhan/kebutuhan-fungsional.tex}
+Setelah kebutuhan \textit{audit event} ditentukan, langkah selanjutnya adalah mengidentifikasi komponen infrastruktur yang diperlukan agar proses pencatatan, penyimpanan, pemantauan, dan analisis \textit{audit trail} dapat berjalan secara menyeluruh. Analisis ini dilakukan dengan mengacu pada model konseptual sistem \textit{audit trail} yang dijelaskan pada Annex B ISO 27789. Berbeda dengan NIST SP 800-53 yang mendefinisikan kontrol keamanan yang harus dipenuhi oleh suatu sistem \textit{audit trail}, ISO 27789 menyediakan model layanan (\textit{service-oriented architecture}) yang menggambarkan komponen-komponen utama beserta interaksinya dalam membangun sebuah sistem \textit{audit trail}.
 
-\input{chapters/ta/chapter-3/analisis-masalah/analisis-kebutuhan/kebutuhan-non-fungsional.tex}
+Model tersebut menunjukkan bahwa sistem \textit{audit trail} tidak hanya terdiri atas media penyimpanan log, tetapi merupakan sekumpulan layanan yang bekerja sama untuk menerima \textit{audit event}, membentuk \textit{audit record}, menyimpan data, melakukan pemantauan terhadap aktivitas yang terjadi, hingga menyediakan fasilitas pencarian dan pelaporan bagi auditor. Berdasarkan model tersebut, komponen-komponen yang menjadi kebutuhan dasar infrastruktur \textit{audit trail} dapat diidentifikasi sebagaimana ditunjukkan pada Tabel \ref{tab:komponen_audit_trail_iso}.
+
+\begin{xltabular}{\textwidth}{|p{4cm}|X|}
+\caption{Identifikasi Komponen Infrastruktur Audit Trail berdasarkan ISO 27789 Annex B}
+\label{tab:komponen_audit_trail_iso}\\
+
+\hline
+\textbf{Komponen} & \textbf{Fungsi} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Komponen} & \textbf{Fungsi} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+Audit Logger  &
+Menerima \textit{audit event} dari aplikasi atau sistem, melakukan validasi awal, kemudian meneruskan \textit{event} untuk diproses dan disimpan sebagai \textit{audit record}. \\
+\hline
+
+Audit Record Generator  &
+Membentuk \textit{audit record} berdasarkan jenis \textit{audit event} yang diterima sehingga seluruh \textit{audit record} memiliki format yang konsisten. \\
+\hline
+
+Audit Event Catalogue  &
+Menyediakan definisi, metadata, dan struktur setiap jenis \textit{audit event} yang digunakan oleh sistem. \\
+\hline
+
+Audit Repository &
+Menyimpan seluruh \textit{audit record} yang dihasilkan sehingga dapat digunakan sebagai bukti pada proses audit maupun investigasi. \\
+\hline
+
+Audit Monitor  &
+Melakukan pemantauan terhadap aliran \textit{audit event} untuk mendeteksi pola atau kondisi tertentu yang memerlukan perhatian lebih lanjut. \\
+\hline
+
+Audit Alert  &
+Menghasilkan notifikasi apabila Audit Monitor mendeteksi pola aktivitas yang memenuhi kondisi tertentu sesuai kebijakan yang ditetapkan. \\
+\hline
+
+Audit Report &
+Menyediakan fasilitas pencarian, pengambilan, dan penyajian \textit{audit record} untuk mendukung proses audit dan investigasi. \\
+\hline
+
+\end{xltabular}
+
+Berdasarkan identifikasi tersebut, dapat dilihat bahwa sistem \textit{audit trail} menurut ISO 27789 terdiri atas beberapa layanan yang memiliki tanggung jawab berbeda namun saling melengkapi. Audit Logger Service berperan sebagai titik masuk seluruh \textit{audit event}, sedangkan Audit Repository bertanggung jawab sebagai media penyimpanan utama. Di sisi lain, Audit Report Service menyediakan akses terhadap data audit untuk keperluan investigasi, sementara Audit Monitor Service dan Audit Alert Service mendukung kemampuan pemantauan secara \textit{real-time} terhadap aktivitas yang dicatat. Selain itu, Audit Event Catalogue Service dan Audit Record Generator Service berfungsi menjaga konsistensi struktur \textit{audit record} yang dihasilkan oleh berbagai aplikasi.
+
+Komponen-komponen tersebut selanjutnya akan dibandingkan dengan kondisi eksisting pada arsitektur DecMed untuk mengidentifikasi komponen yang telah tersedia maupun komponen yang masih belum tersedia. Hasil analisis tersebut menjadi dasar dalam menentukan kebutuhan infrastruktur \textit{audit trail} yang akan dirancang pada penelitian ini.
+
+\subsubsection{Analisis Gap Infrastruktur Audit Trail terhadap DecMed}
+
+Setelah komponen-komponen utama infrastruktur \textit{audit trail} diidentifikasi berdasarkan model konseptual ISO 27789, langkah selanjutnya adalah membandingkan model tersebut dengan kondisi eksisting sistem DecMed. Analisis ini bertujuan untuk mengidentifikasi komponen infrastruktur \textit{audit trail} yang telah tersedia maupun komponen yang masih belum tersedia pada arsitektur DecMed. Hasil analisis tersebut digunakan untuk menentukan kebutuhan implementasi yang harus dipenuhi agar DecMed mampu mendukung proses pencatatan, penyimpanan, pemantauan, dan penyajian \textit{audit trail} secara komprehensif.
+
+Analisis dilakukan dengan mengevaluasi setiap komponen yang direkomendasikan oleh ISO 27789 terhadap arsitektur DecMed yang terdiri atas aplikasi klien, \textit{smart contract} IOTA Move, \textit{Proxy Re-Encryption Server}, serta infrastruktur penyimpanan data yang telah ada. Hasil analisis ditunjukkan pada Tabel \ref{tab:gap_komponen_audit}.
+
+\begin{xltabular}{\textwidth}{|p{3.2cm}|p{3.2cm}|X|X|}
+\caption{Analisis Gap Infrastruktur Audit Trail terhadap DecMed}
+\label{tab:gap_komponen_audit}\\
+
+\hline
+\textbf{Komponen} &
+\textbf{Kondisi DecMed} &
+\textbf{Analisis Gap} &
+\textbf{Kebutuhan}\\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Komponen} &
+\textbf{Kondisi DecMed} &
+\textbf{Analisis Gap} &
+\textbf{Kebutuhan}\\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+Audit Logger Service &
+Belum tersedia. Audit event dicatat secara terpisah oleh masing-masing komponen. &
+Belum terdapat mekanisme terpusat untuk menerima seluruh audit event dari berbagai komponen sistem. &
+Diperlukan layanan yang bertugas menerima seluruh audit event sebelum diproses lebih lanjut.\\
+\hline
+
+Audit Record Generator Service &
+Belum tersedia. &
+Belum terdapat mekanisme pembentukan audit record yang konsisten sehingga struktur audit record bergantung pada implementasi masing-masing komponen. &
+Diperlukan mekanisme pembentukan audit record yang memiliki format dan atribut yang seragam.\\
+\hline
+
+Audit Event Catalogue Service &
+Belum tersedia. &
+Belum terdapat definisi terpusat mengenai jenis audit event beserta atribut yang dimiliki. &
+Diperlukan katalog audit event sebagai acuan seluruh komponen dalam menghasilkan audit record.\\
+\hline
+
+Audit Repository &
+Belum tersedia. &
+DecMed belum memiliki repositori khusus untuk menyimpan audit trail secara terpusat. Riwayat akses pasien dan transaksi blockchain belum dapat berfungsi sebagai repositori audit trail yang komprehensif. &
+Diperlukan repositori khusus yang mampu menyimpan audit trail secara terpusat dan mendukung kebutuhan investigasi.\\
+\hline
+
+Audit Monitor Service &
+Belum tersedia. &
+Belum terdapat mekanisme pemantauan terhadap pola aktivitas atau kejadian mencurigakan secara otomatis. &
+Diperlukan mekanisme monitoring audit event sebagai dasar deteksi aktivitas tertentu.\\
+\hline
+
+Audit Alert Service &
+Belum tersedia. &
+Belum terdapat mekanisme pemberian notifikasi ketika ditemukan aktivitas yang memenuhi kondisi tertentu. &
+Diperlukan layanan yang mampu menghasilkan notifikasi berdasarkan hasil pemantauan audit trail.\\
+\hline
+
+Audit Report Service &
+Sebagian tersedia melalui \textit{Patient Access Log}. &
+Riwayat akses yang tersedia hanya mencakup aktivitas tertentu dan belum mendukung pencarian maupun pelaporan audit trail secara menyeluruh. &
+Diperlukan layanan pelaporan yang mampu melakukan pencarian dan penyajian audit trail untuk proses audit maupun investigasi.\\
+\hline
+
+\end{xltabular}
+
+Berdasarkan Tabel \ref{tab:gap_komponen_audit}, dapat dilihat bahwa sebagian besar komponen infrastruktur \textit{audit trail} yang direkomendasikan oleh ISO 27789 belum tersedia pada arsitektur DecMed. Meskipun DecMed telah memiliki beberapa mekanisme pencatatan aktivitas, seperti \textit{Patient Access Log} dan riwayat transaksi pada IOTA DLT, mekanisme tersebut belum membentuk sebuah sistem \textit{audit trail} yang terintegrasi. Selain itu, belum tersedia layanan yang secara khusus bertanggung jawab untuk menerima \textit{audit event}, membentuk \textit{audit record}, menyimpan data audit secara terpusat, maupun menyediakan fasilitas pemantauan dan pelaporan.
+
+Hasil analisis ini menunjukkan bahwa pengembangan sistem \textit{audit trail} pada DecMed tidak hanya memerlukan penambahan media penyimpanan audit trail, tetapi juga memerlukan beberapa komponen layanan baru yang bekerja secara terintegrasi. Komponen-komponen tersebut selanjutnya akan dianalisis berdasarkan kontrol keamanan yang direkomendasikan oleh NIST SP 800-53 Revision 5 untuk menentukan kebutuhan fungsional dan non-fungsional yang harus dipenuhi oleh setiap komponen sebelum dilakukan proses perancangan sistem.
+
+\subsubsection{Analisis Kebutuhan Keamanan Infrastruktur Audit Trail}
+
+Selain kebutuhan terhadap komponen infrastruktur, sistem \textit{audit trail} juga harus memenuhi kebutuhan keamanan agar informasi audit yang dihasilkan dapat digunakan sebagai bukti yang valid dalam proses audit maupun investigasi. Untuk mengidentifikasi kebutuhan tersebut, penelitian ini mengacu pada keluarga kontrol \textit{Audit and Accountability} (AU) pada NIST SP 800-53 Revision 5. Kontrol-kontrol tersebut dianalisis untuk menentukan kebutuhan fungsional maupun non-fungsional yang harus dipenuhi oleh setiap komponen infrastruktur \textit{audit trail} yang telah diidentifikasi sebelumnya.
+
+Tidak seluruh kontrol pada keluarga AU dianalisis dalam penelitian ini. Analisis difokuskan pada kontrol yang memiliki keterkaitan langsung dengan perancangan infrastruktur \textit{audit trail} pada DecMed. Hasil analisis kebutuhan keamanan berdasarkan kontrol NIST SP 800-53 Revision 5 ditunjukkan pada Tabel \ref{tab:analisis_kontrol_nist}.
+
+\begin{xltabular}{\textwidth}{|p{1.8cm}|p{3.5cm}|X|X|}
+\caption{Analisis Kebutuhan Infrastruktur Audit Trail berdasarkan NIST SP 800-53 Rev. 5}
+\label{tab:analisis_kontrol_nist}\\
+
+\hline
+\textbf{Kontrol} &
+\textbf{Nama Kontrol} &
+\textbf{Analisis} &
+\textbf{Kebutuhan Sistem}\\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Kontrol} &
+\textbf{Nama Kontrol} &
+\textbf{Analisis} &
+\textbf{Kebutuhan Sistem}\\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+AU-2 &
+Event Logging &
+Sistem harus menentukan aktivitas yang perlu dicatat sebagai audit trail berdasarkan kebutuhan organisasi dan risiko keamanan. &
+Sistem harus mampu mencatat seluruh audit event yang telah diidentifikasi pada tahap analisis audit event.\\
+\hline
+
+AU-3 &
+Content of Audit Records &
+Setiap audit record harus memiliki informasi yang cukup untuk mendukung proses identifikasi dan investigasi suatu aktivitas. &
+Sistem harus menghasilkan audit record yang memiliki atribut lengkap seperti identitas pelaku, waktu kejadian, jenis aktivitas, objek yang diakses, dan hasil aktivitas.\\
+\hline
+
+AU-4 &
+Audit Log Storage Capacity &
+Sistem harus menyediakan media penyimpanan yang memadai sehingga audit trail tetap tersedia selama periode retensi yang ditentukan. &
+Sistem harus menyediakan repositori audit yang mampu menyimpan audit trail sesuai kebutuhan retensi.\\
+\hline
+
+AU-5 &
+Response to Audit Logging Process Failures &
+Kegagalan proses pencatatan audit harus dapat dideteksi dan ditangani agar tidak menyebabkan hilangnya audit trail. &
+Sistem harus mampu mendeteksi serta menangani kegagalan proses pencatatan audit.\\
+\hline
+
+AU-6 &
+Audit Record Review, Analysis, and Reporting &
+Audit trail harus dapat ditinjau, dianalisis, dan disajikan untuk mendukung proses audit maupun investigasi. &
+Sistem harus menyediakan mekanisme pencarian, analisis, dan pelaporan audit trail.\\
+\hline
+
+AU-8 &
+Time Stamps &
+Seluruh audit record harus menggunakan informasi waktu yang akurat dan konsisten. &
+Sistem harus memberikan timestamp yang konsisten pada setiap audit record.\\
+\hline
+
+AU-9 &
+Protection of Audit Information &
+Audit trail harus terlindungi dari modifikasi maupun penghapusan yang tidak sah. &
+Sistem harus menjamin integritas dan perlindungan audit trail terhadap perubahan yang tidak sah.\\
+\hline
+
+AU-10 &
+Non-repudiation &
+Audit trail harus mampu mendukung pembuktian bahwa suatu aktivitas benar-benar dilakukan oleh entitas tertentu. &
+Sistem harus mendukung non-repudiation melalui mekanisme yang menjaga keaslian audit record.\\
+\hline
+
+AU-11 &
+Audit Record Retention &
+Audit trail harus dipertahankan selama periode yang telah ditentukan agar tetap tersedia untuk kebutuhan audit maupun investigasi. &
+Sistem harus menyediakan mekanisme retensi audit trail sesuai kebijakan penyimpanan.\\
+\hline
+
+AU-12 &
+Audit Record Generation &
+Sistem harus secara otomatis menghasilkan audit record ketika audit event terjadi. &
+Sistem harus mampu menghasilkan audit record secara otomatis dari seluruh audit event yang telah ditentukan.\\
+\hline
+
+AU-13 &
+Monitoring for Information Disclosure &
+Audit trail harus mendukung pemantauan terhadap aktivitas yang berpotensi menyebabkan pengungkapan informasi yang tidak sah. &
+Sistem harus mendukung pemantauan audit trail untuk mendeteksi aktivitas yang mencurigakan.\\
+\hline
+
+AU-14 &
+Session Audit &
+Apabila diperlukan, sistem harus mampu menghubungkan audit trail dengan suatu sesi pengguna. &
+Sistem harus mendukung pencatatan informasi sesi untuk aktivitas yang memerlukan keterkaitan antar audit event.\\
+\hline
+
+\end{xltabular}
+
+Berdasarkan hasil analisis pada Tabel \ref{tab:analisis_kontrol_nist}, dapat diidentifikasi bahwa kebutuhan keamanan sistem \textit{audit trail} tidak hanya berfokus pada kemampuan mencatat aktivitas, tetapi juga mencakup aspek integritas, ketersediaan, perlindungan, serta kemampuan audit trail dalam mendukung proses investigasi. Kontrol-kontrol tersebut kemudian diterjemahkan menjadi kebutuhan sistem yang harus dipenuhi oleh komponen-komponen infrastruktur \textit{audit trail} yang telah diidentifikasi sebelumnya.
+
+Hasil analisis ini menjadi dasar dalam penyusunan kebutuhan fungsional dan non-fungsional sistem \textit{audit trail}. Kebutuhan tersebut selanjutnya digunakan sebagai acuan pada tahap perancangan arsitektur dan implementasi sistem yang diusulkan.
+
+\subsubsection{Ringkasan Kebutuhan Sistem Audit Trail}
+
+Berdasarkan hasil analisis yang telah dilakukan pada subbab sebelumnya, diperoleh kebutuhan sistem \textit{audit trail} yang akan digunakan sebagai dasar dalam proses perancangan sistem. Kebutuhan tersebut disusun berdasarkan hasil identifikasi \textit{audit event}, analisis komponen infrastruktur berdasarkan ISO 27789, analisis kesenjangan terhadap arsitektur DecMed, serta analisis kebutuhan keamanan berdasarkan keluarga kontrol \textit{Audit and Accountability} pada NIST SP 800-53 Revision 5.
+
+Kebutuhan sistem dibagi menjadi dua kategori, yaitu kebutuhan fungsional dan kebutuhan non-fungsional. Kebutuhan fungsional mendeskripsikan kemampuan yang harus dimiliki oleh sistem \textit{audit trail}, sedangkan kebutuhan non-fungsional menjelaskan karakteristik kualitas dan keamanan yang harus dipenuhi oleh sistem.
+
+\begin{xltabular}{\textwidth}{|p{2cm}|X|}
+\caption{Kebutuhan Fungsional Sistem Audit Trail}
+\label{tab:kebutuhan_fungsional}\\
+
+\hline
+\textbf{ID} & \textbf{Kebutuhan}\\
+\hline
+\endfirsthead
+
+\hline
+\textbf{ID} & \textbf{Kebutuhan}\\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+FR-01 &
+Sistem harus mampu menerima seluruh \textit{audit event} yang dihasilkan oleh komponen-komponen DecMed sesuai dengan daftar \textit{audit event} yang telah ditentukan.\\
+\hline
+
+FR-02 &
+Sistem harus secara otomatis membangkitkan \textit{audit record} setiap kali terjadi \textit{audit event}.\\
+\hline
+
+FR-03 &
+Setiap \textit{audit record} harus memiliki struktur dan atribut yang konsisten sesuai dengan skema audit yang telah ditentukan.\\
+\hline
+
+FR-04 &
+Sistem harus menyimpan seluruh \textit{audit record} pada repositori audit yang terdedikasi.\\
+\hline
+
+FR-05 &
+Sistem harus menyediakan mekanisme untuk mengambil audit record berdasarkan parameter tertentu sebagai kebutuhan proses audit dan investigasi.\\
+\hline
+
+FR-06 &
+Sistem harus mampu mendeteksi kegagalan pada proses pembangkitan maupun penyimpanan \textit{audit record}.\\
+\hline
+
+FR-07 &
+Sistem harus menyediakan mekanisme pengelolaan retensi \textit{audit record} sesuai dengan kebijakan yang ditetapkan.\\
+\hline
+
+\end{xltabular}
+
+\begin{xltabular}{\textwidth}{|p{2cm}|X|}
+\caption{Kebutuhan Non-Fungsional Sistem Audit Trail}
+\label{tab:kebutuhan_non_fungsional}\\
+
+\hline
+\textbf{ID} & \textbf{Kebutuhan}\\
+\hline
+\endfirsthead
+
+\hline
+\textbf{ID} & \textbf{Kebutuhan}\\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+NFR-01 &
+Sistem harus menjamin integritas setiap \textit{audit record} sehingga tidak dapat dimodifikasi secara tidak sah.\\
+\hline
+
+NFR-02 &
+Sistem harus menjamin keaslian (\textit{authenticity}) setiap \textit{audit record}.\\
+\hline
+
+NFR-03 &
+Sistem harus memberikan \textit{timestamp} yang akurat dan konsisten pada setiap \textit{audit record}.\\
+\hline
+
+NFR-04 &
+Sistem harus menerapkan mekanisme \textit{append-only} sehingga \textit{audit record} yang telah tersimpan tidak dapat diubah ataupun dihapus.\\
+\hline
+
+NFR-05 &
+Sistem harus mempertahankan \textit{audit record} selama periode retensi yang ditentukan.\\
+\hline
+
+NFR-06 &
+Sistem harus mendukung \textit{non-repudiation} sehingga \textit{audit record} dapat digunakan sebagai bukti bahwa suatu aktivitas benar-benar dilakukan oleh entitas yang tercatat. \\ 
+\hline
+
+\end{xltabular}
+
+Kebutuhan fungsional dan non-fungsional yang telah dirumuskan menjadi acuan dalam tahap perancangan sistem \textit{audit trail}. Pada tahap selanjutnya, setiap kebutuhan tersebut dipetakan ke dalam rancangan arsitektur, komponen, serta mekanisme implementasi yang sesuai dengan karakteristik arsitektur DecMed. Dengan demikian, rancangan sistem yang dihasilkan tidak hanya memenuhi kebutuhan fungsional pencatatan \textit{audit trail}, tetapi juga memenuhi kebutuhan keamanan, integritas, dan akuntabilitas sebagaimana direkomendasikan oleh standar ISO 27789 dan NIST SP 800-53 Revision 5.

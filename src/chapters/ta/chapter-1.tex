@@ -1,66 +1,113 @@
 \chapter{Pendahuluan}
-
-Bab Pendahuluan secara umum yang dijadikan landasan kerja dan arah kerja penulis tugas akhir, berfungsi mengantar pembaca untuk membaca laporan tugas akhir secara keseluruhan.
+\label{ch:pendahuluan}
 
 \section{Latar Belakang}
-\label{sec:latarbelakang}
+\label{sec:latar-belakang}
 
-Transformasi digital di sektor kesehatan telah mendorong perubahan dalam pengelolaan rekam medis dari bentuk konvensional menuju Rekam Medis Elektronik (RME). Di Indonesia, implementasi RME diwajibkan melalui Peraturan Menteri Kesehatan Republik Indonesia Nomor 24 Tahun 2022 sebagai upaya meningkatkan mutu pelayanan kesehatan, efisiensi operasional, serta kesinambungan pelayanan antar fasilitas kesehatan. Digitalisasi tersebut memungkinkan informasi medis pasien dikelola dan dipertukarkan secara lebih cepat, akurat, dan terintegrasi sehingga dapat mendukung pengambilan keputusan klinis yang lebih baik. Seiring dengan semakin luasnya penerapan RME, sistem informasi kesehatan tidak hanya dituntut mampu menyediakan layanan yang efektif, tetapi juga harus menjamin keamanan data medis yang dikelolanya.
+Rekam Medis Elektronik (RME) merupakan komponen fundamental dalam penyelenggaraan pelayanan kesehatan di Indonesia. Peraturan Menteri Kesehatan Republik Indonesia (Permenkes) Nomor 24 Tahun 2022 tentang Rekam Medis mewajibkan seluruh fasilitas pelayanan kesehatan (fasyankes) untuk menyelenggarakan rekam medis dalam bentuk elektronik, serta mengharuskan penyelenggaraan tersebut menjamin kerahasiaan, keutuhan (integritas), dan ketersediaan data rekam medis (\cite{permenkes24_2022}). Tinjauan sistematis terhadap implementasi RME turut menunjukkan bahwa keamanan dan kerahasiaan data medis pasien menjadi perhatian utama dalam berbagai studi, mengingat data tersebut bersifat sensitif dan berdampak langsung pada kepercayaan pasien terhadap sistem pelayanan kesehatan (\cite{pramesti2024keamanan}). Kewajiban ini menegaskan bahwa keamanan data RME bukan sekadar kebutuhan teknis, melainkan juga kepatuhan regulasi yang mengikat bagi seluruh penyelenggara pelayanan kesehatan.
 
-Data yang tersimpan dalam RME merupakan informasi yang bersifat sensitif karena memuat identitas pasien, riwayat pemeriksaan, diagnosis, tindakan medis, hingga terapi yang diberikan. Tinjauan sistematis mengenai keamanan dan kerahasiaan data pada implementasi RME menunjukkan bahwa ancaman seperti akses tidak sah, penyalahgunaan hak akses, manipulasi data, maupun kebocoran informasi masih menjadi tantangan utama dalam penerapan RME. Risiko tersebut tidak hanya berpotensi merugikan pasien sebagai pemilik data, tetapi juga dapat menimbulkan konsekuensi operasional, etik, dan hukum bagi fasilitas pelayanan kesehatan. Oleh karena itu, pengembangan sistem RME perlu didukung oleh mekanisme keamanan yang mampu menjaga kerahasiaan, integritas, dan ketersediaan data, sekaligus menyediakan akuntabilitas terhadap setiap aktivitas yang dilakukan pada sistem \cite{...}.
+Untuk menjawab tantangan tersebut, penelitian sebelumnya mengembangkan DecMed, sebuah kerangka kerja manajemen RME terdesentralisasi yang menggunakan Distributed Ledger Technology (DLT) IOTA sebagai basis kontrol akses (\cite{DecMed}). DecMed mengintegrasikan Capability-Based Access Control (CapBAC), Proxy Re-Encryption (PRE), dan InterPlanetary File System (IPFS) (\cite{benet2014ipfscontentaddressed}) untuk memastikan bahwa setiap akses terhadap data RME hanya dapat dilakukan atas persetujuan aktif pasien, dengan durasi dan cakupan akses yang dapat dibatasi oleh pasien sendiri (\cite{DecMed}).
 
-Salah satu penelitian yang dikembangkan untuk menjawab kebutuhan tersebut adalah \textit{Decentralized Medical Records Management} (DecMed), yaitu sistem RME berbasis \textit{Distributed Ledger Technology} (DLT) yang memanfaatkan karakteristik \textit{immutable} untuk menjaga integritas data serta menerapkan mekanisme kontrol akses yang berpusat pada pasien. Dengan memanfaatkan DLT, DecMed mampu menyediakan penyimpanan data yang lebih tahan terhadap manipulasi, meningkatkan transparansi pengelolaan data medis, serta memberikan fleksibilitas kepada pasien dalam mengendalikan akses terhadap rekam medisnya. Hasil penelitian tersebut menunjukkan bahwa pemanfaatan DLT dapat menjadi pendekatan yang menjanjikan untuk meningkatkan keamanan pengelolaan data rekam medis dibandingkan pendekatan penyimpanan terpusat \cite{...}.
+Meskipun DecMed berhasil menjawab persoalan kontrol akses dan kerahasiaan data, penelitian tersebut secara eksplisit menyatakan bahwa pengelolaan RME juga membutuhkan \textit{audit trail} yang andal dan dapat diverifikasi (\textit{reliable and verifiable audit trails}), karena pencatatan log merupakan komponen inti dari kontrol audit dan umumnya disyaratkan untuk mendukung kepatuhan regulasi maupun investigasi insiden (\cite{DecMed}). Klaim ini sejalan dengan kerangka kontrol audit pada NIST Special Publication 800-53 Revisi 5, yang menempatkan pencatatan dan peninjauan peristiwa keamanan (kontrol keluarga \textit{Audit and Accountability}) sebagai salah satu persyaratan dasar tata kelola keamanan sistem informasi (\cite{nist80053r5}), sejalan pula dengan kontrol \textit{logging} pada ISO/IEC 27002:2022 (\cite{iso27002_2022}). Catatan audit yang lengkap juga berperan penting sebagai sumber data untuk mendeteksi dan menyelidiki potensi penyalahgunaan oleh pihak internal (\textit{insider threat}) (\cite{cert2022insiderthreat}), serta menjadi prasyarat akuntabilitas pada mekanisme akses darurat (\textit{break-glass access}) yang lazim dibutuhkan dalam layanan kesehatan (\cite{alamin2025breakglass}).
 
-Meskipun demikian, mekanisme pencatatan aktivitas pada DecMed masih berorientasi pada kebutuhan fungsional sistem dan belum dikembangkan sebagai subsistem audit trail yang mendukung kebutuhan audit dan akuntabilitas secara menyeluruh. DecMed telah menyediakan \textit{PatientAccessLog} untuk mencatat riwayat pemberian dan pencabutan hak akses pasien serta memanfaatkan riwayat transaksi pada DLT yang secara otomatis merekam setiap transaksi yang terjadi pada sistem. Akan tetapi, \textit{PatientAccessLog} hanya mencatat aktivitas yang berkaitan dengan pengelolaan hak akses sehingga belum menggambarkan aktivitas sistem secara komprehensif. Di sisi lain, riwayat transaksi pada DLT memang memiliki integritas yang tinggi karena tersimpan secara \textit{immutable}, namun informasi yang disajikan masih berorientasi pada transaksi teknis sehingga kurang mendukung proses pencarian, pemantauan, analisis, maupun peninjauan aktivitas sistem secara efisien. Kondisi tersebut menyebabkan informasi audit masih tersebar pada beberapa komponen sistem sehingga belum menyediakan mekanisme audit trail yang terintegrasi dan mudah dimanfaatkan oleh administrator maupun auditor \cite{...}.
+Namun demikian, mekanisme pencatatan yang tersedia pada DecMed saat ini belum sepenuhnya memenuhi karakteristik audit trail yang baik. Terdapat dua celah utama yang teridentifikasi. \textit{Pertama}, sebagian besar mekanisme yang tercatat pada jaringan IOTA merupakan entri \textit{capability} atau izin akses (\textit{access grant}) -- yaitu metadata yang menyatakan siapa berhak mengakses data apa dan sampai kapan -- bukan catatan atas peristiwa akses yang benar-benar terjadi (\textit{access event}). Akibatnya, sistem belum dapat merekonstruksi riwayat siapa yang benar-benar membaca atau mengubah data RME pada waktu tertentu. \textit{Kedua}, sejumlah operasi pada DecMed, seperti pencabutan akses (\texttt{revoke\_access}) dan pembaruan data administratif maupun klinis (\texttt{update\_administrative\_data}, \texttt{update\_medical\_record}), menyebabkan entri lama pada state tergantikan oleh entri baru alih-alih ditambahkan sebagai riwayat baru yang bersifat \textit{append-only}. Kondisi ini bertentangan dengan karakteristik dasar audit trail, yaitu integritas dan \textit{non-repudiation}, yang mensyaratkan bahwa setiap catatan peristiwa harus bersifat permanen dan tidak dapat diubah maupun dihapus setelah dicatat (\cite{nist80053r5}).
 
-Audit trail merupakan salah satu komponen penting dalam sistem informasi karena menyediakan mekanisme untuk mencatat aktivitas yang terjadi pada sistem sebagai bentuk akuntabilitas terhadap setiap tindakan pengguna maupun komponen sistem. Pada sistem informasi kesehatan, audit trail tidak hanya dimanfaatkan untuk menelusuri riwayat aktivitas pengguna, tetapi juga mendukung proses audit keamanan, pemantauan penggunaan sistem, evaluasi kepatuhan, serta analisis ketika terjadi insiden keamanan. Sejalan dengan kebutuhan tersebut, NIST SP 800-53 Revision 5 melalui keluarga kontrol \textit{Audit and Accountability} memberikan panduan mengenai karakteristik audit trail yang baik, mulai dari penentuan aktivitas yang perlu dicatat, pembentukan audit record, perlindungan audit record, hingga mekanisme peninjauan dan pengelolaan audit log. Dengan demikian, kontrol-kontrol tersebut dapat digunakan sebagai landasan dalam merancang subsistem audit trail yang mampu mendukung kebutuhan audit dan akuntabilitas secara lebih sistematis \cite{...}.
+Celah tersebut menjadi lebih krusial apabila ditinjau dari perspektif ancaman keamanan sistem. Metode STRIDE (\textit{Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege}) merupakan salah satu metode pemodelan ancaman yang umum digunakan untuk mengidentifikasi risiko keamanan pada suatu sistem informasi secara sistematis, yang kemudian dapat dilanjutkan dengan penilaian risiko menggunakan model DREAD (\cite{laksono2021stride}). Salah satu kategori ancaman pada STRIDE, yaitu \textit{repudiation}, merupakan kondisi ketika pengguna sistem dapat menyangkal bahwa ia telah melakukan suatu tindakan tertentu; ancaman ini secara langsung berkaitan dengan ketiadaan atau ketidaklengkapan pencatatan log dan mekanisme audit pada suatu sistem (\cite{laksono2021stride}). Dengan kata lain, kebutuhan pencatatan peristiwa (\textit{event}) pada suatu sistem idealnya tidak ditentukan secara ad hoc, melainkan diturunkan dari analisis ancaman yang relevan terhadap arsitektur sistem yang bersangkutan.
 
-Berdasarkan permasalahan tersebut, penelitian ini bertujuan untuk mengembangkan subsistem audit trail pada sistem DecMed dengan mengacu pada keluarga kontrol \textit{Audit and Accountability} dalam NIST SP 800-53 Revision 5. Penelitian difokuskan pada analisis kebutuhan audit trail, perancangan arsitektur sistem, implementasi mekanisme pencatatan aktivitas yang terintegrasi, serta penyediaan fasilitas untuk mendukung proses audit dan peninjauan aktivitas sistem. Dengan adanya subsistem audit trail tersebut, diharapkan DecMed tidak hanya mampu menjaga keamanan penyimpanan dan pengelolaan akses terhadap rekam medis, tetapi juga menyediakan mekanisme audit yang lebih komprehensif untuk mendukung akuntabilitas dan pengelolaan keamanan sistem.
-
+Berdasarkan pemaparan tersebut, Tugas Akhir ini bermaksud menganalisis kebutuhan audit trail pada sistem DecMed melalui pendekatan pemodelan ancaman STRIDE, guna menentukan jenis peristiwa (\textit{event}) apa saja yang perlu dicatat agar sistem memiliki audit trail yang memenuhi karakteristik integritas dan non-repudiation. Hasil analisis tersebut selanjutnya digunakan sebagai dasar perancangan dan implementasi sebuah layanan audit trail (\textit{audit trail service}) yang terintegrasi dengan arsitektur DecMed yang telah ada, mengikuti pola layanan pendukung (\textit{supporting service}) yang serupa dengan \textit{proxy re-encryption server} yang sudah digunakan pada DecMed (\cite{DecMed}). Metadata dari setiap peristiwa yang tercatat akan disimpan pada jaringan IOTA untuk menjamin integritas dan keterlacakannya, sedangkan berkas log peristiwa akan disimpan pada IPFS (\cite{benet2014ipfscontentaddressed}), konsisten dengan pola pemisahan penyimpanan on-chain dan off-chain yang telah diterapkan pada DecMed untuk data RME (\cite{DecMed}).
 
 \section{Rumusan Masalah}
+\label{sec:rumusan-masalah}
 
-Berdasarkan latar belakang yang telah diuraikan, penelitian ini dirancang untuk menjawab serangkaian pertanyaan kunci yang mendesak. Masalah-masalah ini berfokus pada perancangan, implementasi, dan validasi bukti kriptografis untuk insiden \textit{handling} di lingkungan RME modern. Rumusan masalah dalam penelitian ini adalah sebagai berikut:
+Berdasarkan latar belakang yang telah dipaparkan pada Subbab~\ref{sec:latar-belakang}, terdapat dua rumusan masalah utama dalam Tugas Akhir ini, yaitu
+
 \begin{enumerate}
-    \item Bagaimana merancang sistem \textit{log management} dan \textit{monitoring} yang mampu mencatat aktivitas akses dan pertukaran data secara komprehensif sebagai \textit{audit trail} pada sistem RME berbasis DLT?
-    \item Bagaimana mekanisme pengelolaan log untuk menjamin integritas, konsistensi, dan keterlacakan data log, baik pada komponen \textit{on-chain} maupun \textit{off-chain}, sehingga log tidak dapat dimanipulasi dan tetap andal untuk keperluan pemantauan dan penelusuran insiden?
-    \item Bagaimana sistem \textit{log management} dan \textit{monitoring} yang dirancang dapat mendukung deteksi dan analisis insiden keamanan tanpa melanggar privasi data rekam medis pasien?
+\item Peristiwa (\textit{event}) apa saja yang perlu dicatat oleh mekanisme audit trail pada sistem DecMed berdasarkan hasil analisis ancaman menggunakan metode STRIDE?
+\item Bagaimana rancangan dan implementasi layanan audit trail yang sesuai dengan arsitektur DecMed, dengan memanfaatkan IOTA sebagai media penyimpanan metadata dan IPFS sebagai media penyimpanan berkas log peristiwa?
 \end{enumerate}
 
-% Penting untuk diperhatikan bahwa persoalan yang dideskripsikan pada subbab ini akan dipertanggungjawabkan di bab Evaluasi apakah terselesaikan atau tidak.
+\section{Tujuan dan Ukuran Keberhasilan Pencapaian}
+\label{sec:tujuan}
 
-\section{Tujuan}
+Tujuan dari Tugas Akhir ini adalah
 
-Tujuan dari Tugas Akhir ini adalah merancang dan mengimplementasikan sebuah sistem \textit{log management} dan \textit{monitoring} untuk RME berbasis IOTA (DecMed) yang mampu mengumpulkan log dari keseluruhan sistem.
-
-Keberhasilan penelitian ini akan diukur melalui tiga indikator spesifik sebagai berikut:
 \begin{enumerate}
-    \item Dihasilkannya sistem \textit{audit trail} yang terintegrasi dengan sistem RME DecMed.
-    \item Sistem yang diusulkan harus mampu mensimulasikan pengumpulan bukti dari setidaknya dua skenario serangan (\textit{insider} dan \textit{replay attack}) pada prototipe sistem RME.
+\item Menghasilkan daftar kebutuhan peristiwa (\textit{event requirements}) audit trail pada sistem DecMed berdasarkan analisis ancaman menggunakan metode STRIDE.
+\item Merancang dan mengimplementasikan layanan audit trail yang terintegrasi dengan arsitektur DecMed, dengan metadata peristiwa tersimpan secara immutable pada IOTA dan berkas log peristiwa tersimpan pada IPFS.
 \end{enumerate}
+
+Ukuran keberhasilan pencapaian Tugas Akhir ini didasarkan pada kesesuaian daftar kebutuhan \textit{event} yang dihasilkan terhadap kategori ancaman STRIDE yang teridentifikasi, serta keberhasilan layanan audit trail yang dikembangkan dalam mencatat, menyimpan, dan menyajikan kembali peristiwa-peristiwa tersebut secara benar dan tidak dapat diubah (\textit{immutable}).
+
+% CATATAN UNTUK PENULIS:
+% Bagian ini masih draf awal dan sebaiknya didiskusikan lebih lanjut
+% dengan dosen pembimbing, khususnya terkait metrik/ukuran keberhasilan
+% yang lebih terukur (misalnya cakupan skenario pengujian,
+% jumlah kategori STRIDE yang tercakup, dsb.)
 
 \section{Batasan Masalah}
+\label{sec:batasan-masalah}
 
-Untuk menjaga fokus dan kelayakan penelitian, beberapa batasan perlu ditetapkan. Batasan-batasan ini mencakup ruang lingkup teknologi, jenis ancaman, fokus analisis, dan skala implementasi. Penelitian ini memiliki batasan-batasan sebagai berikut:
+Terdapat beberapa batasan masalah dari Tugas Akhir ini, antara lain
+
 \begin{enumerate}
-    \item Platform DLT yang digunakan untuk mensimulasikan lingkungan RME yang terkontrol dan relevan secara industri, adalah DecMed sebuah prototipe IOTA yang telah dikembangkan sebelumnya oleh I Putu Bakta Hari Sudewa.
-    \item Aspek keamanan yang dibahas hanya mencakup keamanan data rekam medis pasien, bukan keamanan sistem secara keseluruhan seperti IOTA atau IPFS.
+\item Analisis ancaman menggunakan STRIDE dilakukan terhadap arsitektur sistem DecMed yang sudah ada, bukan terhadap perancangan ulang sistem DecMed secara keseluruhan;
+\item Layanan audit trail yang dikembangkan bersifat pencatat pasif (\textit{passive recorder}) yang menerima dan menyimpan peristiwa, tanpa melakukan validasi otorisasi maupun keputusan kontrol akses terhadap peristiwa yang dicatat; dan
+\item Implementasi dilakukan pada lingkungan pengembangan yang sama dengan yang digunakan pada penelitian DecMed sebelumnya.
 \end{enumerate}
+
+% CATATAN UNTUK PENULIS:
+% Sesuaikan dan tambahkan batasan lain jika diperlukan, misalnya terkait
+% cakupan analisis ancaman (apakah mencakup seluruh komponen DecMed atau
+% hanya komponen tertentu), maupun batasan pengujian yang akan dilakukan.
 
 \section{Metodologi}
+\label{sec:metodologi}
 
-Untuk mencapai tujuan yang telah ditetapkan, penelitian ini akan dilaksanakan menggunakan metodologi yang sistematis dan terstruktur. Metodologi ini terdiri dari tahapan-tahapan utama yang saling berkaitan, dimulai dari perencanaan hingga pengujian sistem. Metodologi yang akan digunakan dalam penelitian ini adalah sebagai berikut:
+Metodologi yang digunakan dalam Tugas Akhir ini terdiri dari empat tahap pelaksanaan, sebagai berikut.
+
 \begin{enumerate}
-    \item \textbf{Perencanaan} \\
-    Tahap perencanaan berfokus pada penyusunan dasar konseptual dan teknis dari kerangka kerja yang akan dikembangkan. Kegiatan utama pada tahap ini meliputi analisis komparatif terhadap penelitian dan \textit{framework} terdahulu untuk mengidentifikasi kebutuhan, tantangan, serta pendekatan yang paling sesuai dengan karakteristik sistem yang akan dibangun. Selain itu, dilakukan pemilihan standar dan \textit{best practices} yang relevan dalam bidang keamanan, integritas data, dan forensik digital guna memastikan rancangan memiliki landasan yang kuat dan dapat diimplementasikan secara berkelanjutan. Hasil dari tahap ini berupa rancangan konseptual arsitektur serta pedoman teknis yang akan menjadi acuan dalam tahap implementasi.
-    
-    \item \textbf{Implementasi Sistem} \\
-    Tahap implementasi berfokus pada penerapan rancangan yang telah disusun menjadi sistem yang berfungsi secara operasional. Proses ini mencakup pengembangan arsitektur sistem, pembangunan modul inti yang menangani proses akuisisi, pencatatan, dan pembangkitan bukti kriptografis, serta integrasi komponen ke dalam alur investigasi digital yang terstruktur. Setiap modul dirancang untuk menjamin aspek keamanan, keterlacakan, dan integritas data melalui penerapan algoritma kriptografi serta mekanisme verifikasi yang andal. Setelah sistem terintegrasi secara menyeluruh, dilakukan pengujian dan validasi untuk memastikan seluruh komponen berjalan sesuai spesifikasi dan hasil yang diperoleh dapat dipercaya secara forensik.
-    
-    \item \textbf{Pengujian dan Simulasi} \\
-    Tahap ini berfokus pada pengujian dari implementasi yang telah dibuat serta analisis keberhasilan dari implementasi tersebut. Kegiatan utama pada tahap ini adalah melakukan simulasi skenario serangan yang telah ditentukan yaitu \textit{insider} dan \textit{replay attack} terhadap sistem prototipe yang digunakan. Setelah itu akan dijalankan proses forensik menggunakan kerangka kerja yang dibangun, dan menganalisis bukti yang dihasilkan untuk validasi.
+\item \textbf{Tahap Perencanaan.} Tahap ini berfokus pada pemahaman arsitektur dan mekanisme sistem DecMed yang telah ada, kajian literatur terkait audit trail, threat modeling STRIDE, serta penelitian terkait lainnya sebagai dasar analisis.
+
+\item \textbf{Tahap Analisis Ancaman.} Pada tahap ini dilakukan identifikasi aset, aliran data, dan batas kepercayaan (\textit{trust boundary}) pada arsitektur DecMed, dilanjutkan dengan penerapan metode STRIDE untuk mengidentifikasi ancaman pada setiap komponen. Hasil identifikasi ancaman tersebut kemudian diturunkan menjadi daftar kebutuhan peristiwa (\textit{event requirements}) yang perlu dicatat oleh audit trail.
+
+\item \textbf{Tahap Perancangan dan Implementasi.} Berdasarkan daftar kebutuhan \textit{event} yang telah ditentukan, dilakukan perancangan arsitektur layanan audit trail beserta skema penyimpanan metadata pada IOTA dan berkas log pada IPFS. Selanjutnya, rancangan tersebut diimplementasikan sebagai layanan yang terintegrasi dengan komponen-komponen DecMed yang sudah ada.
+
+\item \textbf{Tahap Pengujian dan Evaluasi.} Tahap terakhir bertujuan menguji dan mengevaluasi apakah layanan audit trail yang dikembangkan berhasil mencatat seluruh \textit{event} yang telah didefinisikan, serta memvalidasi bahwa data yang tercatat memenuhi karakteristik integritas dan non-repudiation yang diharapkan.
 \end{enumerate}
 
-\section{Jadwal Pelaksanaan Tugas Akhir}
+\section{Sistematika Pembahasan}
+\label{sec:sistematika}
 
-Tuliskan rencana kegiatan dan jadwal (dirinci sampai per minggu) mulai dari awal pelaksanaan Tugas Akhir I s.d. sidang tugas akhir berikut milestones dan deliverables yang harus diberikan. Jadwal ini dapat dibantu dengan membuat sebuah tabel timeline.
+Berikut merupakan sistematika pembahasan dari Tugas Akhir ini.
+
+Bab I menjelaskan gagasan utama dari Tugas Akhir ini yang meliputi latar belakang, rumusan masalah, tujuan, batasan, metodologi, hingga sistematika pembahasan.
+
+Bab II memaparkan studi literatur yang dilakukan, mencakup RME, audit trail, threat modeling STRIDE, kontrol akses, DLT dan IOTA, serta teknologi pendukung lain yang digunakan pada DecMed.
+
+Bab III menjelaskan analisis ancaman menggunakan STRIDE terhadap sistem DecMed serta rancangan solusi layanan audit trail yang diusulkan.
+
+Bab IV menjelaskan hasil implementasi dari rancangan yang dipaparkan pada Bab III, beserta mekanisme dan hasil pengujian yang dilakukan.
+
+Bab V merupakan bab penutup yang berisi kesimpulan dan saran dari penulis.
+
+% PENTING: saya belum membaca full text ketiga paper/dokumen ini secara
+% menyeluruh (hanya metadata dan cuplikan hasil pencarian), jadi kamu
+% TETAP WAJIB membaca sendiri bagian yang relevan sebelum submit, untuk
+% memastikan klaim di teks Bab I ini benar-benar sesuai dengan isi
+% aslinya, terutama untuk Al Amin et al. yang detail sitasinya sempat
+% saya salah tulis di draf sebelumnya (venue dan judul lengkapnya).
+%
+% Ringkasan pemakaian tiap key pada Bab I ini:
+%   - permenkes24_2022        : kewajiban RME elektronik + jaminan CIA
+%   - pramesti2024keamanan    : keamanan & kerahasiaan data RME (tinjauan sistematis)
+%   - DecMed                  : arsitektur DecMed, CapBAC/PRE/IPFS, klaim
+%                                kebutuhan audit trail, pola on-chain/off-chain
+%   - benet2014ipfscontentaddressed : peran IPFS sebagai off-chain storage
+%   - nist80053r5              : prinsip kontrol audit (keluarga AU),
+%                                integritas & non-repudiation log
+%   - iso27002_2022            : kontrol logging (8.15) sebagai pelengkap NIST
+%   - cert2022insiderthreat    : audit trail sbg sumber deteksi/investigasi
+%                                penyalahgunaan internal (insider threat)
+%   - alamin2025breakglass     : akuntabilitas pada akses darurat (break-glass)
+%   - laksono2021stride        : definisi STRIDE+DREAD, kaitan kategori
+%                                repudiation dengan kebutuhan logging/audit

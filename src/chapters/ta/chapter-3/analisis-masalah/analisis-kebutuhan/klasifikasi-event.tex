@@ -1,6 +1,6 @@
-\subsubsection{Analisis Kebutuhan Audit Trail}
+\subsection{Analisis Kebutuhan Audit Event}
 
-Tahap ini bertujuan untuk mengidentifikasi aktivitas-aktivitas pada sistem DecMed yang perlu dicatat sebagai bagian dari mekanisme \textit{audit trail}. Identifikasi tersebut dilakukan dengan memanfaatkan hasil analisis ancaman menggunakan metode STRIDE yang telah dijelaskan pada bagian sebelumnya. Setiap ancaman yang teridentifikasi dianalisis untuk menentukan bukti digital (\textit{digital evidence}) yang diperlukan dalam mendukung proses audit maupun investigasi insiden keamanan. Berdasarkan kebutuhan bukti tersebut, kemudian ditentukan aktivitas sistem yang perlu direkam sebagai \textit{audit event}. Hasil dari tahap ini berupa daftar \textit{audit event} beserta atribut-atribut audit yang diperlukan sebagai dasar dalam perancangan mekanisme pengumpulan dan penyimpanan \textit{audit trail} pada sistem DecMed. Hasil pemetaan antara ancaman, kebutuhan bukti digital, dan audit event yang dihasilkan ditunjukkan pada Tabel \ref{tab:threat-event-mapping}.
+Berdasarkan hasil analisis ancaman menggunakan metode STRIDE pada bagian sebelumnya, tahap selanjutnya adalah menentukan kebutuhan audit trail yang diperlukan untuk menghasilkan bukti digital terhadap setiap ancaman yang teridentifikasi. Kebutuhan tersebut diperoleh dengan memetakan setiap ancaman ke aktivitas sistem yang perlu dicatat sebagai audit event. Hasil analisis ini menjadi dasar dalam mengidentifikasi kesenjangan mekanisme audit pada DecMed serta menjadi masukan bagi perancangan sistem audit trail pada bab selanjutnya. Hasil pemetaan antara ancaman, kebutuhan bukti digital, dan audit event yang dihasilkan ditunjukkan pada Tabel \ref{tab:threat-event-mapping}.
 
 \begin{xltabular}
     {\textwidth}
@@ -275,11 +275,11 @@ Hasil pelaksanaan \textit{audit event}, seperti \textit{success}, \textit{failur
 \end{tabular}
 \end{table}
 
-Field \texttt{record\_id} dan \texttt{prev\_record\_hash} tidak secara eksplisit disyaratkan oleh kontrol AU-3. Kedua atribut tersebut ditambahkan untuk memenuhi kebutuhan rancangan \textit{audit trail} pada penelitian ini, khususnya dalam menjamin identitas unik setiap \textit{audit record} serta menjaga integritas rangkaian \textit{audit record} melalui mekanisme \textit{hash chaining}. Penambahan atribut tersebut juga ditujukan untuk mengatasi permasalahan pada \textit{PatientAccessLog} yang telah diidentifikasi pada analisis masalah, yaitu belum tersedianya jaminan bahwa riwayat aktivitas bersifat \textit{append-only} dan \textit{immutable}.
+Field \texttt{record\_id} dan \texttt{prev\_record\_hash} tidak secara eksplisit disyaratkan oleh kontrol AU-3. Kedua atribut tersebut ditambahkan untuk memenuhi kebutuhan rancangan \textit{audit trail} pada penelitian ini, khususnya dalam menjamin identitas unik setiap \textit{audit record} serta menjaga integritas rangkaian \textit{audit record} melalui mekanisme \textit{hash chaining}.
 
 \begin{xltabular}
 {\textwidth}
-{|>{\centering\arraybackslash}p{1.2cm}|X|>{\raggedright\arraybackslash}p{5.2cm}|}
+{|>{\centering\arraybackslash}p{1.2cm}|X|>{\raggedright\arraybackslash}p{5.8cm}|}
 
 \caption{Atribut Audit Tambahan untuk Setiap Audit Event}
 \label{tab:detail-audit-record}\\
@@ -400,3 +400,157 @@ Mendokumentasikan proses validasi capability beserta hasil evaluasi hak akses. \
 \hline
 
 \end{xltabular}
+
+\paragraph{Analisis Gap Audit Event}
+
+Setelah diperoleh daftar \textit{audit event} yang dibutuhkan, tahap selanjutnya adalah mengevaluasi apakah sistem DecMed telah menyediakan mekanisme pencatatan terhadap \textit{audit event} tersebut. Evaluasi dilakukan dengan membandingkan daftar \textit{audit event} hasil identifikasi dengan mekanisme pencatatan yang telah tersedia pada DecMed, yaitu \textit{PatientAccessLog} yang disimpan sebagai objek \textit{on-chain} serta riwayat transaksi (\textit{transaction history}) pada jaringan IOTA. Hasil analisis tersebut disajikan pada Tabel~\ref{tab:audit-event-gap}.
+
+\begin{xltabular}
+{\textwidth}
+{|>{\centering\arraybackslash}p{1cm}
+ |>{\raggedright\arraybackslash}p{2cm}
+ |>{\centering\arraybackslash}p{2cm}
+ |X|}
+
+\caption{Analisis Gap Audit Event pada DecMed}
+\label{tab:audit-event-gap}\\
+
+\hline
+\textbf{ID} &
+\textbf{Audit Event} &
+\textbf{Kondisi Saat Ini} &
+\textbf{Analisis Gap} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{ID} &
+\textbf{Audit Event} &
+\textbf{Kondisi Saat Ini} &
+\textbf{Analisis Gap} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\endlastfoot
+
+EV1 &
+Authentica\-tion &
+Tidak tersedia &
+Tidak terdapat mekanisme pencatatan aktivitas autentikasi pengguna sehingga percobaan autentikasi berhasil maupun gagal tidak dapat dijadikan bukti audit. \\
+\hline
+
+EV2 &
+QR Access Delegation Validation &
+Tidak tersedia &
+Proses validasi payload QR tidak menghasilkan audit record sehingga tidak tersedia bukti terhadap penyalahgunaan maupun manipulasi QR Access Delegation. \\
+\hline
+
+EV3 &
+Capability Creation &
+Sebagian &
+Aktivitas tercatat pada \textit{PatientAccessLog} dan transaksi \textit{on-chain}, namun informasi yang dicatat masih terbatas dan belum dirancang sebagai audit trail yang terintegrasi. \\
+\hline
+
+EV4 &
+Medical Record Access &
+Tidak tersedia &
+Aktivitas pembacaan maupun perubahan data rekam medis belum dicatat sebagai audit record sehingga sulit dilakukan penelusuran akses terhadap data pasien. \\
+\hline
+
+EV5 &
+Activation Key Issuance &
+Tidak tersedia &
+Tidak tersedia mekanisme audit terhadap proses penerbitan \textit{activation key}. \\
+\hline
+
+EV6 &
+Healthcare Facility Registration &
+Sebagian &
+Aktivitas registrasi direkam sebagai transaksi \textit{on-chain}, namun belum tersedia audit record yang mendokumentasikan informasi kontekstual aktivitas registrasi. \\
+\hline
+
+EV7 &
+PRE Service Request &
+Tidak tersedia &
+Aktivitas permintaan layanan pada PRE Server belum dicatat sebagai audit record. \\
+\hline
+
+EV8 &
+Re-encryption Operation &
+Tidak tersedia &
+Proses \textit{re-encryption} tidak menghasilkan bukti audit yang dapat digunakan dalam investigasi. \\
+\hline
+
+EV9 &
+Blockchain Transaction Submission &
+Sebagian &
+Riwayat transaksi tersedia pada jaringan IOTA, namun hanya merekam hasil transaksi tanpa informasi operasional yang lengkap mengenai proses pengiriman transaksi. \\
+\hline
+
+EV10 &
+Gas Sponsorship Request &
+Tidak tersedia &
+Tidak tersedia mekanisme audit terhadap permintaan sponsorship transaksi. \\
+\hline
+
+EV11 &
+Gas Sponsorship Decision &
+Tidak tersedia &
+Keputusan pemberian maupun penolakan sponsorship belum dicatat sebagai audit record. \\
+\hline
+
+EV12 &
+Client Key Store Operation &
+Tidak tersedia &
+Aktivitas pengelolaan material kriptografi pada sisi klien belum memiliki mekanisme audit. \\
+\hline
+
+EV13 &
+Client Key Store Access &
+Tidak tersedia &
+Akses terhadap material kriptografi tidak menghasilkan bukti audit. \\
+\hline
+
+EV14 &
+Sensitive Cache Object Operation &
+Tidak tersedia &
+Aktivitas penyimpanan objek sensitif pada Redis belum dicatat. \\
+\hline
+
+EV15 &
+Sensitive Cache Object Access &
+Tidak tersedia &
+Aktivitas pembacaan objek sensitif pada Redis belum dicatat. \\
+\hline
+
+EV16 &
+IPFS Object Access &
+Tidak tersedia &
+Aktivitas unggah maupun unduh objek pada IPFS belum memiliki mekanisme audit. \\
+\hline
+
+EV17 &
+IPFS Object Integrity Verification &
+Tidak tersedia &
+Tidak tersedia pencatatan terhadap proses verifikasi integritas objek pada IPFS. \\
+\hline
+
+EV18 &
+On-chain Metadata Access &
+Tidak tersedia &
+Aktivitas pembacaan metadata maupun objek \textit{on-chain} tidak dicatat sebagai audit record. \\
+\hline
+
+EV19 &
+Capability Validation &
+Tidak tersedia &
+Proses validasi \textit{capability} sebelum otorisasi akses belum menghasilkan audit record. \\
+\hline
+
+\end{xltabular}
+
+Berdasarkan hasil analisis pada Tabel~\ref{tab:audit-event-gap}, dapat diketahui bahwa DecMed telah menyediakan mekanisme pencatatan terhadap sebagian aktivitas melalui \textit{PatientAccessLog} dan riwayat transaksi pada jaringan IOTA. Namun, mekanisme tersebut hanya mencakup sebagian kecil \textit{audit event} yang dibutuhkan serta belum dirancang sebagai sebuah sistem \textit{audit trail}. Sebagian besar aktivitas penting, khususnya yang terjadi pada komponen \textit{Client}, PRE Server, Redis, maupun IPFS, belum menghasilkan bukti audit yang dapat digunakan dalam proses audit maupun investigasi insiden keamanan. Selain itu, informasi yang tersedia pada mekanisme pencatatan yang telah ada masih bersifat terbatas dan tersebar pada beberapa komponen sehingga belum mampu menyediakan jejak audit yang lengkap. Oleh karena itu, diperlukan mekanisme audit trail yang mampu mencatat seluruh \textit{audit event} yang telah diidentifikasi secara terintegrasi.

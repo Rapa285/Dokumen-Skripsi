@@ -1,6 +1,12 @@
 \section{Analisis}
 
 \subsection{Analisis Masalah}
+
+\subsection{Analisis Sistem DecMed}
+
+Sebagaimana dijelaskan pada Bab II.7, DecMed adalah kerangka kerja manajemen RME terdesentralisasi dengan menggunakan DLT IOTA sebagai penyimpanan on-chain, IPFS sebagai penyimpanan off-chain, serta PRE untuk mendukung
+distribusi akses data yang aman. Arsitektur ini sudah memberikan fondasi untuk menjaga integritas data dan mengurangi ketergantungan pada penyimpanan terpusat. Terdapat tiga aktor utama pada DecMed, yaitu:
+
 Rekam Medis Elektronik (RME) merupakan sistem yang mengelola data kesehatan pasien dalam bentuk digital sehingga membutuhkan jaminan keamanan, integritas, dan akuntabilitas terhadap setiap aktivitas yang terjadi di dalam sistem. Selain mekanisme perlindungan data, kemampuan untuk merekam dan menyimpan jejak aktivitas (\textit{audit trail}) juga menjadi aspek penting karena menyediakan bukti digital yang dapat digunakan dalam proses audit maupun investigasi insiden keamanan.
 
 Salah satu penelitian yang mengimplementasikan aspek keamanan pada RME adalah \textit{Decentralized Medical Record} (DecMed) \cite{DecMed}. Penelitian tersebut memanfaatkan \textit{Distributed Ledger Technology} (DLT) IOTA sebagai infrastruktur penyimpanan dan pengelolaan data rekam medis. Pendekatan tersebut menawarkan berbagai keunggulan, seperti sifat data yang sulit dimodifikasi (\textit{tamper resistant}), transparansi transaksi, serta mekanisme verifikasi yang terdistribusi. Meskipun implementasi tersebut telah berhasil meningkatkan aspek keamanan penyimpanan data, penelitian lebih berfokus pada pencegahan serangan dan perlindungan data. Aspek audit trail sebagai mekanisme untuk menghasilkan, menyimpan, dan mengelola bukti digital selama proses investigasi insiden keamanan masih belum menjadi fokus pembahasan.
@@ -21,7 +27,6 @@ Oleh karena itu, penelitian ini mengusulkan suatu sistem \textit{audit trail} ya
 
 \input{chapters/ta/chapter-3/analisis-masalah/analisis-ancaman.tex}
 
-\input{chapters/ta/chapter-3/analisis-masalah/analisis-kebutuhan.tex}
+\input{chapters/ta/chapter-3/analisis-masalah/analisis-kebutuhan/klasifikasi-event.tex}
 
-% \input{chapters/ta/chapter-3/analisis-kebutuhan-event-audit.tex}
-% \input{chapters/ta/chapter-3/analisis-kebutuhan-audit-trail.tex}
+\input{chapters/ta/chapter-3/analisis-masalah/analisis-kebutuhan.tex}
