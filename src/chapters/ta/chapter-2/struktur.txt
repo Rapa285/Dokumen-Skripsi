@@ -1,0 +1,44 @@
+BAB II STUDI LITERATUR
+
+II.1 Rekam Medis Elektronik                    [sudah ada, pertahankan]
+  II.1.1 Definisi dan Regulasi RME
+  II.1.2 Kebutuhan Keamanan dan Akuntabilitas
+
+II.2 Audit Trail                               [revisi dan perluas]
+  II.2.1 Definisi dan Konsep
+  II.2.2 Karakteristik Audit Trail yang Baik
+  II.2.3 Komponen dan Model Layanan Audit Trail [perluas dengan Annex B]
+    → trigger events, konten record, pengumpulan,
+      penyimpanan, pembacaan  [sudah ada]
+    → 7 komponen layanan ISO 27789 Annex B     [TAMBAH]
+  II.2.4 Kebutuhan Keamanan Audit Trail        [TAMBAH BARU]
+    → NIST SP 800-53 AU family (AU-2 s/d AU-14)
+  II.2.5 Mekanisme Integritas Audit Trail      [TAMBAH BARU]
+    → Hash-chaining
+    → Digital signature untuk non-repudiation
+    → Manajemen dan rotasi log (NIST SP 800-92)
+
+II.3 Pemodelan Ancaman dengan STRIDE           [revisi dan perluas]
+  II.3.1 Konsep dan Kategori STRIDE            [sudah ada]
+  II.3.2 Data Flow Diagram dalam Threat Modeling [TAMBAH BARU]
+    → DFD sebagai alat dekomposisi sistem
+    → Komponen DFD (proses, data store, data flow,
+      external entity, trust boundary)
+  II.3.3 Pendekatan STRIDE-per-Interaction     [TAMBAH BARU]
+    → Perbedaan dengan STRIDE-per-Element
+    → Tabel kategori STRIDE per tipe interaksi
+  II.3.4 Penurunan Kebutuhan Audit Event       [sudah ada, pertahankan]
+
+II.4 Kontrol Akses                             [sudah ada, pertahankan]
+  II.4.1 Definisi dan Jenis Kontrol Akses
+  II.4.2 Keterkaitan Kontrol Akses dan Audit Trail
+
+II.5 DLT dan Immutability                      [sudah ada, pertahankan]
+  II.5.1 DLT sebagai Basis Pencatatan Tidak Berubah
+  II.5.2 IOTA
+
+II.6 Arsitektur Layanan Pendukung              [sudah ada, pertahankan]
+  II.6.1 Pola Layanan Terpisah dalam DecMed
+  II.6.2 PRE dan IPFS
+
+II.7 Penelitian Terkait                        [sudah ada, pertahankan]

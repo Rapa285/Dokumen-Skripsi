@@ -132,9 +132,202 @@ Kemampuan pembacaan yang fleksibel semacam ini menjadi penting bagi pihak yang b
 \subsection{Konsep dan Kategori STRIDE}
 \label{subsec:konsep-kategori-stride}
 
-Threat modeling (pemodelan ancaman) merupakan proses terstruktur yang digunakan untuk mendeteksi kemungkinan kerentanan dan ancaman keamanan pada suatu sistem, mengukur tingkat keparahan dari setiap potensi risiko, serta memprioritaskan langkah perlindungan terhadap infrastruktur (\cite{laksono2021stride}). Proses threat modeling umumnya terdiri atas tiga tahap utama, yaitu dekomposisi aplikasi (memahami aplikasi dan bagaimana aplikasi tersebut berinteraksi dengan entitas eksternal), klasifikasi ancaman (mengidentifikasi dan menentukan kategori ancaman menggunakan suatu metodologi tertentu), dan penentuan tindakan pencegahan serta mitigasi (\cite{laksono2021stride}).
+\textit{Threat modeling} (pemodelan ancaman) merupakan proses terstruktur
+untuk mengidentifikasi, mengenumerasi, dan memprioritaskan ancaman
+keamanan pada suatu sistem sebelum ancaman tersebut benar-benar
+dieksploitasi (\cite{shostack2014}). Proses ini umumnya terdiri atas empat
+pertanyaan pokok: apa yang sedang dibangun, apa yang dapat salah,
+apa yang perlu dilakukan terhadap hal tersebut, dan apakah pekerjaan
+tersebut telah dilakukan dengan cukup baik (\cite{shostack2014}).
 
-STRIDE merupakan salah satu metodologi klasifikasi ancaman yang dikembangkan oleh Microsoft, dengan nama yang dibentuk dari huruf pertama masing-masing kategori ancaman, yaitu \textit{Spoofing}, \textit{Tampering}, \textit{Repudiation}, \textit{Information Disclosure}, \textit{Denial of Service}, dan \textit{Elevation of Privilege} (\cite{laksono2021stride}). Keenam kategori tersebut didefinisikan sebagai berikut. \textit{Spoofing} adalah tindak ancaman yang ditujukan untuk mengakses dan menggunakan kredensial pengguna lain secara ilegal, seperti nama dan sandi pengguna. \textit{Tampering} adalah tindak ancaman yang bertujuan mengubah data, baik data yang tersimpan dalam basis data maupun data pada saat transit melalui jaringan. \textit{Repudiation} adalah tindak ancaman berupa perbuatan ilegal dalam suatu sistem yang tidak memiliki kemampuan untuk melacak tindakan yang telah dilakukan. \textit{Information Disclosure} adalah tindak ancaman berupa perbuatan membaca berkas secara tidak sah, atau membaca data pada saat transit. \textit{Denial of Service} adalah tindak ancaman yang bertujuan menolak akses ke pengguna yang valid. \textit{Elevation of Privilege} adalah tindak ancaman yang bertujuan memperoleh hak akses lebih tinggi agar dapat mengakses informasi atau menyusup ke sistem secara tidak sah (\cite{laksono2021stride}).
+STRIDE merupakan salah satu kerangka kerja \textit{threat modeling} yang
+dikembangkan oleh Loren Kohnfelder dan Praerit Garg di Microsoft, dengan
+nama yang dibentuk dari huruf pertama masing-masing kategori ancaman
+(\cite{shostack2014}). Kerangka kerja ini dirancang untuk membantu
+pengembang perangkat lunak mengidentifikasi jenis-jenis serangan yang
+cenderung dialami suatu sistem. Setiap kategori STRIDE merupakan
+kebalikan dari properti keamanan yang diinginkan pada suatu sistem,
+sebagaimana ditunjukkan pada Tabel~\ref{tab:stride-kategori}.
+
+\begin{table}[h]
+\centering
+\caption{Kategori Ancaman STRIDE dan Properti Keamanan yang Dilanggar}
+\label{tab:stride-kategori}
+\begin{tabular}{|p{2.5cm}|p{3cm}|p{7cm}|}
+\hline
+\textbf{Kategori} & \textbf{Properti yang Dilanggar} & \textbf{Definisi} \\
+\hline
+Spoofing & Authentication &
+Berpura-pura menjadi sesuatu atau seseorang selain diri sendiri. \\
+\hline
+Tampering & Integrity &
+Memodifikasi sesuatu pada disk, jaringan, atau memori. \\
+\hline
+Repudiation & Non-repudiation &
+Mengklaim tidak melakukan sesuatu atau tidak bertanggung jawab
+atas suatu tindakan. \\
+\hline
+Information Disclosure & Confidentiality &
+Memberikan informasi kepada pihak yang tidak berwenang
+untuk melihatnya. \\
+\hline
+Denial of Service & Availability &
+Menyerap sumber daya yang dibutuhkan untuk menyediakan layanan. \\
+\hline
+Elevation of Privilege & Authorization &
+Memungkinkan seseorang melakukan sesuatu yang tidak
+diizinkan untuk dilakukan. \\
+\hline
+\end{tabular}
+\end{table}
+
+Kategori \textit{Repudiation} memiliki karakteristik yang berbeda dari
+kategori lainnya: ancaman ini beroperasi pada lapisan bisnis, bukan
+semata pada lapisan teknis jaringan atau aplikasi (\cite{shostack2014}).
+Penting untuk dipahami bahwa repudiasi tidak selalu merupakan tindakan
+jahat --- seseorang dapat secara jujur menyatakan tidak melakukan sesuatu
+karena kegagalan teknologi atau proses. Oleh karena itu, pertanyaan
+kunci bagi perancang sistem adalah: \textit{bukti apa yang dimiliki sistem
+untuk membantah atau membuktikan suatu klaim?} Apabila sistem tidak
+memiliki log, tidak menyimpan log, atau tidak dapat menganalisis log,
+ancaman repudiasi menjadi sangat sulit untuk dibantah (\cite{shostack2014}).
+Hal ini menegaskan keterkaitan langsung antara kategori \textit{Repudiation}
+pada STRIDE dengan kebutuhan mekanisme audit trail pada suatu sistem.
+
+\subsection{Dekomposisi Sistem dan Data Flow Diagram dalam Threat Modeling}
+\label{subsec:dfd-threat-modeling}
+
+Sebelum mengidentifikasi ancaman menggunakan STRIDE, suatu sistem
+perlu didekomposisi terlebih dahulu untuk memperoleh pemahaman
+menyeluruh mengenai cara kerja sistem dan bagaimana sistem tersebut
+berinteraksi dengan entitas eksternal (\cite{shostack2014}). Dekomposisi
+ini umumnya mencakup identifikasi deskripsi sistem, dependensi eksternal,
+titik masuk (\textit{entry points}), aset yang perlu dilindungi, dan
+tingkat kepercayaan (\textit{trust level}) dari setiap entitas yang
+terlibat.
+
+\textit{Data Flow Diagram} (DFD) merupakan alat utama yang digunakan
+dalam tahap dekomposisi ini. DFD menggambarkan bagaimana data mengalir
+di antara elemen-elemen sistem, sehingga memungkinkan analis untuk
+mengidentifikasi di mana ancaman keamanan paling mungkin muncul
+(\cite{shostack2014}). DFD dalam konteks \textit{threat modeling} terdiri
+atas empat elemen dasar:
+
+\begin{itemize}
+    \item \textbf{Proses} (\textit{process}) -- elemen yang menerima,
+    mengolah, dan mengirimkan data; direpresentasikan sebagai lingkaran
+    atau persegi panjang dengan sudut membulat.
+    \item \textbf{Penyimpanan data} (\textit{data store}) -- tempat data
+    disimpan secara persisten; direpresentasikan sebagai dua garis
+    paralel.
+    \item \textbf{Aliran data} (\textit{data flow}) -- perpindahan data
+    antar elemen; direpresentasikan sebagai panah berlabel.
+    \item \textbf{Entitas eksternal} (\textit{external entity}) --
+    aktor atau sistem di luar kendali sistem yang dianalisis;
+    direpresentasikan sebagai persegi panjang.
+\end{itemize}
+
+Elemen tambahan yang krusial dalam \textit{threat modeling} adalah
+\textbf{batas kepercayaan} (\textit{trust boundary}), yang memisahkan
+bagian-bagian sistem dengan tingkat kepercayaan berbeda dan
+direpresentasikan sebagai garis putus-putus. Ancaman paling signifikan
+umumnya muncul pada aliran data yang melintasi batas kepercayaan ini,
+karena pada titik itulah asumsi mengenai kepercayaan terhadap data
+maupun pengirimnya berubah (\cite{shostack2014}).
+
+\subsection{Pendekatan STRIDE-per-Interaction}
+\label{subsec:stride-per-interaction}
+
+Terdapat dua pendekatan utama dalam menerapkan STRIDE pada DFD suatu
+sistem: STRIDE-per-element dan STRIDE-per-interaction (\cite{shostack2014}).
+
+\textbf{STRIDE-per-element} merupakan pendekatan yang lebih sederhana,
+di mana setiap elemen DFD (proses, penyimpanan data, aliran data, entitas
+eksternal) diperiksa terhadap subset kategori STRIDE yang paling relevan
+bagi tipe elemen tersebut. Pendekatan ini mudah dipelajari dan dapat
+digunakan tanpa memerlukan tabel referensi yang kompleks, namun cenderung
+menghasilkan ancaman yang serupa berulang kali pada model yang besar
+(\cite{shostack2014}).
+
+\textbf{STRIDE-per-interaction} merupakan pendekatan yang lebih rinci,
+di mana ancaman diperiksa berdasarkan setiap interaksi antar elemen
+dalam bentuk tuple (asal, tujuan, jenis interaksi), bukan berdasarkan
+elemen secara individual (\cite{shostack2014}). Pendekatan ini
+dikembangkan oleh Larry Osterman dan Douglas MacIver di Microsoft.
+Keunggulan utamanya adalah bahwa ancaman diidentifikasi dalam konteks
+interaksi nyata yang terjadi pada sistem, sehingga lebih mudah dipahami
+dan lebih langsung terhubung ke keputusan perancangan yang perlu diambil
+(\cite{shostack2014}).
+
+Pada STRIDE-per-interaction, tidak semua kategori STRIDE relevan untuk
+setiap tipe interaksi. Tabel~\ref{tab:stride-per-interaction} menunjukkan
+kategori STRIDE yang relevan untuk setiap tipe interaksi berdasarkan
+kerangka yang dikembangkan oleh Shostack (\cite{shostack2014}).
+
+\begin{table}[h]
+\centering
+\caption{Relevansi Kategori STRIDE per Tipe Interaksi}
+\label{tab:stride-per-interaction}
+\begin{tabular}{|p{5.5cm}|c|c|c|c|c|c|}
+\hline
+\textbf{Tipe Interaksi} & \textbf{S} & \textbf{T} & \textbf{R} &
+\textbf{I} & \textbf{D} & \textbf{E} \\
+\hline
+Proses mengirim output ke proses lain &
+\checkmark & \checkmark & \checkmark & \checkmark & & \checkmark \\
+\hline
+Proses mengirim output ke entitas eksternal (kode) &
+\checkmark & & \checkmark & \checkmark & & \\
+\hline
+Proses mengirim output ke entitas eksternal (manusia) &
+& & \checkmark & & & \\
+\hline
+Proses menerima input dari penyimpanan data &
+\checkmark & \checkmark & \checkmark & \checkmark & & \\
+\hline
+Proses menerima input dari proses lain &
+\checkmark & & \checkmark & & \checkmark & \checkmark \\
+\hline
+Proses menerima input dari entitas eksternal &
+\checkmark & & \checkmark & & \checkmark & \checkmark \\
+\hline
+Proses mengirim output ke penyimpanan data &
+& \checkmark & \checkmark & \checkmark & \checkmark & \\
+\hline
+Aliran data melintasi batas mesin/jaringan &
+\checkmark & \checkmark & & \checkmark & \checkmark & \\
+\hline
+Penyimpanan data menerima aliran data dari proses &
+& \checkmark & \checkmark & \checkmark & \checkmark & \\
+\hline
+Penyimpanan data mengirim aliran data ke proses &
+& \checkmark & \checkmark & \checkmark & \checkmark & \\
+\hline
+Entitas eksternal mengirim input ke proses &
+\checkmark & & \checkmark & \checkmark & & \\
+\hline
+Entitas eksternal menerima input dari proses &
+\checkmark & & \checkmark & & & \\
+\hline
+\end{tabular}
+\end{table}
+
+Sebagai ilustrasi penerapan tabel tersebut: ketika sebuah proses
+menerima \textit{input} dari entitas eksternal, ancaman yang relevan
+adalah \textit{Spoofing} (entitas eksternal yang mengirim data mungkin
+bukan entitas yang sebenarnya), \textit{Repudiation} (entitas eksternal
+dapat menyangkal pernah mengirimkan data tersebut), dan
+\textit{Elevation of Privilege} (entitas eksternal dapat mengirim data
+yang memaksa proses melakukan sesuatu di luar kewenangan pengirim).
+Sebaliknya, \textit{Tampering} dan \textit{Denial of Service} kurang
+relevan pada interaksi ini karena proses yang menerima data umumnya
+sudah memiliki kendali penuh atas cara data tersebut diproses
+(\cite{shostack2014}).
+
+STRIDE-per-interaction memerlukan tabel referensi untuk digunakan
+secara efektif, namun menghasilkan ancaman yang lebih kontekstual
+dan lebih mudah dihubungkan ke keputusan mitigasi yang spesifik
+(\cite{shostack2014}).
 
 \subsection{Penurunan Kebutuhan Audit Event dari Analisis Ancaman}
 \label{subsec:penurunan-event-stride}
