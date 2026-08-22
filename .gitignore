@@ -17,7 +17,7 @@ texmf
 .directory
 build/*
 src/build/*
-!src/build/thesis.pdf
+build/thesis.pdf
 .idea
 *.pdf
 __pycache__

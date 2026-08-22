@@ -1,0 +1,153 @@
+
+
+\section{Lingkungan Implementasi}
+
+Implementasi dilakukan pada lingkungan yang sama dengan yang digunakan pada penelitian DecMed sebelumnya, sebagaimana dijelaskan pada Subbab~\ref{sec:batasan-masalah}. Komponen ATS berjalan sebagai layanan \textit{backend} Rust yang berdiri sendiri di lingkungan lokal bersama PRE Server. Daftar dependensi utama yang digunakan pada implementasi ATS ditunjukkan pada Tabel~\ref{tab:dependensi-ats}.
+
+\begin{table}[h]
+\centering
+\caption{Dependensi Utama Audit Trail Service}
+\label{tab:dependensi-ats}
+\begin{tabular}{|p{3.5cm}|p{2cm}|p{6.5cm}|}
+\hline
+\textbf{Dependensi} & \textbf{Versi} & \textbf{Fungsi} \\
+\hline
+\texttt{axum} & 0.8.4 & \textit{Web framework} HTTP untuk endpoint penerimaan \textit{audit event}. \\
+\hline
+\texttt{tokio} & 1.44.2 & \textit{Async runtime} Rust untuk pemrosesan konkuren. \\
+\hline
+\texttt{serde} / \texttt{serde\_json} & 1.x & Serialisasi dan deserialisasi data JSON. \\
+\hline
+\texttt{ed25519-dalek} & 3.0.0 & Verifikasi tanda tangan digital Ed25519 pada \textit{signed event}. \\
+\hline
+\texttt{sha2} & 0.10 & Komputasi \textit{hash} SHA-256 untuk mekanisme \textit{hash-chaining}. \\
+\hline
+\texttt{uuid} & 1.x & Pembangkitan \texttt{record\_id} berbasis UUID v7 yang bersifat monoton. \\
+\hline
+\texttt{chrono} & 0.4.39 & Penanganan waktu dan \textit{timestamp} dalam format UTC. \\
+\hline
+\texttt{iota-sdk} & 1.2.0-alpha & Interaksi dengan jaringan IOTA untuk publikasi metadata rotasi log. \\
+\hline
+\texttt{reqwest} & 0.12 & Klien HTTP untuk unggah berkas ke IPFS dan interaksi dengan Gas Station. \\
+\hline
+\texttt{tokio-util} & 0.7.11 & \textit{Streaming} berkas saat unggah ke IPFS menggunakan \texttt{BytesCodec}. \\
+\hline
+\end{tabular}
+\end{table}
+
+Pada PRE Server yang telah ada, dependensi \texttt{ed25519-dalek} versi 2.x ditambahkan untuk mendukung pembangkitan pasangan kunci penandatanganan event pada sisi pengirim.
+
+\section{Implementasi}
+
+Implementasi sistem audit trail pada penelitian ini terdiri atas dua bagian utama. Pertama, implementasi komponen-komponen internal ATS sebagai layanan \textit{backend} yang berdiri sendiri. Kedua, implementasi integrasi ATS ke dalam PRE Server yang telah ada pada arsitektur DecMed. Daftar komponen yang diimplementasikan beserta keterkaitan dengan rancangan ditunjukkan pada Tabel~\ref{tab:daftar-implementasi-ats}.
+
+\begin{table}[h]
+\centering
+\caption{Daftar Implementasi Sistem Audit Trail}
+\label{tab:daftar-implementasi-ats}
+\begin{tabular}{|p{1.8cm}|p{4cm}|p{6.2cm}|}
+\hline
+\textbf{ID} & \textbf{Komponen} & \textbf{Merealisasikan Rancangan} \\
+\hline
+I-ATS-01 & Skema tipe data \texttt{AuditEvent} dan \texttt{AuditRecord}. & Katalog \textit{audit event} (EV1--EV18) dan skema atribut audit pada Tabel~\ref{tab:skema-umum-audit-record}--\ref{tab:detail-audit-record}. \\
+\hline
+I-ATS-02 & Endpoint \texttt{POST /api/events} dan mekanisme verifikasi \textit{signed event}. & Komponen Audit Receiver pada rancangan ATS. \\
+\hline
+I-ATS-03 & Komponen \texttt{AuditLogger} dengan antrian asinkron internal. & Komponen Audit Logger dengan mekanisme \textit{hash-chaining}. \\
+\hline
+I-ATS-04 & Worker rotasi log, unggah IPFS, dan publikasi metadata ke IOTA. & Komponen Log Rotation \& Archival Worker. \\
+\hline
+I-ATS-05 & Modul \texttt{ats} pada PRE Server dan \texttt{ATSClient}. & Integrasi ATS ke dalam arsitektur DecMed. \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Implementasi Skema Tipe Data Audit}
+
+Implementasi skema tipe data audit merealisasikan katalog \textit{audit event} dan skema atribut yang telah ditentukan pada Subbab~\ref{subsec:analisis-kebutuhan-audit-event}. Seluruh tipe data didefinisikan pada berkas \texttt{audit-trail/src/types.rs}.
+
+Tipe data \texttt{AuditEvent} mewakili satu peristiwa audit yang diterima dari komponen pengirim. Tipe ini memuat atribut umum yang wajib ada pada seluruh jenis \textit{event} serta atribut tambahan yang spesifik terhadap jenis \textit{event} melalui mekanisme \textit{tagged enum} \texttt{AuditEventDetails}. Pendekatan ini memungkinkan satu struktur data tunggal merepresentasikan seluruh 18 jenis \textit{event} (EV1--EV18) yang telah diidentifikasi, dengan validasi tipe yang dijalankan oleh \textit{compiler} Rust pada waktu kompilasi.
+
+\texttt{AuditEventDetails} diimplementasikan sebagai \textit{tagged enum} dengan anotasi \texttt{\#[serde(tag = "event\_type")]} sehingga nilai \texttt{event\_type} pada JSON yang masuk menentukan varian enum yang akan diparsing. Setiap varian memuat atribut tambahan yang spesifik terhadap jenis \textit{event} sesuai Tabel~\ref{tab:detail-audit-record}. Sebagai contoh, varian \texttt{EV6} untuk \textit{event} permintaan layanan PRE memuat atribut \texttt{endpoint\_called}, \texttt{request\_id}, \texttt{caller\_component}, dan \texttt{channel\_encryption}.
+
+Tipe data \texttt{AuditRecord} mewakili catatan audit yang telah terbentuk dan siap disimpan. Tipe ini memuat \texttt{record\_id} berbasis UUID v7, \texttt{timestamp} dalam format UTC, \texttt{prev\_record\_hash} untuk membentuk rantai \textit{hash}, \texttt{record\_hash} sebagai sidik jari \textit{record}, serta seluruh atribut \texttt{AuditEvent} melalui mekanisme \texttt{\#[serde(flatten)]}. Penggunaan \texttt{flatten} memastikan seluruh atribut \textit{event} diserialisasi pada tingkat yang sama dengan atribut \textit{record} sehingga berkas JSON-Lines yang dihasilkan mudah dibaca.
+
+Tipe data \texttt{SignedEvent} mewakili struktur yang diterima dari komponen pengirim melalui endpoint HTTP. Tipe ini memuat tiga bidang: \texttt{payload} sebagai representasi JSON dari \textit{audit event}, \texttt{signature} sebagai tanda tangan digital Ed25519 atas \texttt{payload} dalam representasi heksadesimal, dan \texttt{public\_key} sebagai kunci publik pengirim dalam representasi heksadesimal.
+
+\texttt{AuditOutcome} diimplementasikan sebagai enum dengan empat varian: \texttt{Success}, \texttt{Failure}, \texttt{Denied}, dan \texttt{Unknown}, merealisasikan atribut \texttt{outcome} pada skema atribut umum Tabel~\ref{tab:skema-umum-audit-record}.
+
+\subsection{Implementasi Audit Receiver}
+
+Komponen Audit Receiver diimplementasikan melalui handler \texttt{handle\_event} pada berkas \texttt{audit-trail/src/handlers.rs} dan \textit{routing} pada \texttt{audit-trail/src/main.rs}. Endpoint \texttt{POST /api/events} menerima \textit{request} berisi objek \texttt{SignedEvent} dalam format JSON.
+
+Proses pada handler \texttt{handle\_event} terdiri atas dua fase. Fase pertama adalah verifikasi sumber \textit{event} melalui fungsi \texttt{Utils::verify\_and\_extract\_event}. Fungsi ini melakukan tiga langkah: mendekode kunci publik dari representasi heksadesimal menjadi \texttt{VerifyingKey} Ed25519, mendekode tanda tangan dari representasi heksadesimal menjadi \texttt{Signature} Ed25519, kemudian memverifikasi tanda tangan terhadap byte-byte \textit{payload}. Apabila verifikasi berhasil, \textit{payload} string diurai menjadi objek \texttt{AuditEvent}. Apabila verifikasi gagal, handler mengembalikan respons \textit{error} tanpa memproses \textit{event} lebih lanjut.
+
+Fase kedua adalah memasukkan \textit{event} yang telah terverifikasi ke dalam antrian asinkron internal melalui \texttt{state.audit\_tx.send(audit\_event).await}. Antrian ini diimplementasikan menggunakan \texttt{tokio::sync::mpsc} dengan kapasitas 10.000 event, memastikan ATS dapat menerima \textit{event} dalam jumlah besar tanpa memblokir pengirim.
+
+Struktur \texttt{Handlers} hanya menyimpan \texttt{audit\_tx} bertipe \texttt{Sender<AuditEvent>} sebagai satu-satunya \textit{state}. Desain ini dengan sengaja memisahkan proses penerimaan \textit{event} dari proses pembentukan dan penyimpanan \textit{audit record}, sehingga keduanya dapat berjalan secara konkuren tanpa saling memblokir.
+
+\subsection{Implementasi Audit Logger}
+
+Komponen Audit Logger diimplementasikan sebagai \texttt{struct AuditLogger} pada berkas \texttt{audit-trail/src/audit.rs}. Komponen ini berjalan sebagai \textit{task} Tokio terpisah yang di-\textit{spawn} pada saat aplikasi dimulai, menerima \textit{event} dari antrian asinkron, membentuk \textit{audit record}, dan menulis ke berkas log.
+
+\texttt{AuditLogger} menyimpan dua bidang: \texttt{rx} bertipe \texttt{Receiver<AuditEvent>} sebagai sisi penerima antrian asinkron, dan \texttt{prev\_record\_hash} bertipe \texttt{Option<String>} sebagai hash dari \textit{record} sebelumnya untuk keperluan \textit{hash-chaining}. Bidang \texttt{prev\_record\_hash} diinisialisasi dengan \texttt{None} pada \textit{record} pertama dalam satu siklus kerja ATS.
+
+Metode \texttt{run} menjalankan \textit{loop} utama yang terus berjalan selama pengirim masih aktif, menggunakan pola \texttt{while let Some(event) = self.rx.recv().await}. Untuk setiap \textit{event} yang diterima, \textit{loop} melakukan tiga langkah berurutan. Pertama, memanggil fungsi \texttt{create\_audit\_record} untuk membentuk \texttt{AuditRecord} baru. Kedua, memanggil fungsi \texttt{write\_audit\_record} untuk menulis \textit{record} ke berkas log. Ketiga, memperbarui \texttt{self.prev\_record\_hash} dengan \textit{hash} dari \textit{record} yang baru saja ditulis.
+
+Fungsi \texttt{create\_audit\_record} merealisasikan mekanisme \textit{hash-chaining} dengan langkah-langkah berikut: membangkitkan \texttt{record\_id} baru menggunakan \texttt{Uuid::now\_v7()}, mengambil waktu saat ini menggunakan \texttt{Utc::now()}, kemudian mendelegasikan komputasi \textit{hash} ke \texttt{Utils::calculate\_record\_hash}. Fungsi \texttt{calculate\_record\_hash} menggabungkan \texttt{record\_id}, \texttt{timestamp}, \texttt{prev\_record\_hash}, dan isi \textit{event} menjadi satu objek JSON, kemudian menghitung SHA-256 dari representasi JSON tersebut dan mengembalikannya sebagai string heksadesimal.
+
+Fungsi \texttt{write\_audit\_record} membuka berkas log dengan mode \textit{append} menggunakan \texttt{OpenOptions::new().create(true).append(true)}, kemudian menulis representasi JSON dari \textit{record} diikuti karakter baris baru (\texttt{\textbackslash n}). Penggunaan mode \textit{append} menjamin bahwa entri yang sudah ada tidak pernah tertimpa, merealisasikan karakteristik \textit{append-only} yang disyaratkan oleh NFR-04. Konstanta \texttt{LOG\_FILE\_PATH} yang merujuk ke \texttt{./logs/audit\_logs.log} didefinisikan pada \texttt{audit-trail/src/constants.rs} dan digunakan sebagai satu-satunya referensi jalur berkas log di seluruh kode ATS.
+
+\subsection{Implementasi Log Rotation dan Archival Worker}
+
+Komponen Log Rotation \& Archival Worker diimplementasikan sebagai fungsi \texttt{Utils::spawn\_log\_rotation\_worker} pada berkas \texttt{audit-trail/src/utils.rs}. Fungsi ini menerima satu argumen \texttt{package\_id} yang merupakan ID paket \textit{smart contract} ATS pada jaringan IOTA, kemudian men-\textit{spawn} sebuah \textit{task} Tokio yang berjalan selamanya dengan interval yang dapat dikonfigurasi melalui konstanta \texttt{LOG\_ROTATION\_INTERVAL\_SECS}.
+
+Setiap siklus rotasi, worker melakukan tiga tahap berurutan.
+
+\textbf{Tahap 1 -- Rotasi berkas log.} Worker memeriksa apakah berkas log aktif ada dan tidak kosong. Apabila berkas kosong, siklus dilewati. Apabila berkas berisi data, worker membentuk nama berkas arsip baru dengan format \texttt{logs/uploading\_\{timestamp\}.log} menggunakan \textit{Unix timestamp} saat ini, kemudian memindahkan berkas log aktif ke nama arsip baru menggunakan \texttt{fs::rename}. Operasi \texttt{rename} bersifat atomik pada sistem berkas Linux sehingga tidak terjadi kehilangan \textit{record} yang sedang ditulis oleh Audit Logger.
+
+\textbf{Tahap 2 -- Unggah ke IPFS.} Worker menghitung nilai \textit{hash} SHA-256 dari berkas arsip menggunakan \texttt{IotaLogClient::hash\_file}, kemudian mengunggah berkas ke IPFS Cluster melalui fungsi \texttt{Utils::add\_file\_to\_ipfs}. Fungsi ini menggunakan \texttt{FramedRead} dengan \texttt{BytesCodec} untuk melakukan \textit{streaming} berkas tanpa memuat seluruh konten ke memori sekaligus, yang penting untuk berkas log berukuran besar. Respons dari IPFS menghasilkan CID yang menjadi penanda konten berkas.
+
+\textbf{Tahap 3 -- Publikasi metadata ke IOTA.} Worker membentuk objek \texttt{IotaLogMetadata} yang memuat informasi rotasi, termasuk CID hasil unggah IPFS, nilai \textit{hash} berkas (\texttt{file\_hash}), nomor urut rotasi (\texttt{log\_sequence\_number}), waktu rotasi, dan referensi \textit{transaction digest} rotasi sebelumnya (\texttt{prev\_tx\_digest}). Bidang \texttt{prev\_tx\_digest} membentuk rantai antar entri metadata \textit{on-chain}, analog dengan mekanisme \textit{hash-chaining} pada \textit{audit record}. Metadata tersebut kemudian diterbitkan ke jaringan IOTA melalui \texttt{IotaLogClient::publish\_metadata}.
+
+Implementasi \texttt{IotaLogClient} pada berkas \texttt{audit-trail/src/iota\_client.rs} menangani seluruh interaksi dengan jaringan IOTA. Fungsi \texttt{publish\_metadata} melakukan serangkaian langkah: menserialisasi metadata ke JSON string, membangun transaksi IOTA menggunakan \texttt{ProgrammableTransactionBuilder}, mereservasi \textit{gas} dari Gas Station Server, menandatangani transaksi dengan kunci privat ATS, kemudian mengeksekusi transaksi melalui Gas Station Server. Apabila transaksi berhasil, fungsi mengembalikan \texttt{PublishResult} yang memuat \texttt{object\_id} objek \texttt{LogRecord} yang dibuat \textit{on-chain} serta \texttt{tx\_digest} transaksi.
+
+\textit{Smart contract} Move yang digunakan ATS didefinisikan pada \texttt{move/ats/sources/audit\_trail.move}. Modul \texttt{ats::audit\_log} menyediakan fungsi \texttt{create\_log} yang menerima string JSON metadata kemudian membuat objek \texttt{LogRecord} yang di-\textit{freeze} sehingga bersifat \textit{immutable} setelah dibuat. Pembekuan objek (\texttt{transfer::freeze\_object}) adalah mekanisme utama yang menjamin sifat \textit{immutability} metadata rotasi log pada jaringan IOTA, merealisasikan NFR-01 dan NFR-05.
+
+Setelah publikasi ke IOTA berhasil, worker memperbarui \texttt{prev\_tx\_digest} untuk siklus berikutnya dan menghapus berkas arsip dari penyimpanan lokal menggunakan \texttt{fs::remove\_file}. Retensi jangka panjang bergantung pada mekanisme \textit{pinning} IPFS Cluster yang telah digunakan DecMed.
+
+\subsection{Implementasi Integrasi ATS pada PRE Server}
+
+Integrasi ATS ke dalam PRE Server yang telah ada diimplementasikan melalui penambahan modul \texttt{ats} pada direktori \texttt{proxy-reencryption/src/ats/}. Modul ini terdiri atas dua berkas: \texttt{ats.rs} yang memuat implementasi utama dan \texttt{mod.rs} yang mengekspor tipe-tipe publik.
+
+\textbf{Tipe data bersama.} Berkas \texttt{ats.rs} mendefinisikan ulang tipe-tipe data \texttt{AuditEvent}, \texttt{AuditOutcome}, dan \texttt{AuditEventDetails} yang strukturnya setara dengan yang ada di ATS. Pendekatan ini dipilih agar PRE Server tidak bergantung pada \textit{crate} ATS secara langsung, mempertahankan independensi antarkomponen. Varian \texttt{AuditEventDetails} yang diimplementasikan pada PRE Server mencakup jenis \textit{event} yang relevan dengan operasi PRE: \texttt{EV6} untuk permintaan layanan PRE, \texttt{EV7} untuk operasi \textit{re-encryption}, \texttt{EV13} untuk penulisan Redis, \texttt{EV14} untuk pembacaan Redis, dan \texttt{EV15} untuk operasi IPFS. Tipe \texttt{SignedAuditEvent} mendefinisikan struktur JSON yang akan dikirimkan ke endpoint \texttt{POST /api/events} pada ATS.
+
+\textbf{Implementasi \texttt{ATSClient}.} Struct \texttt{ATSClient} bertanggung jawab mengelola pasangan kunci Ed25519 untuk penandatanganan \textit{event} serta mengirimkan \textit{signed event} ke ATS. Kunci Ed25519 dibangkitkan secara acak pada saat inisialisasi menggunakan \texttt{SigningKey::generate(\&mut OsRng)}, sehingga setiap instans PRE Server memiliki kunci penandatanganan yang unik. Kunci publik yang bersesuaian disertakan pada setiap \textit{signed event} agar ATS dapat memverifikasi tanda tangan tanpa perlu menyimpan daftar kunci yang diizinkan.
+
+\texttt{ATSClient} menyediakan dua metode pengiriman. Metode \texttt{send\_event} bersifat \textit{async} dan menunggu respons dari ATS, berguna ketika kode pemanggil perlu menangani \textit{error} pengiriman. Metode \texttt{send\_event\_nonblocking} men-\textit{spawn} \textit{task} Tokio terpisah yang berjalan secara \textit{fire-and-forget}; apabila pengiriman gagal, \textit{error} hanya dicatat ke \textit{stderr} tanpa memblokir alur utama. Metode kedua inilah yang digunakan di seluruh handler PRE Server agar operasi audit tidak menambah latensi pada alur layanan utama.
+
+Implementasi \texttt{ATSWorker} sebagai \textit{helper} internal menangani proses penandatanganan dan pengiriman pada \textit{spawned task}. Worker ini menyalin byte-byte kunci penandatanganan dari \texttt{ATSClient} agar dapat merekonstruksi \texttt{SigningKey} di dalam task yang bersifat \texttt{'static}. Proses penandatanganan menggunakan \texttt{self.signing\_key.sign(\&payload\_bytes)} dari \textit{trait} \texttt{Signer} pada \textit{crate} \texttt{ed25519-dalek}, menghasilkan tanda tangan 64-byte yang kemudian dikodekan sebagai heksadesimal.
+
+\textbf{Integrasi ke \texttt{AppState}.} Bidang \texttt{ats\_client: ATSClient} ditambahkan pada struct \texttt{AppState} di \texttt{proxy-reencryption/src/types.rs}. Inisialisasi dilakukan pada \texttt{main.rs} dengan membaca \texttt{ATS\_ENDPOINT} dari \textit{environment variable}, kemudian memanggil \texttt{ATSClient::with\_endpoint(\&ats\_endpoint)}. Nilai \textit{default} endpoint adalah \texttt{http://localhost:3000/api/events} apabila variabel tidak dikonfigurasi.
+
+\textbf{Instrumentasi handler.} Tiga handler PRE Server diinstrumentasi untuk mengirimkan \textit{audit event}:
+
+\begin{enumerate}
+    \item Handler \texttt{get\_nonce\_handler} mengirimkan \textit{event} EV6 (\texttt{PRERequest}) setelah \textit{nonce} berhasil disimpan di Redis, mencatat endpoint yang dipanggil, ID permintaan, komponen pemanggil, dan status enkripsi kanal.
+
+    \item Handler \texttt{store\_keys} mengirimkan \textit{event} EV13 (\texttt{RedisWrite}) setelah kunci PRE berhasil disimpan di Redis, mencatat jenis kunci Redis, jenis operasi, dan TTL yang tersisa dalam detik.
+
+    \item Handler \texttt{create\_medical\_record} mengirimkan \textit{event} EV15 (\texttt{IPFSOperation}) setelah data terenkripsi berhasil diunggah ke IPFS, mencatat CID yang dihasilkan, jenis operasi, dan ukuran data.
+\end{enumerate}
+
+Seluruh instrumentasi menggunakan metode \texttt{send\_event\_nonblocking} agar tidak menambah latensi pada alur utama. Variabel \textit{environment} \texttt{ATS\_ENDPOINT} pada berkas \texttt{proxy-reencryption/.env} dikonfigurasi ke \texttt{http://localhost:3000/api/events} agar PRE Server mengirimkan event ke instans ATS yang berjalan di lingkungan lokal.
+
+\subsection{Implementasi Verifikasi Integritas Audit Record}
+
+Fungsi \texttt{Utils::verify\_record} pada berkas \texttt{audit-trail/src/utils.rs} merealisasikan mekanisme verifikasi integritas satu \textit{audit record}. Fungsi ini menghitung ulang \texttt{record\_hash} dari \texttt{record\_id}, \texttt{timestamp}, \texttt{prev\_record\_hash}, dan isi \textit{event} menggunakan \texttt{calculate\_record\_hash}, kemudian membandingkannya dengan \texttt{record\_hash} yang tersimpan. Kesamaan nilai keduanya membuktikan bahwa \textit{record} tidak mengalami modifikasi sejak dibuat.
+
+Verifikasi rantai secara penuh dilakukan dengan memeriksa setiap \textit{record} secara berurutan: nilai \texttt{prev\_record\_hash} setiap \textit{record} harus sama persis dengan \texttt{record\_hash} dari \textit{record} sebelumnya. Apabila terdapat \textit{record} yang dihapus, ditambahkan, atau dimodifikasi di tengah rantai, nilai \texttt{record\_hash} seluruh \textit{record} sesudahnya akan menjadi tidak konsisten dan verifikasi akan gagal.
+
+\section{Pengujian}
+
+\textit{[Bagian pengujian akan ditambahkan setelah implementasi selesai diverifikasi.]}
