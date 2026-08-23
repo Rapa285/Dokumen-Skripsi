@@ -18,6 +18,7 @@ Data RME tergolong sebagai data yang sensitif karena memuat informasi identitas 
 
 Kebutuhan penelusuran kembali (\textit{traceability}) inilah yang menjadikan akuntabilitas sebagai aspek keamanan yang tidak dapat dipisahkan dari kerahasiaan dan integritas data RME. Akuntabilitas dalam konteks ini merujuk pada kemampuan suatu sistem untuk menghubungkan setiap tindakan yang dilakukan terhadap data dengan identitas pihak yang melakukannya, sehingga setiap pihak yang mengakses maupun mengubah data RME dapat dimintai pertanggungjawaban atas tindakannya. Sebagai contoh, kerangka kerja DecMed yang menjadi basis pengembangan pada Tugas Akhir ini dirancang agar seluruh akses terhadap data RME hanya dapat dilakukan atas persetujuan aktif pasien melalui mekanisme kontrol akses berbasis \textit{capability} (\cite{DecMed}). Namun demikian, tanpa mekanisme yang menjamin akuntabilitas, kontrol akses yang ketat sekalipun tidak dapat membuktikan bahwa suatu pelanggaran keamanan benar-benar terjadi, siapa pihak yang bertanggung jawab, maupun bagaimana kronologi pelanggaran tersebut (\cite{DecMed}). Kebutuhan inilah yang menjadi latar belakang pentingnya mekanisme audit trail sebagai pelengkap dari kontrol akses pada sistem manajemen RME, yang akan dibahas lebih lanjut pada Subbab~\ref{sec:audit-trail}.
 
+\input{chapters/ta/chapter-2/audit-trail.tex}
 
 \section{Threat Modeling dengan STRIDE}
 \label{sec:stride}
@@ -78,7 +79,7 @@ Kategori \textit{Repudiation} memiliki karakteristik yang berbeda dari
 kategori lainnya: ancaman ini beroperasi pada lapisan bisnis, bukan
 semata pada lapisan teknis jaringan atau aplikasi (\cite{shostack2014}).
 Penting untuk dipahami bahwa repudiasi tidak selalu merupakan tindakan
-jahat --- seseorang dapat secara jujur menyatakan tidak melakukan sesuatu
+jahat, misalnya seseorang dapat secara jujur menyatakan tidak melakukan sesuatu
 karena kegagalan teknologi atau proses. Oleh karena itu, pertanyaan
 kunci bagi perancang sistem adalah: \textit{bukti apa yang dimiliki sistem
 untuk membantah atau membuktikan suatu klaim?} Apabila sistem tidak

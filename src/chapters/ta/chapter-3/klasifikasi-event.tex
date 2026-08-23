@@ -218,7 +218,7 @@ EV19 & Capability Validation & Pencatatan proses validasi \textit{capability} se
 
 \end{xltabular}
 
-\paragraph{Identifikasi Atribut Audit}
+\subsubsection{Identifikasi Atribut Audit}
 
 Setelah diperoleh daftar \textit{audit event} pada Tabel~\ref{tab:audit-event-list}, tahap selanjutnya adalah mengidentifikasi atribut yang perlu dicatat setiap kali \textit{audit event} tersebut terjadi. Kumpulan atribut tersebut membentuk sebuah \textit{audit record} yang menjadi bukti digital atas aktivitas sistem. Penentuan atribut audit dilakukan dengan mengacu pada kontrol AU-3 \textit{Content of Audit Records} pada NIST SP 800-53 Rev. 5 \cite{nist80053r5}, yang menyatakan bahwa setiap \textit{audit record} harus memuat informasi mengenai (a) jenis \textit{event} yang terjadi, (b) waktu kejadian, (c) lokasi atau sumber kejadian, (d) sumber \textit{event}, (e) hasil (\textit{outcome}) dari \textit{event}, serta (f) identitas individu, subjek, maupun objek yang terlibat.
 
@@ -401,7 +401,7 @@ Mendokumentasikan proses validasi capability beserta hasil evaluasi hak akses. \
 
 \end{xltabular}
 
-\paragraph{Analisis Gap Audit Event}
+\subsubsection{Analisis Gap Audit Event}
 
 Setelah diperoleh daftar \textit{audit event} yang dibutuhkan, tahap selanjutnya adalah mengevaluasi apakah sistem DecMed telah menyediakan mekanisme pencatatan terhadap \textit{audit event} tersebut. Evaluasi dilakukan dengan membandingkan daftar \textit{audit event} hasil identifikasi dengan mekanisme pencatatan yang telah tersedia pada DecMed, yaitu \textit{PatientAccessLog} yang disimpan sebagai objek \textit{on-chain} serta riwayat transaksi (\textit{transaction history}) pada jaringan IOTA. Hasil analisis tersebut disajikan pada Tabel~\ref{tab:audit-event-gap}.
 
