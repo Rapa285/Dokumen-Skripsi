@@ -1,10 +1,8 @@
-\subsection{Analisis Ancaman DecMed}
+\subsection{Dekomposisi Aplikasi}
 
-\subsubsection{Dekomposisi Aplikasi}
+Dekomposisi aplikasi merupakan tahap awal proses \textit{threat modeling} yang bertujuan memperoleh pemahaman menyeluruh mengenai sistem DecMed dan bagaimana sistem tersebut berinteraksi dengan entitas eksternal. Dekomposisi ini terdiri atas deskripsi sistem, dependensi eksternal, titik masuk, aset, dan level kepercayaan, yang selanjutnya menjadi dasar bagi proses identifikasi ancaman menggunakan metode STRIDE.
 
-Dekomposisi aplikasi merupakan tahap awal proses \textit{threat modeling} yang bertujuan memperoleh pemahaman menyeluruh mengenai sistem DecMed dan bagaimana sistem tersebut berinteraksi dengan entitas eksternal. Dekomposisi ini terdiri atas deskripsi sistem, dependensi eksternal, titik masuk, aset, dan level kepercayaan, yang selanjutnya menjadi dasar bagi proses klasifikasi ancaman menggunakan metode STRIDE.
-
-\paragraph{Deskripsi Sistem}
+\subsubsection{Deskripsi Sistem}
 
 DecMed adalah kerangka kerja manajemen Rekam Medis Elektronik (RME) terdesentralisasi yang dibangun di atas Distributed Ledger Technology (DLT) IOTA. Sistem ini mengimplementasikan Capability-Based Access Control (CapBAC), Proxy Re-Encryption (PRE), dan InterPlanetary File System (IPFS) untuk menjamin kepemilikan data medis oleh pasien. Pasien secara aktif memberikan atau mencabut akses, menentukan durasi akses, dan berbagi data secara selektif dengan tenaga kesehatan. Sistem diimplementasikan menggunakan \textit{smart contract} berbahasa Move pada ledger IOTA, sementara data klinis terenkripsi disimpan pada IPFS.
 
@@ -17,58 +15,61 @@ Arsitektur sistem terdiri atas tiga lapisan (\textit{tiers}):
 
 Seluruh akses terhadap data RME pasien oleh pihak lain wajib melalui Proxy, dan setiap pemberian akses oleh pasien dicatat sebagai entri \textit{capability} pada penyimpanan \textit{on-chain} yang bersifat \textit{immutable}, membentuk fondasi model CapBAC pada sistem DecMed.
 
-\paragraph{Dependensi Eksternal}
+\subsubsection{Dependensi Eksternal}
 
 Dependensi eksternal merupakan objek di luar kode aplikasi yang keberadaannya dapat menimbulkan ancaman terhadap sistem. Setiap dependensi diberi nomor unik dan deskripsi.
 
-\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{1.2cm}|X|}
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{1.2cm}|>{\raggedright\arraybackslash}p{4.5cm}|X|}
     \caption{Dependensi Eksternal Sistem DecMed}
     \label{tab:dependensi-eksternal} \\
     \hline
-    \textbf{ID} & \textbf{Deskripsi} \\
+    \textbf{ID} & \textbf{Komponen} & \textbf{Deskripsi} \\
     \hline
     \endfirsthead
+    
     \hline
-    \textbf{ID} & \textbf{Deskripsi} \\
+    \textbf{ID} & \textbf{Komponen} & \textbf{Deskripsi} \\
     \hline
     \endhead
+    
     \hline
     \endfoot
+    
     \hline
     \endlastfoot
 
-    DE-01 & IOTA Rebased -- DLT berbasis Directed Acyclic Graph (DAG) dengan konsensus Mysticeti (Byzantine Fault Tolerant, Delegated Proof-of-Stake), finalitas transaksi $\sim$500 ms, mendukung lebih dari 50.000 TPS. \\
+    DE-01 & IOTA Rebased & DLT berbasis Directed Acyclic Graph (DAG) dengan konsensus Mysticeti (Byzantine Fault Tolerant, Delegated Proof-of-Stake), finalitas transaksi $\sim$500 ms, mendukung lebih dari 50.000 TPS. \\
     \hline
 
-    DE-02 & Smart Contract Move -- \textit{package} \texttt{decmed} yang dipublikasikan pada IOTA Layer 1, terdiri atas modul \texttt{patient}, \texttt{admin}, \texttt{hospital\_personnel}, \texttt{proxy}, \texttt{shared}, serta modul struktur data \texttt{std\_struct\_*} dan \texttt{std\_enum\_*}. \\
+    DE-02 & Smart Contract Move & \textit{package} \texttt{decmed} yang dipublikasikan pada IOTA Layer 1, terdiri atas modul \texttt{patient}, \texttt{admin}, \texttt{hospital\_personnel}, \texttt{proxy}, \texttt{shared}, serta modul struktur data \texttt{std\_struct\_*} dan \texttt{std\_enum\_*}. \\
     \hline
 
-    DE-03 & PRE Server -- diimplementasikan dengan Rust dan \textit{framework} Axum, menyediakan endpoint REST untuk proses autentikasi, pertukaran kunci, dan operasi RME. \\
+    DE-03 & PRE Server & diimplementasikan dengan Rust dan \textit{framework} Axum, menyediakan endpoint REST untuk proses autentikasi, pertukaran kunci, dan operasi RME. \\
     \hline
 
-    DE-04 & IOTA Gas Station -- terdiri atas Gas Station Server (endpoint reservasi dan eksekusi \textit{gas object}), Gas Station Storage (berbasis Redis dengan skrip LUA untuk akses konkuren), dan Key Store Manager/KSM (KMS eksternal atau penyimpanan kunci \textit{in-memory}). \\
+    DE-04 & IOTA Gas Station & terdiri atas Gas Station Server (endpoint reservasi dan eksekusi \textit{gas object}), Gas Station Storage (berbasis Redis dengan skrip LUA untuk akses konkuren), dan Key Store Manager/KSM (KMS eksternal atau penyimpanan kunci \textit{in-memory}). \\
     \hline
 
-    DE-05 & Redis -- digunakan oleh PRE Server untuk menyimpan data sementara seperti \textit{nonce} autentikasi (TTL 3 menit) dan material PRE seperti \textit{kfrag} (TTL 2 jam); juga digunakan oleh Gas Station sebagai \textit{storage} \textit{gas object}. \\
+    DE-05 & Redis & digunakan oleh PRE Server untuk menyimpan data sementara seperti \textit{nonce} autentikasi (TTL 3 menit) dan material PRE seperti \textit{kfrag} (TTL 2 jam); juga digunakan oleh Gas Station sebagai \textit{storage} \textit{gas object}. \\
     \hline
 
-    DE-06 & IPFS Cluster -- penyimpanan \textit{off-chain} terdesentralisasi berbasis \textit{content-addressing} (CID) untuk data klinis pasien yang telah dienkripsi, digunakan karena ukuran data klinis dapat melebihi batas objek IOTA (250 KB). \\
+    DE-06 & IPFS Cluster & penyimpanan \textit{off-chain} terdesentralisasi berbasis \textit{content-addressing} (CID) untuk data klinis pasien yang telah dienkripsi, digunakan karena ukuran data klinis dapat melebihi batas objek IOTA (250 KB). \\
     \hline
 
-    DE-07 & Client Application Framework -- Tauri (Rust + SvelteKit/TypeScript), dengan tiga varian: Patient Client (mobile), Hospital Client (desktop), dan Ministry Client (desktop). \\
+    DE-07 & Client Application Framework & Tauri (Rust + SvelteKit/TypeScript), dengan tiga varian: Patient Client (mobile), Hospital Client (desktop), dan Ministry Client (desktop). \\
     \hline
 
-    DE-08 & Skema BIP39 -- standar \textit{mnemonic} 12 kata untuk pembuatan dan pemulihan kunci kriptografis pasien dan tenaga fasyankes secara \textit{non-custodial}. \\
+    DE-08 & Skema BIP39 & standar \textit{mnemonic} 12 kata untuk pembuatan dan pemulihan kunci kriptografis pasien dan tenaga fasyankes secara \textit{non-custodial}. \\
     \hline
 
-    DE-09 & Mekanisme kriptografis Proxy Re-Encryption (PRE) dan AES-GCM -- digunakan untuk enkripsi data administratif dan klinis serta proses re-enkripsi \textit{ciphertext} bagi penerima yang berwenang. \\
+    DE-09 & Mekanisme kriptografis Proxy Re-Encryption (PRE) dan AES-GCM & digunakan untuk enkripsi data administratif dan klinis serta proses re-enkripsi \textit{ciphertext} bagi penerima yang berwenang. \\
     \hline
 
 \end{xltabular}
 
-\paragraph{Titik Masuk}
+\subsubsection{Titik Masuk}
 
-Titik masuk merupakan antarmuka pada aplikasi yang menjadi media interaksi antara pengguna (atau penyerang) dengan aplikasi maupun data. Setiap titik masuk diberi nomor unik, deskripsi, dan level kepercayaan minimum yang mengacu pada Tabel~\ref{tab:trust-level}.
+Titik masuk (\textit{Entrypoints}) merupakan antarmuka pada aplikasi yang menjadi media interaksi antara pengguna (atau penyerang) dengan aplikasi maupun data. Setiap titik masuk diberi nomor unik, deskripsi, dan level kepercayaan minimum yang mengacu pada Tabel~\ref{tab:trust-level}.
 
 \begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{1.4cm}|>{\raggedright\arraybackslash}p{4.2cm}|X|>{\centering\arraybackslash}p{2cm}|}
     \caption{Titik Masuk Sistem DecMed}
@@ -130,7 +131,7 @@ Titik masuk merupakan antarmuka pada aplikasi yang menjadi media interaksi antar
 
 \end{xltabular}
 
-\paragraph{Aset}
+\subsubsection{Aset}
 
 Aset merupakan hal fisik maupun abstrak yang dimiliki sistem dan menjadi target ketertarikan penyerang. Setiap aset diberi nomor unik, deskripsi, dan level kepercayaan yang mengacu pada Tabel~\ref{tab:trust-level}.
 
@@ -188,7 +189,7 @@ Aset merupakan hal fisik maupun abstrak yang dimiliki sistem dan menjadi target 
 
 \end{xltabular}
 
-\paragraph{Level Kepercayaan}
+\subsubsection{Level Kepercayaan}
 
 Level kepercayaan merepresentasikan hak akses yang diberikan sistem kepada suatu entitas eksternal maupun proses internal. Penentuan level kepercayaan pada sistem DecMed menggunakan pendekatan gabungan (\textit{hybrid}) antara \textit{role} untuk entitas eksternal (manusia) dan \textit{capability} untuk proses/entitas internal, mengingat sistem DecMed secara eksplisit mengimplementasikan model Capability-Based Access Control (CapBAC).
 
@@ -239,7 +240,7 @@ Level kepercayaan merepresentasikan hak akses yang diberikan sistem kepada suatu
 
 Catatan: LK3 dan LK4 bersifat \textit{paralel}, bukan hierarkis -- keduanya diberikan \textit{capability} oleh pasien secara independen dengan cakupan data yang berbeda (administratif saja vs. administratif dan klinis), sehingga tidak dapat diasumsikan LK4 selalu memiliki privilese lebih tinggi dari LK3 di seluruh konteks ancaman.
 
-\paragraph{Data Flow Diagram}
+\subsubsection{Data Flow Diagram}
 
 Data Flow Diagram (DFD) digunakan untuk menggambarkan aliran data antara entitas eksternal, proses, dan penyimpanan data pada sistem DecMed secara visual, sebagai dasar identifikasi elemen yang akan diklasifikasikan ancamannya menggunakan metode STRIDE pada subbab berikutnya. DFD sistem DecMed digambarkan pada Gambar~\ref{fig:decmed-dfd}.
 
@@ -250,18 +251,18 @@ Data Flow Diagram (DFD) digunakan untuk menggambarkan aliran data antara entitas
     \label{fig:decmed-dfd}
 \end{figure}
 
-DFD tersebut menggambarkan interaksi antara entitas eksternal (aktor), proses, dan penyimpanan data yang telah diidentifikasi pada dependensi eksternal (Tabel~\ref{tab:dependensi-eksternal}), titik masuk (Tabel~\ref{tab:titik-masuk}), aset (Tabel~\ref{tab:aset}), dan level kepercayaan (Tabel~\ref{tab:trust-level}) pada subbab sebelumnya. Elemen-elemen pada DFD tersebut menjadi dasar penomoran dan referensi pada proses klasifikasi ancaman menggunakan metode STRIDE (III.1.2.2).
+DFD tersebut menggambarkan interaksi antara entitas eksternal (aktor), proses, dan penyimpanan data yang telah diidentifikasi pada dependensi eksternal (Tabel~\ref{tab:dependensi-eksternal}), titik masuk (Tabel~\ref{tab:titik-masuk}), aset (Tabel~\ref{tab:aset}), dan level kepercayaan (Tabel~\ref{tab:trust-level}) pada subbab sebelumnya. Elemen-elemen pada DFD tersebut menjadi dasar penomoran dan referensi pada proses identifikasi ancaman menggunakan metode STRIDE (III.1.2.2).
 
-\subsubsection{Klasifikasi Ancaman}
+\subsection{Identifikasi Ancaman DecMed}
 
-Klasifikasi ancaman dilakukan menggunakan pendekatan \textit{STRIDE-per-Interaction}. Setiap interaksi antar elemen pada Data Flow Diagram (Gambar~\ref{fig:decmed-dfd}) diperiksa berdasarkan arah dan tipe interaksinya (\textit{process} ke \textit{data store}, \textit{process} ke \textit{process}, \textit{data flow} yang melintasi \textit{machine boundary}, dsb.), kemudian kategori STRIDE yang dianalisis dibatasi hanya pada kategori yang relevan bagi tipe interaksi tersebut, mengacu pada Tabel~\ref{tab:stride-per-interaction}. Pendekatan ini memberikan justifikasi eksplisit atas kategori yang dipilih maupun yang tidak dianalisis untuk setiap ancaman.
+Identifikasi ancaman dilakukan menggunakan pendekatan \textit{STRIDE-per-Interaction}. Setiap interaksi antar elemen pada Data Flow Diagram (Gambar~\ref{fig:decmed-dfd}) diperiksa berdasarkan arah dan tipe interaksinya (\textit{process} ke \textit{data store}, \textit{process} ke \textit{process}, \textit{data flow} yang melintasi \textit{machine boundary}, dsb.), kemudian kategori STRIDE yang dianalisis dibatasi hanya pada kategori yang relevan bagi tipe interaksi tersebut, mengacu pada Tabel~\ref{tab:stride-per-interaction}. Pendekatan ini memberikan justifikasi eksplisit atas kategori yang dipilih maupun yang tidak dianalisis untuk setiap ancaman.
 
 Elemen \texttt{E6 IOTA Network} dan \texttt{E7 IOTA Gas Station} pada \texttt{TB5 External Provider} diperlakukan sebagai infrastruktur eksternal tepercaya yang berada di luar kendali sistem DecMed; ancaman terhadap operasional internal keduanya berada di luar cakupan \textit{threat model} ini, dan hanya interaksinya dengan sistem (melalui P8, sebagai \textit{process} yang mengirim output ke \textit{external interactor}) yang dianalisis.
 
-Hasil klasifikasi ancaman disajikan pada Tabel~\ref{tab:klasifikasi-ancaman}, dengan kolom \textbf{Tipe Interaksi} merujuk pada nomor baris interaksi di Tabel~\ref{tab:stride-per-interaction} yang menjadi dasar penentuan kategori STRIDE bagi ancaman terkait.
+Hasil identifikasi ancaman disajikan pada Tabel~\ref{tab:klasifikasi-ancaman}, dengan kolom \textbf{Tipe Interaksi} merujuk pada nomor baris interaksi di Tabel~\ref{tab:stride-per-interaction} yang menjadi dasar penentuan kategori STRIDE bagi ancaman terkait.
 
 \begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{0.8cm}|X|>{\centering\arraybackslash}p{1.3cm}|>{\centering\arraybackslash}p{1.5cm}|>{\centering\arraybackslash}p{1.5cm}|>{\centering\arraybackslash}p{1.5cm}|}
-    \caption{Klasifikasi Ancaman Sistem DecMed} 
+    \caption{Identifikasi Ancaman Sistem DecMed} 
     \label{tab:klasifikasi-ancaman} \\
     
     \hline
@@ -365,5 +366,3 @@ Hasil klasifikasi ancaman disajikan pada Tabel~\ref{tab:klasifikasi-ancaman}, de
     \hline
 
 \end{xltabular}
-
-% \input{chapters/ta/chapter-3/analisis-masalah/analisis-ancaman/dread-scoring.tex}

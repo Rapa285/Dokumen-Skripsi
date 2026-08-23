@@ -51,11 +51,6 @@ Identitas pengguna, jenis operasi (\textit{read}/\textit{write}), objek rekam me
 Medical Record Access \\
 \hline
 
-T8 &
-Identitas Hospital Administrator, penerima \textit{activation key}, dan waktu penerbitan. &
-Activation Key Issuance \\
-\hline
-
 T9 &
 Identitas Ministry Administrator, identitas fasyankes yang diregistrasi, waktu, serta \textit{transaction digest}. &
 Healthcare Facility Registration \\
@@ -73,7 +68,7 @@ Re-encryption Operation \\
 
 T15 &
 \textit{Transaction digest}, identitas penandatangan, payload transaksi, dan hasil pengiriman transaksi. &
-Blockchain Transaction Submission \\
+IOTA Transaction Submission \\
 \hline
 
 T16, T18 &
@@ -131,25 +126,23 @@ Capability Validation \\
 Berdasarkan hasil pemetaan tersebut, diperoleh sekumpulan audit event yang mewakili aktivitas-aktivitas penting pada sistem DecMed. Satu audit event dapat digunakan sebagai bukti terhadap lebih dari satu ancaman apabila ancaman tersebut memiliki kebutuhan bukti digital yang serupa. Daftar audit event hasil identifikasi tersebut ditunjukkan pada Tabel \ref{tab:audit-event-list}.
 
 \begin{xltabular}
-    {\textwidth}
-    {|>{\centering\arraybackslash}p{1cm}
-     |>{\raggedright\arraybackslash}p{4cm}
-     |X|}
+{\textwidth}
+{|>{\centering\arraybackslash}p{1.2cm}|X|>{\raggedright\arraybackslash}p{5.8cm}|}
 
-\caption{Daftar Audit Event Hasil Identifikasi}
-\label{tab:audit-event-list}\\
+\caption{Atribut Audit Tambahan untuk Setiap Audit Event}
+\label{tab:detail-audit-record}\\
 
 \hline
-\textbf{ID} &
-\textbf{Audit Event} &
-\textbf{Deskripsi Aktivitas} \\
+\textbf{ID Event} &
+\textbf{Atribut Tambahan} &
+\textbf{Alasan} \\
 \hline
 \endfirsthead
 
 \hline
-\textbf{ID} &
-\textbf{Audit Event} &
-\textbf{Deskripsi Aktivitas} \\
+\textbf{ID Event} &
+\textbf{Atribut Tambahan} &
+\textbf{Alasan} \\
 \hline
 \endhead
 
@@ -159,61 +152,94 @@ Berdasarkan hasil pemetaan tersebut, diperoleh sekumpulan audit event yang mewak
 \hline
 \endlastfoot
 
-EV1 & Authentication & Pencatatan setiap percobaan autentikasi pengguna ke Client, baik berhasil maupun gagal. \\
+EV1 &
+\texttt{auth\_method}, \texttt{authentication\_result}, \texttt{failed\_attempt\_count}, \texttt{device\_fingerprint}. &
+Mendukung identifikasi metode autentikasi, pola kegagalan autentikasi, serta anomali perangkat yang digunakan. \\
 \hline
 
-EV2 & QR Access Delegation Validation & Pencatatan proses validasi payload QR Access Delegation sebelum akses diberikan kepada tenaga fasyankes. \\
+EV2 &
+\texttt{qr\_payload\_id}, \texttt{recipient\_identity}, \texttt{signature\_valid}. &
+Membuktikan keaslian payload QR serta identitas pihak yang menerima delegasi akses. \\
 \hline
 
-EV3 & Capability Creation & Pencatatan aktivitas pembuatan \textit{capability} akses oleh pasien kepada tenaga fasyankes. \\
+EV3 &
+\texttt{capability\_id}, \texttt{access\_scope}, \texttt{expiry\_duration}, \texttt{transaction\_digest}. &
+Mendokumentasikan capability yang diberikan beserta ruang lingkup akses dan transaksi yang merekamnya. \\
 \hline
 
-EV4 & Medical Record Access & Pencatatan aktivitas pembacaan maupun perubahan data rekam medis. \\
+EV4 &
+\texttt{access\_type}, \texttt{medical\_record\_id}, \texttt{capability\_id}, \texttt{authorization\_token\_id}. &
+Mengidentifikasi jenis akses terhadap rekam medis beserta capability dan token otorisasi yang digunakan. \\
 \hline
 
-EV5 & Activation Key Issuance & Pencatatan aktivitas penerbitan \textit{activation key} kepada personel fasyankes. \\
+EV5 &
+\texttt{facility\_id}, \texttt{facility\_name}, \texttt{administrator\_id}, \texttt{transaction\_digest}. &
+Mendokumentasikan registrasi fasilitas pelayanan kesehatan beserta transaksi yang merekamnya. \\
 \hline
 
-EV6 & Healthcare Facility Registration & Pencatatan aktivitas registrasi fasyankes beserta administratornya. \\
+EV6 &
+\texttt{endpoint\_called}, \texttt{request\_id}, \texttt{caller\_component}, \texttt{channel\_encryption}. &
+Mengidentifikasi layanan PRE yang dipanggil beserta komponen pemanggil dan status pengamanan kanal komunikasi. \\
 \hline
 
-EV7 & PRE Service Request & Pencatatan setiap permintaan layanan yang diterima PRE Server. \\
+EV7 &
+\texttt{reencryption\_operation\_id}, \texttt{capability\_id}, \texttt{target\_ciphertext}, \texttt{kfrag\_identifier}. &
+Mendokumentasikan proses re-enkripsi yang dilakukan terhadap data terenkripsi. \\
 \hline
 
-EV8 & Re-encryption Operation & Pencatatan aktivitas re-enkripsi data oleh PRE Server. \\
+EV8 &
+\texttt{transaction\_digest}, \texttt{payload\_hash}, \texttt{network\_confirmation\_status}. &
+Menyediakan bukti pengiriman transaksi beserta status konfirmasi pada jaringan IOTA. \\
 \hline
 
-EV9 & Blockchain Transaction Submission & Pencatatan aktivitas pembuatan, penandatanganan, dan pengiriman transaksi ke jaringan IOTA. \\
+EV9 &
+\texttt{requested\_gas\_budget}, \texttt{requester\_id}, \texttt{transaction\_digest}. &
+Mendokumentasikan permintaan sponsorship beserta kebutuhan gas transaksi. \\
 \hline
 
-EV10 & Gas Sponsorship Request & Pencatatan aktivitas permintaan sponsorship transaksi kepada Gas Station. \\
+EV10 &
+\texttt{approval\_status}, \texttt{decision\_reason}, \texttt{approved\_by}. &
+Mencatat keputusan sponsorship beserta alasan keputusan dan pihak yang memberikan persetujuan. \\
 \hline
 
-EV11 & Gas Sponsorship Decision & Pencatatan keputusan Gas Station terhadap permintaan sponsorship transaksi. \\
+EV11 &
+\texttt{key\_operation}, \texttt{key\_id}, \texttt{key\_type}. &
+Mencatat aktivitas pembuatan, perubahan, maupun penghapusan material kriptografi. \\
 \hline
 
-EV12 & Client Key Store Operation & Pencatatan aktivitas pembuatan, perubahan, maupun penghapusan material kriptografi pada Client Key Store. \\
+EV12 &
+\texttt{key\_id}, \texttt{key\_type}, \texttt{access\_purpose}. &
+Mencatat aktivitas akses terhadap material kriptografi beserta tujuan penggunaannya. \\
 \hline
 
-EV13 & Client Key Store Access & Pencatatan aktivitas akses terhadap material kriptografi pada Client Key Store. \\
+EV13 &
+\texttt{redis\_key\_type}, \texttt{operation\_type}, \texttt{ttl\_remaining}. &
+Mencatat aktivitas penyimpanan atau perubahan objek sensitif pada Redis. \\
 \hline
 
-EV14 & Sensitive Cache Object Operation & Pencatatan aktivitas penyimpanan maupun perubahan objek sensitif pada Redis. \\
+EV14 &
+\texttt{redis\_key\_type}, \texttt{request\_origin}, \texttt{ttl\_remaining}. &
+Mencatat aktivitas pembacaan objek sensitif beserta asal permintaan. \\
 \hline
 
-EV15 & Sensitive Cache Object Access & Pencatatan aktivitas pembacaan objek sensitif pada Redis. \\
+EV15 &
+\texttt{cid}, \texttt{operation\_type}, \texttt{data\_size}. &
+Mencatat aktivitas unggah maupun unduh objek pada penyimpanan IPFS. \\
 \hline
 
-EV16 & IPFS Object Access & Pencatatan aktivitas pengunggahan maupun pengunduhan objek pada IPFS. \\
+EV16 &
+\texttt{cid}, \texttt{expected\_hash}, \texttt{verification\_result}. &
+Mendokumentasikan proses verifikasi integritas objek pada IPFS. \\
 \hline
 
-EV17 & IPFS Object Integrity Verification & Pencatatan proses verifikasi integritas objek yang tersimpan pada IPFS. \\
+EV17 &
+\texttt{metadata\_type}, \texttt{object\_id}, \texttt{query\_requester\_id}. &
+Mencatat aktivitas pembacaan metadata atau objek pada ledger IOTA. \\
 \hline
 
-EV18 & On-chain Metadata Access & Pencatatan aktivitas pembacaan metadata maupun objek pada ledger IOTA. \\
-\hline
-
-EV19 & Capability Validation & Pencatatan proses validasi \textit{capability} sebelum permintaan diproses lebih lanjut. \\
+EV18 &
+\texttt{capability\_checked}, \texttt{required\_scope}, \texttt{actual\_scope}, \texttt{validation\_result}. &
+Mendokumentasikan proses validasi capability beserta hasil evaluasi hak akses. \\
 \hline
 
 \end{xltabular}
@@ -325,76 +351,71 @@ Mengidentifikasi jenis akses terhadap rekam medis beserta capability dan token o
 \hline
 
 EV5 &
-\texttt{activation\_key\_id}, \texttt{issuer\_id}, \texttt{recipient\_id}, \texttt{expiration\_time}. &
-Mencatat informasi penerbitan \textit{activation key} beserta pihak penerbit dan penerimanya. \\
-\hline
-
-EV6 &
 \texttt{facility\_id}, \texttt{facility\_name}, \texttt{administrator\_id}, \texttt{transaction\_digest}. &
 Mendokumentasikan registrasi fasilitas pelayanan kesehatan beserta transaksi yang merekamnya. \\
 \hline
 
-EV7 &
+EV6 &
 \texttt{endpoint\_called}, \texttt{request\_id}, \texttt{caller\_component}, \texttt{channel\_encryption}. &
 Mengidentifikasi layanan PRE yang dipanggil beserta komponen pemanggil dan status pengamanan kanal komunikasi. \\
 \hline
 
-EV8 &
+EV7 &
 \texttt{reencryption\_operation\_id}, \texttt{capability\_id}, \texttt{target\_ciphertext}, \texttt{kfrag\_identifier}. &
 Mendokumentasikan proses re-enkripsi yang dilakukan terhadap data terenkripsi. \\
 \hline
 
-EV9 &
+EV8 &
 \texttt{transaction\_digest}, \texttt{payload\_hash}, \texttt{network\_confirmation\_status}. &
 Menyediakan bukti pengiriman transaksi beserta status konfirmasi pada jaringan IOTA. \\
 \hline
 
-EV10 &
+EV9 &
 \texttt{requested\_gas\_budget}, \texttt{requester\_id}, \texttt{transaction\_digest}. &
 Mendokumentasikan permintaan sponsorship beserta kebutuhan gas transaksi. \\
 \hline
 
-EV11 &
+EV10 &
 \texttt{approval\_status}, \texttt{decision\_reason}, \texttt{approved\_by}. &
 Mencatat keputusan sponsorship beserta alasan keputusan dan pihak yang memberikan persetujuan. \\
 \hline
 
-EV12 &
+EV11 &
 \texttt{key\_operation}, \texttt{key\_id}, \texttt{key\_type}. &
 Mencatat aktivitas pembuatan, perubahan, maupun penghapusan material kriptografi. \\
 \hline
 
-EV13 &
+EV12 &
 \texttt{key\_id}, \texttt{key\_type}, \texttt{access\_purpose}. &
 Mencatat aktivitas akses terhadap material kriptografi beserta tujuan penggunaannya. \\
 \hline
 
-EV14 &
+EV13 &
 \texttt{redis\_key\_type}, \texttt{operation\_type}, \texttt{ttl\_remaining}. &
 Mencatat aktivitas penyimpanan atau perubahan objek sensitif pada Redis. \\
 \hline
 
-EV15 &
+EV14 &
 \texttt{redis\_key\_type}, \texttt{request\_origin}, \texttt{ttl\_remaining}. &
 Mencatat aktivitas pembacaan objek sensitif beserta asal permintaan. \\
 \hline
 
-EV16 &
+EV15 &
 \texttt{cid}, \texttt{operation\_type}, \texttt{data\_size}. &
 Mencatat aktivitas unggah maupun unduh objek pada penyimpanan IPFS. \\
 \hline
 
-EV17 &
+EV16 &
 \texttt{cid}, \texttt{expected\_hash}, \texttt{verification\_result}. &
 Mendokumentasikan proses verifikasi integritas objek pada IPFS. \\
 \hline
 
-EV18 &
+EV17 &
 \texttt{metadata\_type}, \texttt{object\_id}, \texttt{query\_requester\_id}. &
 Mencatat aktivitas pembacaan metadata atau objek pada ledger IOTA. \\
 \hline
 
-EV19 &
+EV18 &
 \texttt{capability\_checked}, \texttt{required\_scope}, \texttt{actual\_scope}, \texttt{validation\_result}. &
 Mendokumentasikan proses validasi capability beserta hasil evaluasi hak akses. \\
 \hline
@@ -462,90 +483,84 @@ Aktivitas pembacaan maupun perubahan data rekam medis belum dicatat sebagai audi
 \hline
 
 EV5 &
-Activation Key Issuance &
-Tidak tersedia &
-Tidak tersedia mekanisme audit terhadap proses penerbitan \textit{activation key}. \\
-\hline
-
-EV6 &
 Healthcare Facility Registration &
 Sebagian &
 Aktivitas registrasi direkam sebagai transaksi \textit{on-chain}, namun belum tersedia audit record yang mendokumentasikan informasi kontekstual aktivitas registrasi. \\
 \hline
 
-EV7 &
+EV6 &
 PRE Service Request &
 Tidak tersedia &
 Aktivitas permintaan layanan pada PRE Server belum dicatat sebagai audit record. \\
 \hline
 
-EV8 &
+EV7 &
 Re-encryption Operation &
 Tidak tersedia &
 Proses \textit{re-encryption} tidak menghasilkan bukti audit yang dapat digunakan dalam investigasi. \\
 \hline
 
-EV9 &
-Blockchain Transaction Submission &
+EV8 &
+IOTA Transaction Submission &
 Sebagian &
 Riwayat transaksi tersedia pada jaringan IOTA, namun hanya merekam hasil transaksi tanpa informasi operasional yang lengkap mengenai proses pengiriman transaksi. \\
 \hline
 
-EV10 &
+EV9 &
 Gas Sponsorship Request &
 Tidak tersedia &
 Tidak tersedia mekanisme audit terhadap permintaan sponsorship transaksi. \\
 \hline
 
-EV11 &
+EV10 &
 Gas Sponsorship Decision &
 Tidak tersedia &
 Keputusan pemberian maupun penolakan sponsorship belum dicatat sebagai audit record. \\
 \hline
 
-EV12 &
+EV11 &
 Client Key Store Operation &
 Tidak tersedia &
 Aktivitas pengelolaan material kriptografi pada sisi klien belum memiliki mekanisme audit. \\
 \hline
 
-EV13 &
+EV12 &
 Client Key Store Access &
 Tidak tersedia &
 Akses terhadap material kriptografi tidak menghasilkan bukti audit. \\
 \hline
 
-EV14 &
+EV13 &
 Sensitive Cache Object Operation &
 Tidak tersedia &
 Aktivitas penyimpanan objek sensitif pada Redis belum dicatat. \\
 \hline
 
-EV15 &
+EV14 &
 Sensitive Cache Object Access &
 Tidak tersedia &
 Aktivitas pembacaan objek sensitif pada Redis belum dicatat. \\
 \hline
 
-EV16 &
+EV15 &
 IPFS Object Access &
 Tidak tersedia &
 Aktivitas unggah maupun unduh objek pada IPFS belum memiliki mekanisme audit. \\
 \hline
 
-EV17 &
+EV16 &
 IPFS Object Integrity Verification &
 Tidak tersedia &
 Tidak tersedia pencatatan terhadap proses verifikasi integritas objek pada IPFS. \\
 \hline
 
-EV18 &
+EV17 &
 On-chain Metadata Access &
 Tidak tersedia &
 Aktivitas pembacaan metadata maupun objek \textit{on-chain} tidak dicatat sebagai audit record. \\
 \hline
 
-EV19 &
+EV18 &
 Capability Validation &
 Tidak tersedia &
 Proses validasi \textit{capability} sebelum otorisasi akses belum menghasilkan audit record. \\

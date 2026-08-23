@@ -108,15 +108,15 @@ mengidentifikasi di mana ancaman keamanan paling mungkin muncul
 atas empat elemen dasar:
 
 \begin{itemize}
-    \item \textbf{Proses} (\textit{process}) -- elemen yang menerima,
-    mengolah, dan mengirimkan data; direpresentasikan sebagai lingkaran
+    \item (\textit{Process}) : elemen yang menerima,
+    mengolah, dan mengirimkan data, biasanya direpresentasikan sebagai lingkaran
     atau persegi panjang dengan sudut membulat.
-    \item \textbf{Penyimpanan data} (\textit{data store}) -- tempat data
+    \item (\textit{Data Store}) : tempat data
     disimpan secara persisten; direpresentasikan sebagai dua garis
     paralel.
-    \item \textbf{Aliran data} (\textit{data flow}) -- perpindahan data
+    \item (\textit{Data Flow}) : perpindahan data
     antar elemen; direpresentasikan sebagai panah berlabel.
-    \item \textbf{Entitas eksternal} (\textit{external entity}) --
+    \item (\textit{External Entity}) :
     aktor atau sistem di luar kendali sistem yang dianalisis;
     direpresentasikan sebagai persegi panjang.
 \end{itemize}
@@ -226,7 +226,7 @@ dan lebih mudah dihubungkan ke keputusan mitigasi yang spesifik
 \subsection{Penurunan Kebutuhan Audit Event dari Analisis Ancaman}
 \label{subsec:penurunan-event-stride}
 
-Hasil klasifikasi ancaman menggunakan STRIDE pada suatu sistem selanjutnya dapat dinilai tingkat risikonya menggunakan metodologi DREAD (\textit{Damage potential}, \textit{Reproducibility}, \textit{Exploitability}, \textit{Affected user}, \textit{Discoverability}), sehingga dapat disusun peringkat ancaman yang menjadi dasar prioritas penyusunan langkah mitigasi (\cite{laksono2021stride}). Setiap kategori ancaman STRIDE pada dasarnya berkaitan dengan bidang keamanan (\textit{security control}) tertentu yang relevan sebagai acuan mitigasinya, misalnya kategori \textit{Spoofing} berkaitan dengan bidang \textit{authentication}, kategori \textit{Tampering} berkaitan dengan bidang \textit{integrity}, dan kategori \textit{Repudiation} berkaitan dengan bidang \textit{non-repudiation} (\cite{laksono2021stride}).
+Hasil identifikasi ancaman menggunakan STRIDE pada suatu sistem selanjutnya dapat dinilai tingkat risikonya menggunakan metodologi DREAD (\textit{Damage potential}, \textit{Reproducibility}, \textit{Exploitability}, \textit{Affected user}, \textit{Discoverability}), sehingga dapat disusun peringkat ancaman yang menjadi dasar prioritas penyusunan langkah mitigasi (\cite{laksono2021stride}). Setiap kategori ancaman STRIDE pada dasarnya berkaitan dengan bidang keamanan (\textit{security control}) tertentu yang relevan sebagai acuan mitigasinya, misalnya kategori \textit{Spoofing} berkaitan dengan bidang \textit{authentication}, kategori \textit{Tampering} berkaitan dengan bidang \textit{integrity}, dan kategori \textit{Repudiation} berkaitan dengan bidang \textit{non-repudiation} (\cite{laksono2021stride}).
 
 Penerapan STRIDE pada studi kasus sistem informasi akademik menunjukkan keterkaitan langsung antara ancaman kategori \textit{Repudiation} dengan kebutuhan pencatatan log. Salah satu ancaman kategori \textit{Repudiation} yang teridentifikasi pada studi tersebut adalah pencatatan log yang minim sebagai bukti penanganan klaim penyangkalan (\cite{laksono2021stride}). Langkah mitigasi yang diusulkan untuk ancaman kategori \textit{Repudiation} pada studi tersebut mencakup ketentuan bahwa segala tindakan yang dilakukan pada sistem harus dicatat pada log sebagai bahan pembuktian atas terjadinya suatu tindakan, disertai penerapan tanda tangan digital (\textit{digital signature}) yang tercatat secara otomatis pada log setiap kali terjadi perubahan data (\cite{laksono2021stride}).
 

@@ -13,7 +13,7 @@ tidak mengubah alur bisnis maupun fungsionalitas DecMed yang sudah berjalan.
 ATS terdiri atas tiga komponen fungsional utama:
 
 \begin{itemize}
-    \item \textbf{Audit Receiver} -- menyediakan \textit{endpoint}
+    \item \textbf{Audit Receiver} yang menyediakan \textit{endpoint}
     \texttt{POST /api/events} sebagai titik masuk tunggal seluruh audit
     \textit{event} dari berbagai sumber pada sistem DecMed (Client Apps,
     PRE Server, Gas Station Server). Setiap \textit{event} dikirimkan
@@ -21,7 +21,7 @@ ATS terdiri atas tiga komponen fungsional utama:
     Ed25519, memungkinkan ATS memverifikasi keaslian pengirim sebelum
     \textit{event} diproses lebih lanjut.
 
-    \item \textbf{Audit Logger} -- menerima \textit{event} yang telah
+    \item \textbf{Audit Logger} yang menerima \textit{event} yang telah
     diverifikasi dari Audit Receiver melalui antrian asinkron internal
     (\textit{mpsc channel}), membentuk \textit{audit record} dengan atribut
     standar, dan menerapkan mekanisme \textit{hash-chaining} antar
@@ -31,8 +31,8 @@ ATS terdiri atas tiga komponen fungsional utama:
     terdeteksi karena seluruh \textit{record} sesudahnya akan memiliki
     nilai \texttt{record\_hash} yang tidak konsisten.
 
-    \item \textbf{Log Rotation \& Archival Worker} -- berjalan secara
-    periodik dan bertanggung jawab atas tiga tahap pengarsipan:
+    \item \textbf{Log Rotation \& Archival Worker} yang berjalan secara
+    periodik dan bertanggung jawab atas tiga tahap pengarsipan, yaitu:
     (i) merotasi berkas log aktif menjadi berkas arsip baru,
     (ii) mengunggah berkas arsip ke IPFS Cluster yang telah digunakan
     DecMed sebagai penyimpanan \textit{off-chain}, sehingga menghasilkan
@@ -55,11 +55,11 @@ Server. Setiap sumber mengirimkan \textit{event} ke ATS dalam format
 \texttt{SignedEvent} yang terdiri atas tiga bidang:
 
 \begin{itemize}
-    \item \texttt{payload} -- representasi JSON dari \textit{audit event}
+    \item \texttt{payload} berupa representasi JSON dari \textit{audit event}
     yang berisi seluruh atribut kontekstual aktivitas yang dicatat,
-    \item \texttt{signature} -- tanda tangan digital Ed25519 atas
+    \item \texttt{signature} berupa tanda tangan digital Ed25519 atas
     \texttt{payload} dalam representasi heksadesimal (64 byte), dan
-    \item \texttt{public\_key} -- kunci publik Ed25519 pengirim dalam
+    \item \texttt{public\_key} berupa kunci publik Ed25519 pengirim dalam
     representasi heksadesimal (32 byte).
 \end{itemize}
 
@@ -83,7 +83,7 @@ of Audit Records} pada NIST SP 800-53 Rev. 5:
 \textbf{Atribut} & \textbf{Deskripsi} \\
 \hline
 \texttt{source\_component} &
-Komponen sumber pembangkit \textit{event} (mis. nama modul atau layanan). \\
+Komponen sumber pembangkit \textit{event}, misalnya nama modul atau layanan. \\
 \hline
 \texttt{actor\_id} &
 Identitas aktor yang memicu aktivitas, seperti \textit{IOTA address}
@@ -93,7 +93,7 @@ atau identitas sesi. \\
 Identitas objek atau sumber daya yang menjadi target aktivitas. \\
 \hline
 \texttt{outcome} &
-Hasil pelaksanaan aktivitas: \texttt{Success}, \texttt{Failure},
+Hasil pelaksanaan aktivitas berupa \texttt{Success}, \texttt{Failure},
 \texttt{Denied}, atau \texttt{Unknown}. \\
 \hline
 \texttt{action\_type} &
@@ -101,7 +101,7 @@ Jenis tindakan yang dilakukan. \\
 \hline
 \texttt{event\_type} &
 Jenis \textit{audit event} yang merujuk pada katalog \textit{event}
-(EV1--EV18) beserta atribut tambahan yang spesifik terhadap jenis tersebut. \\
+(EV1 hingga EV18) beserta atribut tambahan yang spesifik terhadap jenis tersebut. \\
 \hline
 \end{tabular}
 \end{table}
@@ -117,15 +117,15 @@ Setelah \textit{event} diterima dari antrian internal, Audit Logger
 membentuk sebuah \texttt{AuditRecord} yang terdiri atas:
 
 \begin{itemize}
-    \item \texttt{record\_id} -- pengenal unik berbasis UUID v7 yang
+    \item \texttt{record\_id} berupa pengenal unik berbasis UUID v7 yang
     mengandung informasi waktu sehingga bersifat monoton dan dapat
     diurutkan secara kronologis,
-    \item \texttt{timestamp} -- waktu pembentukan \textit{record} dalam
+    \item \texttt{timestamp} berupa waktu pembentukan \textit{record} dalam
     format UTC,
-    \item \texttt{prev\_record\_hash} -- nilai \textit{hash} SHA-256 dari
+    \item \texttt{prev\_record\_hash} berupa nilai \textit{hash} SHA-256 dari
     \textit{record} sebelumnya, atau \texttt{null} apabila merupakan
     \textit{record} pertama dalam rantai,
-    \item \texttt{record\_hash} -- nilai \textit{hash} SHA-256 dari
+    \item \texttt{record\_hash} berupa nilai \textit{hash} SHA-256 dari
     kombinasi \texttt{record\_id}, \texttt{timestamp},
     \texttt{prev\_record\_hash}, dan isi \textit{event}, serta
     \item seluruh atribut \texttt{AuditEvent} yang telah diverifikasi.
@@ -147,20 +147,20 @@ Log Rotation \& Archival Worker berjalan secara periodik pada interval yang
 dapat dikonfigurasi. Pada setiap siklus rotasi, worker melakukan tiga tahap
 berurutan:
 
-\textbf{Tahap 1 -- Rotasi berkas log.}
+\textbf{Tahap 1: Rotasi berkas log.}
 Worker mengganti nama berkas log aktif dengan nama berkas arsip baru yang
 menyertakan \textit{timestamp} rotasi. Operasi penggantian nama ini bersifat
 atomik pada sistem berkas sehingga tidak terjadi kehilangan \textit{record}
 yang sedang ditulis.
 
-\textbf{Tahap 2 -- Pengarsipan ke IPFS.}
+\textbf{Tahap 2: Pengarsipan ke IPFS.}
 Worker menghitung nilai \textit{hash} SHA-256 dari berkas arsip sebagai
 \textit{fingerprint} integritas berkas, kemudian mengunggah berkas tersebut
 ke IPFS Cluster melalui endpoint \texttt{/add}. Proses unggah menghasilkan
 CID yang bersifat unik terhadap isi berkas; apabila isi berkas berubah,
 CID yang dihasilkan juga akan berbeda.
 
-\textbf{Tahap 3 -- Publikasi metadata ke IOTA.}
+\textbf{Tahap 3: Publikasi metadata ke IOTA.}
 Worker menyusun objek \texttt{IotaLogMetadata} yang memuat informasi rotasi,
 termasuk CID hasil unggah IPFS, nilai \textit{hash} berkas, nomor urut
 rotasi (\texttt{log\_sequence\_number}), waktu rotasi, dan referensi
@@ -170,8 +170,8 @@ tersebut kemudian diterbitkan ke jaringan IOTA melalui Gas Station Server
 yang telah ada, menghasilkan \textit{transaction digest} baru yang bersifat
 \textit{immutable}.
 
-Kombinasi CID (di IPFS) dan \textit{transaction digest} (di IOTA) memberikan
-dua lapis jaminan bagi setiap berkas arsip log: isi berkas tidak dapat
+Kombinasi CID di IPFS dan \textit{transaction digest} di IOTA memberikan
+dua lapis jaminan bagi setiap berkas arsip log. Isi berkas tidak dapat
 diubah tanpa mengubah CID-nya, dan CID beserta metadata yang telah
 diterbitkan ke IOTA tidak dapat diubah maupun dihapus setelah transaksi
 final. Dengan demikian, pihak yang berwenang dapat memverifikasi keutuhan
@@ -203,7 +203,7 @@ ATS yang dirancang.
 \endfoot
 
 FR-01 & Menerima seluruh audit event sesuai katalog. &
-Endpoint \texttt{POST /api/events} menerima seluruh jenis event EV1--EV18
+Endpoint \texttt{POST /api/events} menerima seluruh jenis event EV1 hingga EV18
 melalui format \texttt{SignedEvent} yang seragam. \\
 \hline
 
@@ -228,8 +228,8 @@ berkas arsip lengkap dari IPFS. \\
 \hline
 
 FR-06 & Mendeteksi kegagalan proses pembangkitan dan penyimpanan. &
-Kegagalan pada setiap tahap (verifikasi, penulisan, unggah IPFS, publikasi
-IOTA) dicatat ke \textit{stderr} dan siklus rotasi dilanjutkan pada interval
+Kegagalan pada setiap tahap, yaitu verifikasi, penulisan, unggah IPFS, dan publikasi
+IOTA, dicatat ke \textit{stderr} dan siklus rotasi dilanjutkan pada interval
 berikutnya. \\
 \hline
 
@@ -240,8 +240,8 @@ pada IPFS Cluster. \\
 \hline
 
 NFR-01 & Integritas setiap audit record. &
-Mekanisme \textit{hash-chaining} (\texttt{record\_hash} yang menyertakan
-\texttt{prev\_record\_hash}) menjamin deteksi modifikasi. \\
+Mekanisme \textit{hash-chaining}, yaitu \texttt{record\_hash} yang menyertakan
+\texttt{prev\_record\_hash}, menjamin deteksi modifikasi. \\
 \hline
 
 NFR-02 & Keaslian (\textit{authenticity}) audit record. &
@@ -260,7 +260,7 @@ Penulisan ke berkas log menggunakan mode \textit{append}; mekanisme
 \hline
 
 NFR-05 & Retensi audit record. &
-Arsip log disimpan secara permanen di IPFS (dengan \textit{pinning}) dan
+Arsip log disimpan secara permanen di IPFS melalui mekanisme \textit{pinning} dan
 referensinya tercatat secara \textit{immutable} di IOTA. \\
 \hline
 

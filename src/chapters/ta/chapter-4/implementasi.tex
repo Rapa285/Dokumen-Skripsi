@@ -116,31 +116,52 @@ Implementasi \texttt{IotaLogClient} pada berkas \texttt{audit-trail/src/iota\_cl
 
 Setelah publikasi ke IOTA berhasil, worker memperbarui \texttt{prev\_tx\_digest} untuk siklus berikutnya dan menghapus berkas arsip dari penyimpanan lokal menggunakan \texttt{fs::remove\_file}. Retensi jangka panjang bergantung pada mekanisme \textit{pinning} IPFS Cluster yang telah digunakan DecMed.
 
-\subsection{Implementasi Integrasi ATS pada PRE Server}
+\subsection{Implementasi Integrasi ATS ke DecMed}
 
-Integrasi ATS ke dalam PRE Server yang telah ada diimplementasikan melalui penambahan modul \texttt{ats} pada direktori \texttt{proxy-reencryption/src/ats/}. Modul ini terdiri atas dua berkas: \texttt{ats.rs} yang memuat implementasi utama dan \texttt{mod.rs} yang mengekspor tipe-tipe publik.
+Integrasi ATS ke dalam arsitektur DecMed dilakukan secara seragam pada seluruh komponen sumber \textit{event} (\textit{event source}) yang telah diidentifikasi pada Subbab~\ref{subsec:penurunan-event-stride}, yaitu PRE Server, Patient Client, Hospital Client, dan Ministry Client. Setiap \textit{event source} diberikan penambahan modul \texttt{ats} pada direktori sumber masing-masing komponen (mis. \texttt{proxy-reencryption/src/ats/} untuk PRE Server), dengan pola struktur yang konsisten di setiap komponen: berkas \texttt{ats.rs} yang memuat implementasi utama dan \texttt{mod.rs} yang mengekspor tipe-tipe publik.
 
-\textbf{Tipe data bersama.} Berkas \texttt{ats.rs} mendefinisikan ulang tipe-tipe data \texttt{AuditEvent}, \texttt{AuditOutcome}, dan \texttt{AuditEventDetails} yang strukturnya setara dengan yang ada di ATS. Pendekatan ini dipilih agar PRE Server tidak bergantung pada \textit{crate} ATS secara langsung, mempertahankan independensi antarkomponen. Varian \texttt{AuditEventDetails} yang diimplementasikan pada PRE Server mencakup jenis \textit{event} yang relevan dengan operasi PRE: \texttt{EV6} untuk permintaan layanan PRE, \texttt{EV7} untuk operasi \textit{re-encryption}, \texttt{EV13} untuk penulisan Redis, \texttt{EV14} untuk pembacaan Redis, dan \texttt{EV15} untuk operasi IPFS. Tipe \texttt{SignedAuditEvent} mendefinisikan struktur JSON yang akan dikirimkan ke endpoint \texttt{POST /api/events} pada ATS.
+\textbf{Tipe data bersama.} Pada setiap \textit{event source}, berkas \texttt{ats.rs} mendefinisikan ulang tipe-tipe data \texttt{AuditEvent}, \texttt{AuditOutcome}, dan \texttt{AuditEventDetails} yang strukturnya setara dengan yang ada di ATS. Pendekatan ini dipilih agar setiap komponen sumber \textit{event} tidak bergantung pada \textit{crate} ATS secara langsung, mempertahankan independensi antarkomponen sesuai arsitektur DecMed yang terdiri atas layanan-layanan yang terpisah. Varian \texttt{AuditEventDetails} yang diimplementasikan pada masing-masing \textit{event source} dibatasi hanya pada jenis \textit{event} yang relevan dengan aktivitas komponen tersebut. Tipe \texttt{SignedAuditEvent} mendefinisikan struktur JSON yang dikirimkan oleh seluruh \textit{event source} ke endpoint \texttt{POST /api/events} pada ATS, sehingga format pengiriman tetap seragam meskipun isi \texttt{AuditEventDetails} berbeda-beda antarkomponen.
 
-\textbf{Implementasi \texttt{ATSClient}.} Struct \texttt{ATSClient} bertanggung jawab mengelola pasangan kunci Ed25519 untuk penandatanganan \textit{event} serta mengirimkan \textit{signed event} ke ATS. Kunci Ed25519 dibangkitkan secara acak pada saat inisialisasi menggunakan \texttt{SigningKey::generate(\&mut OsRng)}, sehingga setiap instans PRE Server memiliki kunci penandatanganan yang unik. Kunci publik yang bersesuaian disertakan pada setiap \textit{signed event} agar ATS dapat memverifikasi tanda tangan tanpa perlu menyimpan daftar kunci yang diizinkan.
+\textbf{Implementasi \texttt{ATSClient}.} Setiap modul \texttt{ats} pada masing-masing \textit{event source} menyediakan struct \texttt{ATSClient} yang bertanggung jawab mengelola pasangan kunci Ed25519 untuk penandatanganan \textit{event} serta mengirimkan \textit{signed event} ke ATS. Kunci Ed25519 dibangkitkan secara acak pada saat inisialisasi menggunakan \texttt{SigningKey::generate(\&mut OsRng)}, sehingga setiap instans komponen memiliki kunci penandatanganan yang unik terlepas dari jenis komponennya. Kunci publik yang bersesuaian disertakan pada setiap \textit{signed event} agar ATS dapat memverifikasi tanda tangan tanpa perlu menyimpan daftar kunci yang diizinkan terlebih dahulu, sehingga penambahan \textit{event source} baru di kemudian hari tidak memerlukan konfigurasi tambahan pada sisi ATS.
 
-\texttt{ATSClient} menyediakan dua metode pengiriman. Metode \texttt{send\_event} bersifat \textit{async} dan menunggu respons dari ATS, berguna ketika kode pemanggil perlu menangani \textit{error} pengiriman. Metode \texttt{send\_event\_nonblocking} men-\textit{spawn} \textit{task} Tokio terpisah yang berjalan secara \textit{fire-and-forget}; apabila pengiriman gagal, \textit{error} hanya dicatat ke \textit{stderr} tanpa memblokir alur utama. Metode kedua inilah yang digunakan di seluruh handler PRE Server agar operasi audit tidak menambah latensi pada alur layanan utama.
+\texttt{ATSClient} menyediakan dua metode pengiriman yang sama pada seluruh \textit{event source}. Metode \texttt{send\_event} bersifat \textit{async} dan menunggu respons dari ATS, berguna ketika kode pemanggil perlu menangani \textit{error} pengiriman. Metode \texttt{send\_event\_nonblocking} men-\textit{spawn} \textit{task} Tokio terpisah yang berjalan secara \textit{fire-and-forget}; apabila pengiriman gagal, \textit{error} hanya dicatat ke \textit{stderr} tanpa memblokir alur utama. Metode kedua inilah yang digunakan pada seluruh instrumentasi di setiap \textit{event source} agar operasi audit tidak menambah latensi pada alur layanan utama masing-masing komponen.
 
-Implementasi \texttt{ATSWorker} sebagai \textit{helper} internal menangani proses penandatanganan dan pengiriman pada \textit{spawned task}. Worker ini menyalin byte-byte kunci penandatanganan dari \texttt{ATSClient} agar dapat merekonstruksi \texttt{SigningKey} di dalam task yang bersifat \texttt{'static}. Proses penandatanganan menggunakan \texttt{self.signing\_key.sign(\&payload\_bytes)} dari \textit{trait} \texttt{Signer} pada \textit{crate} \texttt{ed25519-dalek}, menghasilkan tanda tangan 64-byte yang kemudian dikodekan sebagai heksadesimal.
+Implementasi \texttt{ATSWorker} sebagai \textit{helper} internal menangani proses penandatanganan dan pengiriman pada \textit{spawned task}, dan direplikasi dengan pola yang sama pada setiap modul \texttt{ats}. Worker ini menyalin byte-byte kunci penandatanganan dari \texttt{ATSClient} agar dapat merekonstruksi \texttt{SigningKey} di dalam task yang bersifat \texttt{'static}. Proses penandatanganan menggunakan \texttt{self.signing\_key.sign(\&payload\_bytes)} dari \textit{trait} \texttt{Signer} pada \textit{crate} \texttt{ed25519-dalek}, menghasilkan tanda tangan 64-byte yang kemudian dikodekan sebagai heksadesimal.
 
-\textbf{Integrasi ke \texttt{AppState}.} Bidang \texttt{ats\_client: ATSClient} ditambahkan pada struct \texttt{AppState} di \texttt{proxy-reencryption/src/types.rs}. Inisialisasi dilakukan pada \texttt{main.rs} dengan membaca \texttt{ATS\_ENDPOINT} dari \textit{environment variable}, kemudian memanggil \texttt{ATSClient::with\_endpoint(\&ats\_endpoint)}. Nilai \textit{default} endpoint adalah \texttt{http://localhost:3000/api/events} apabila variabel tidak dikonfigurasi.
+\textbf{Integrasi ke \textit{state} komponen.} Pada setiap \textit{event source}, sebuah bidang \texttt{ats\_client: ATSClient} ditambahkan pada struct \textit{state} utama komponen tersebut (misalnya \texttt{AppState} pada PRE Server di \texttt{proxy-reencryption/src/types.rs}, atau struct \textit{state}/\textit{context} yang setara pada Patient Client, Hospital Client, dan Ministry Client). Inisialisasi dilakukan pada titik masuk (\textit{entry point}) masing-masing komponen dengan membaca \texttt{ATS\_ENDPOINT} dari \textit{environment variable}, kemudian memanggil \texttt{ATSClient::with\_endpoint(\&ats\_endpoint)}. Nilai \textit{default} endpoint adalah \texttt{http://localhost:3000/api/events} apabila variabel tidak dikonfigurasi, sehingga seluruh \textit{event source} pada lingkungan implementasi mengarah ke instans ATS yang sama.
 
-\textbf{Instrumentasi handler.} Tiga handler PRE Server diinstrumentasi untuk mengirimkan \textit{audit event}:
+\textbf{Distribusi event per \textit{event source}.} Berbeda dengan PRE Server yang berjalan sebagai layanan \textit{backend}, Patient Client, Hospital Client, dan Ministry Client merupakan aplikasi \textit{client} berbasis Tauri. Pada ketiga aplikasi tersebut, modul \texttt{ats} diimplementasikan pada sisi \textit{backend} Rust dari aplikasi Tauri (bukan pada lapisan antarmuka SvelteKit/TypeScript), sehingga penandatanganan dan pengiriman \textit{event} tetap dilakukan dengan kunci yang tidak terekspos ke lapisan antarmuka. Jumlah dan jenis \textit{event} yang diproduksi oleh setiap komponen berbeda-beda sesuai dengan aktivitas yang menjadi tanggung jawabnya, sebagaimana dirangkum pada Tabel~\ref{tab:pemetaan-event-source}. Kode \texttt{EV} pada kolom ketiga tabel tersebut merujuk pada daftar \textit{audit event} hasil identifikasi pada Tabel~\ref{tab:audit-event-list}.
 
-\begin{enumerate}
-    \item Handler \texttt{get\_nonce\_handler} mengirimkan \textit{event} EV6 (\texttt{PRERequest}) setelah \textit{nonce} berhasil disimpan di Redis, mencatat endpoint yang dipanggil, ID permintaan, komponen pemanggil, dan status enkripsi kanal.
+\begin{table}[h]
+\centering
+\caption{Pemetaan Event Source terhadap Audit Event yang Diproduksi}
+\label{tab:pemetaan-event-source}
+\begin{tabular}{|p{2.6cm}|p{1.6cm}|p{8.6cm}|}
+\hline
+\textbf{Event Source} & \textbf{Jumlah Event} & \textbf{Kode Audit Event} \\
+\hline
+PRE Server &
+11 &
+EV6, EV7, EV8, EV9, EV10, EV13, EV14, EV15, EV16, EV17, EV18 \\
+\hline
+Patient Client &
+9 &
+EV1, EV2, EV3, EV8, EV9, EV10, EV11, EV12, EV17 \\
+\hline
+Hospital Client &
+7 &
+EV1, EV4, EV8, EV9, EV10, EV11, EV12 \\
+\hline
+Ministry Client &
+4 &
+EV5, EV8, EV9, EV10 \\
+\hline
+\end{tabular}
+\end{table}
 
-    \item Handler \texttt{store\_keys} mengirimkan \textit{event} EV13 (\texttt{RedisWrite}) setelah kunci PRE berhasil disimpan di Redis, mencatat jenis kunci Redis, jenis operasi, dan TTL yang tersisa dalam detik.
+Perlu dicatat bahwa permintaan dan keputusan sponsorship transaksi (EV9, EV10) serta pengiriman transaksi ke jaringan IOTA (EV8) tercatat pada sisi pemohon (\textit{caller}) — yaitu PRE Server, Patient Client, Hospital Client, atau Ministry Client, tergantung komponen mana yang menginisiasi transaksi tersebut — bukan pada Gas Station Server itu sendiri. Gas Station Server pada rancangan ini diperlakukan sebagai infrastruktur pendukung yang tidak diinstrumentasi sebagai \textit{event source} tersendiri, sehingga tidak memiliki modul \texttt{ats}; keputusan sponsorship yang dihasilkannya cukup direkam oleh komponen pemanggil sebagai bagian dari EV9/EV10.
 
-    \item Handler \texttt{create\_medical\_record} mengirimkan \textit{event} EV15 (\texttt{IPFSOperation}) setelah data terenkripsi berhasil diunggah ke IPFS, mencatat CID yang dihasilkan, jenis operasi, dan ukuran data.
-\end{enumerate}
-
-Seluruh instrumentasi menggunakan metode \texttt{send\_event\_nonblocking} agar tidak menambah latensi pada alur utama. Variabel \textit{environment} \texttt{ATS\_ENDPOINT} pada berkas \texttt{proxy-reencryption/.env} dikonfigurasi ke \texttt{http://localhost:3000/api/events} agar PRE Server mengirimkan event ke instans ATS yang berjalan di lingkungan lokal.
+Seluruh instrumentasi pada Tabel~\ref{tab:pemetaan-event-source} menggunakan metode \texttt{send\_event\_nonblocking} agar tidak menambah latensi pada alur utama masing-masing \textit{event source}. Variabel \textit{environment} \texttt{ATS\_ENDPOINT} dikonfigurasi secara konsisten pada berkas \texttt{.env} setiap komponen (mis. \texttt{proxy-reencryption/.env} untuk PRE Server, dan berkas konfigurasi setara pada ketiga aplikasi \textit{client}) ke \texttt{http://localhost:3000/api/events}, sehingga seluruh \textit{event source} mengirimkan \textit{event} ke instans ATS yang sama di lingkungan lokal. Pendekatan modul \texttt{ats} yang seragam ini memungkinkan penambahan \textit{event source} baru di masa mendatang dilakukan dengan mereplikasi pola modul yang sama tanpa mengubah desain ATS itu sendiri.
 
 \subsection{Implementasi Verifikasi Integritas Audit Record}
 
