@@ -261,17 +261,17 @@ Elemen \texttt{E6 IOTA Network} dan \texttt{E7 IOTA Gas Station} pada \texttt{TB
 
 Hasil identifikasi ancaman disajikan pada Tabel~\ref{tab:klasifikasi-ancaman}, dengan kolom \textbf{Tipe Interaksi} merujuk pada nomor baris interaksi di Tabel~\ref{tab:stride-per-interaction} yang menjadi dasar penentuan kategori STRIDE bagi ancaman terkait.
 
-\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{0.8cm}|X|>{\centering\arraybackslash}p{1.3cm}|>{\centering\arraybackslash}p{1.5cm}|>{\centering\arraybackslash}p{1.5cm}|>{\centering\arraybackslash}p{1.5cm}|}
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{0.8cm}|X|>{\centering\arraybackslash}p{1.8cm}|}
     \caption{Identifikasi Ancaman Sistem DecMed} 
     \label{tab:klasifikasi-ancaman} \\
     
     \hline
-    \textbf{ID} & \textbf{Deskripsi Ancaman} & \textbf{Elemen DFD} & \textbf{Level Kepercayaan} & \textbf{Tipe Interaksi} & \textbf{STRIDE} \\
+    \textbf{ID} & \textbf{Deskripsi Ancaman} & \textbf{STRIDE} \\
     \hline
     \endfirsthead
 
     \hline
-    \textbf{ID} & \textbf{Deskripsi Ancaman} & \textbf{Elemen DFD} & \textbf{Level Kepercayaan} & \textbf{Tipe Interaksi} & \textbf{STRIDE} \\
+    \textbf{ID} & \textbf{Deskripsi Ancaman} & \textbf{STRIDE} \\
     \hline
     \endhead
 
@@ -281,88 +281,79 @@ Hasil identifikasi ancaman disajikan pada Tabel~\ref{tab:klasifikasi-ancaman}, d
     \hline
     \endlastfoot
 
-    T1 & Penyerang mendapatkan kredensial atau membajak sesi lokal milik pengguna untuk berpura-pura menjadi pemilik identitas sah saat \textit{sign-in}. & E1--E5, P1, P2, P3 & LK1--LK6 & 7, 11 & S \\
+    T1 & Penyerang mendapatkan kredensial atau membajak sesi lokal milik pengguna untuk berpura-pura menjadi pemilik identitas sah saat \textit{sign-in}. & S \\
     \hline
 
-    T2 & Kredensial \textit{sign-in} (PIN) tersadap atau terekam melalui \textit{shoulder surfing}, \textit{keylogger}, atau malware pada perangkat saat dimasukkan ke Client. & E1--E5, P1, P2, P3 & LK1--LK6 & 7, 11 & I \\
+    T2 & Kredensial \textit{sign-in} (PIN) tersadap atau terekam melalui \textit{shoulder surfing}, \textit{keylogger}, atau malware pada perangkat saat dimasukkan ke Client. & I \\
     \hline
 
-    T3 & Percobaan \textit{sign-in} berulang secara masif menghabiskan sumber daya Client (\textit{local resource exhaustion}). & E1--E5, P1, P2, P3 & LK1 & 7 & D \\
+    T3 & Percobaan \textit{sign-in} berulang secara masif menghabiskan sumber daya Client (\textit{local resource exhaustion}). & D \\
     \hline
 
-    T4 & Payload QR Access Delegation dipalsukan sebelum dipindai oleh Patient Client. & P2, F2 & LK2, LK4 & 7 & S \\
+    T4 & Payload QR Access Delegation dipalsukan sebelum dipindai oleh Patient Client. & S \\
     \hline
 
-    T5 & Payload QR Access Delegation disadap sehingga informasi delegasi akses bocor kepada pihak tidak berwenang. & P2, F2 & LK2, LK4 & 7 & I \\
+    T5 & Payload QR Access Delegation disadap sehingga informasi delegasi akses bocor kepada pihak tidak berwenang. & I \\
     \hline
 
-    T6 & Pasien menyangkal pernah memberikan akses (\texttt{create\_access}) kepada tenaga medis tertentu. & E1, P2, P8 & LK2 & 11 & R \\
+    T6 & Pasien menyangkal pernah memberikan akses (\texttt{create\_access}) kepada tenaga medis tertentu. & R \\
     \hline
 
-    T7 & Tenaga medis atau tenaga administratif menyangkal pernah mengakses maupun mengubah data pasien tertentu. & E2, E3, P1, P6 & LK3, LK4 & 11 & R \\
+    T7 & Tenaga medis atau tenaga administratif menyangkal pernah mengakses maupun mengubah data pasien tertentu. & R \\
     \hline
 
-    T8 & Admin fasyankes menyangkal pernah menerbitkan \textit{activation key} kepada personel tertentu. & E4, P1 & LK5 & 11 & R \\
+    T8 & Admin fasyankes menyangkal pernah menerbitkan \textit{activation key} kepada personel tertentu. & R \\
     \hline
 
-    T9 & Ministry Administrator menyangkal pernah meregistrasi fasyankes tertentu beserta admin-nya. & E5, P3 & LK6 & 11 & R \\
+    T9 & Ministry Administrator menyangkal pernah meregistrasi fasyankes tertentu beserta admin-nya. & R \\
     \hline
 
-    T10 & Penyerang menyamar sebagai Proxy Re-encryption API (P4) yang sah (\textit{man-in-the-middle}) saat Client mengirim permintaan, karena flow melintasi batas perangkat (\textit{client}--\textit{backend}). & P1, P2, P4, F7, F8 & LK2--LK4 & 2, 8 & S \\
+    T10 & Penyerang menyamar sebagai Proxy Re-encryption API (P4) yang sah (\textit{man-in-the-middle}) saat Client mengirim permintaan. & S \\
     \hline
 
-    T11 & Penyerang menyadap komunikasi Client--PRE Server yang melintasi batas perangkat, mengungkap token JWT maupun data administratif. & P1, P2, P4, F7, F8, F15 & LK2--LK4 & 8 & I \\
+    T11 & Penyerang menyadap komunikasi Client dengan PRE Server, mengungkap data sensitif seperti token JWT maupun data administratif. & I \\
     \hline
 
-    T12 & Pihak eksternal membanjiri \textit{endpoint} \texttt{POST /nonce} atau \texttt{POST /keys} dengan permintaan palsu untuk menghabiskan sumber daya PRE Server. & P4, P5, F7, F8 & LK1 & 7 & D \\
+    T12 & Pihak eksternal membanjiri \textit{endpoint} dengan permintaan palsu untuk menghabiskan sumber daya PRE Server. & D \\
     \hline
 
-    T13 & Token JWT dipalsukan atau diputar ulang (\textit{replay}) pada permintaan dari Proxy Re-encryption API ke Medical Record Management. & P4, P6, F12 & LK3, LK4 & 2 & S \\
+    T13 & Token JWT dipalsukan atau diputar ulang (\textit{replay}) pada permintaan dari Client ke PRE Server. & S \\
     \hline
 
-    T14 & Penyadapan jalur \textit{dispatch} internal dari Proxy Re-encryption API ke Authentication/Medical Record Management mengungkap data yang sedang diproses. & P4, P5, P6, F11, F12 & LK7 & 2 & I \\
+    T14 & Penyerang memodifikasi \textit{Move transaction} pada perjalanan dari IOTA Transaction Client menuju IOTA Network. & T \\
     \hline
 
-    T15 & Penyerang memodifikasi \textit{Move transaction} pada jalur dari IOTA Transaction Client menuju IOTA Network, karena flow melintasi batas sistem DecMed dengan infrastruktur eksternal. & P8, F23 & LK7, LK8 & 3, 8 & T \\
+    T15 & Penyerang menyamar sebagai IOTA Transaction Client (P8) yang sah saat berinteraksi dengan Gas Station untuk mengajukan sponsorship transaksi palsu. & S \\
     \hline
 
-    T16 & Penyerang menyamar sebagai IOTA Transaction Client (P8) yang sah saat berinteraksi dengan Gas Station untuk mengajukan sponsorship transaksi palsu. & P8, F24 & LK7, LK8 & 3 & S \\
+    T16 & PRE Server (P8) menyangkal telah mengajukan atau menerima keputusan sponsorship transaksi tertentu dari Gas Station. & R \\
     \hline
 
-    T17 & PRE Server (P8) menyangkal telah mengajukan atau menerima keputusan sponsorship transaksi tertentu dari Gas Station. & P8, F24, F25 & LK7, LK8 & 3 & R \\
+    T17 & Penyerang mengajukan permintaan sponsorship \textit{gas} secara berulang sehingga \textit{gas object} habis dan transaksi sah pengguna lain gagal tersponsori. & D \\
     \hline
 
-    T18 & Penyerang mengajukan permintaan sponsorship \textit{gas} secara berulang sehingga \textit{gas object} habis dan transaksi sah pengguna lain gagal tersponsori. & P8, F24, F25 & LK1--LK4 & 3 & D \\
+    T18 & Pihak dengan akses tidak sah ke Redis memodifikasi nilai \textit{nonce} autentikasi atau \texttt{kfrag} sebelum digunakan. & T \\
     \hline
 
-    T19 & Penyerang dengan akses tidak sah memodifikasi kunci privat atau material PRE yang tersimpan pada Client Key Store. & D3, P1, P2, F5, F6 & LK1 & 5, 10 & T \\
+    T19 & Pihak dengan akses tidak sah ke Redis membaca \texttt{kfrag} atau \textit{nonce} sebelum masa berlakunya (TTL) berakhir. & I \\
     \hline
 
-    T20 & Penyerang dengan akses fisik ke perangkat yang tidak terkunci membaca kunci privat pada Client Key Store. & D3, F5, F6 & LK1 & 10 & I \\
+    T20 & Redis dipenuhi (\textit{memory exhaustion}) melalui permintaan \textit{nonce} baru secara berulang sehingga proses autentikasi pengguna sah terganggu. & D \\
     \hline
 
-    T21 & Pihak dengan akses tidak sah ke Redis memodifikasi nilai \textit{nonce} autentikasi atau \texttt{kfrag} sebelum digunakan. & D1, P4, P5, P7, F13, F14 & LK7 & 5, 10 & T \\
+    T21 & Data klinis terenkripsi diunduh dari IPFS Cluster Storage oleh pihak tidak berwenang. & I \\
     \hline
 
-    T22 & Pihak dengan akses tidak sah ke Redis membaca \texttt{kfrag} atau \textit{nonce} sebelum masa berlakunya (TTL) berakhir. & D1 & LK7 & 10 & I \\
+    T22 & IPFS Cluster dibanjiri permintaan berukuran besar sehingga mengganggu ketersediaan data klinis bagi pengguna sah. & D \\
     \hline
 
-    T23 & Redis dipenuhi (\textit{memory exhaustion}) melalui permintaan \textit{nonce} baru secara berulang sehingga proses autentikasi pengguna sah terganggu. & D1, F13 & LK1 & 5 & D \\
+    T23 & Metadata \textit{on-chain} yang tersimpan pada IOTA On-Chain State bersifat publik sehingga pola transaksi berpotensi dianalisis untuk mengungkap informasi tidak langsung mengenai pasien. & I \\
     \hline
 
-    T24 & Data klinis terenkripsi diunduh dari IPFS Cluster Storage oleh pihak tidak berwenang; risiko pengungkapan tetap ada apabila kunci enkripsi terkait bocor atau lemah. & D2, F18, F19 & LK1, publik & 10 & I \\
+    T24 & Kelemahan validasi \textit{capability on-chain} memungkinkan pembacaan atau pembuatan \texttt{ProxyCapEnum}/ \texttt{GlobalAdminCap} tanpa otorisasi sah, setara privilese tertinggi PRE Server/Kementerian Kesehatan. & E \\
     \hline
 
-    T25 & IPFS Cluster dibanjiri permintaan \textit{fetch}/\textit{pin} berukuran besar sehingga mengganggu ketersediaan data klinis bagi pengguna sah. & D2 & publik & 5 & D \\
-    \hline
-
-    T26 & Metadata \textit{on-chain} yang tersimpan pada IOTA On-Chain State bersifat publik sehingga pola transaksi berpotensi dianalisis untuk mengungkap informasi tidak langsung mengenai pasien. & D4, F21, F22 & LK9, publik & 10 & I \\
-    \hline
-
-    T27 & Kelemahan validasi \textit{capability on-chain} memungkinkan pembacaan atau pembuatan \texttt{ProxyCapEnum}/\texttt{GlobalAdminCap} tanpa otorisasi sah, setara privilese tertinggi PRE Server/Kementerian Kesehatan. & P7, D4 & LK2/LK4 $\rightarrow$ LK6/LK7 & 5 & E \\
-    \hline
-
-    T28 & Kegagalan validasi otorisasi pada Authentication \& Access Control memungkinkan Medical Record Management memproses permintaan dengan \textit{scope} lebih tinggi dari yang seharusnya (administratif $\rightarrow$ klinis). & P5, P6, F26 & LK3 $\rightarrow$ LK4 & 2 & E \\
+    T25 & Kegagalan validasi otorisasi pada Authentication \& Access Control memungkinkan Medical Record Management memproses permintaan dengan \textit{scope} lebih tinggi dari yang seharusnya. & E \\
     \hline
 
 \end{xltabular}
