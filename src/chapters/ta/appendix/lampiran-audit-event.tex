@@ -1,0 +1,131 @@
+\chapter{Pemetaan Ancaman ke Audit Event}
+
+
+\begin{xltabular}
+    {\textwidth}
+    {|>{\centering\arraybackslash}p{1.2cm}
+     |>{\raggedright\arraybackslash}p{3.2cm}
+     |>{\centering\arraybackslash}p{1.8cm}
+     |X|}
+
+\caption{Pemetaan Ancaman ke Audit Event}
+\label{tab:threat-event-mapping}\\
+
+\hline
+
+\textbf{Event ID} &
+\textbf{Event Name} &
+\textbf{Threat} &
+\textbf{Bukti yang Dibutuhkan} \\
+
+\hline
+\endfirsthead
+
+\hline
+
+\textbf{Event ID} &
+\textbf{Event Name} &
+\textbf{Threat} &
+\textbf{Bukti yang Dibutuhkan} \\
+
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\endlastfoot
+
+EV1 &
+Authentication &
+T1, T2, T3 &
+Identitas aktor yang melakukan autentikasi, waktu autentikasi, objek autentikasi, metode autentikasi, hasil autentikasi, perangkat yang digunakan, serta frekuensi percobaan autentikasi. \\
+
+\hline
+
+EV2 &
+QR Access Delegation Validation &
+T4, T5 &
+Identitas aktor yang membuat dan memindai QR, waktu validasi, objek QR Access Delegation, hasil validasi, serta payload QR Access Delegation. \\
+
+\hline
+
+EV3 &
+Capability Creation &
+T6 &
+Identitas aktor yang membuat \textit{capability}, waktu pembuatan, objek \textit{capability} dan akses yang didelegasikan, penerima akses, identitas pasien, hasil pembuatan, serta \textit{transaction digest}. \\
+
+\hline
+
+EV4 &
+Medical Record Access &
+T7, T13 &
+Identitas aktor yang mengakses rekam medis, waktu akses, objek rekam medis, jenis operasi (\textit{read}/\textit{write}), \textit{capability} yang digunakan, hasil validasi otorisasi, serta hasil operasi akses. \\
+
+\hline
+
+EV5 &
+Hospital Personnel Activation Key Generation &
+T8 &
+Identitas aktor yang menghasilkan activation key, waktu pembuatan, objek activation key dan personel yang terkait, identitas Admin Fasyankes, identitas personel, serta hasil pembuatan activation key. \\
+
+\hline
+
+EV6 &
+Healthcare Facility Registration &
+T9 &
+Identitas aktor yang melakukan registrasi, waktu registrasi, objek fasilitas pelayanan kesehatan, identitas Ministry Administrator, identitas fasyankes yang diregistrasi, serta hasil registrasi. \\
+
+\hline
+
+EV7 &
+PRE Service Request &
+T10, T11, T12 &
+Identitas aktor atau pemohon, waktu permintaan, objek layanan PRE yang diminta, endpoint tujuan, jenis layanan yang diminta, serta hasil pemrosesan permintaan. \\
+
+\hline
+
+EV8 &
+IOTA Transaction Submission &
+T14 &
+Identitas aktor atau penandatangan, waktu pengiriman, objek transaksi IOTA, \textit{transaction digest}, payload transaksi, hasil pengiriman transaksi, serta status konfirmasi pada jaringan IOTA. \\
+
+\hline
+
+EV9 &
+Gas Sponsorship Request &
+T15, T16, T17 &
+Identitas aktor atau pemohon sponsorship, waktu permintaan, objek transaksi yang diajukan untuk sponsorship, \textit{transaction digest}, kebutuhan gas transaksi, serta hasil pengajuan sponsorship. \\
+
+\hline
+
+EV10 &
+Redis Operation &
+T18, T19, T20 &
+Identitas aktor atau proses yang melakukan operasi, waktu operasi, objek Redis yang diakses, jenis operasi, hasil operasi, serta informasi TTL apabila relevan. \\
+
+\hline
+
+EV11 &
+IPFS Object Access &
+T21, T22 &
+Identitas aktor atau pemohon, waktu akses, objek IPFS yang diakses berupa Content Identifier (CID), jenis operasi, hasil operasi, serta ukuran data apabila relevan. \\
+
+\hline
+
+EV12 &
+On-chain Metadata Access &
+T23 &
+Identitas aktor atau pemohon, waktu akses, objek metadata \textit{on-chain} yang diakses, jenis operasi akses, serta hasil operasi. \\
+
+\hline
+
+EV13 &
+Capability Validation &
+T24, T25 &
+Identitas aktor atau pemohon, waktu validasi, objek \textit{capability} yang divalidasi berupa Capability ID, hasil validasi otorisasi, \textit{required scope}, \textit{actual scope}, serta alasan penolakan apabila validasi gagal. \\
+
+\hline
+
+\end{xltabular}

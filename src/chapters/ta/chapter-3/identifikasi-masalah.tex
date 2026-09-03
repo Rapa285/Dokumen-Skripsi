@@ -1,0 +1,31 @@
+\subsection{Identifikasi Masalah}
+
+Berdasarkan analisis terhadap implementasi audit trail DecMed pada \ref{analisis-decmed}, sejumlah masalah diidentifikasi agar DecMed dapat mendukung pembentukan dan pengelolaan audit trail secara utuh. Permasalahan utama pada sistem saat ini adalah sistem pencatatan sebuah kejadian itu masih tersebar sehingga tidak sinkron dalam berbagai aspek dan masih memiliki kekurangan masing-masing.
+
+Selain masalah utama tersebut, terdapat beberapa masalah turunan yang perlu diperhatikan agar rancangan solusi dapat ditegakkan secara andal. Masalah turunan ini bersumber dari keterbatasan masing-masing komponen pencatatan bawaan. Pertama, cakupan \textit{event} masih sangat terbatas sehingga belum mampu merekam aktivitas bernilai audit tinggi secara menyeluruh. Kedua, data log pada penyimpanan internal rentan mengalami perubahan atau tertimpa (\textit{overwrite}) seiring perubahan status, sehingga melanggar prinsip \textit{immutability}. Ketiga, format data transaksi dari DLT belum terstandarisasi. Keempat, mekanisme penyimpanan jaringan DLT rentan mengalami \textit{data pruning} yang mengancam ketersediaan data dalam jangka panjang.
+
+Agar keterhubungan antara analisis masalah, kebutuhan sistem, rancangan, implementasi, dan pengujian dapat ditelusuri, permasalahan tersebut dirinci menggunakan ID M-TA pada Tabel~\ref{tab:identifikasi-masalah}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Identifikasi Masalah \textit{Audit Trail} DecMed}
+    \label{tab:identifikasi-masalah}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|p{2cm}|p{7.5cm}|p{4cm}|}
+        \hline
+        \textbf{ID} & \textbf{Masalah} & \textbf{Dasar Analisis} \\
+        \hline
+        M-TA-01 & Belum adanya sistem \textit{audit trail} yang terintegrasi untuk mengelola bukti digital secara terpusat. & \ref{subsubsec:keterbatasan-tersebar} \\
+        \hline
+        M-TA-02 & Cakupan pencatatan \textit{event} masih sempit dan belum mencakup keseluruhan aktivitas bernilai audit tinggi. & \ref{subsubsec:keterbatasan-patientaccesslog} \& \ref{subsubsec:keterbatasan-tx-block} \\
+        \hline
+        M-TA-03 & \textit{Audit record} masih bisa mengalami modifikasi (\textit{overwrite}) sehingga tidak \textit{immutable}. & \ref{subsubsec:keterbatasan-patientaccesslog} \\
+        \hline
+        M-TA-04 & Format \textit{audit record} masih belum terstandarisasi sehingga menyulitkan proses pembacaan. & \ref{subsubsec:keterbatasan-tx-block} \\
+        \hline
+        M-TA-05 & Bukti digital rentan terhapus akibat \textit{data pruning} sehingga tidak menjamin retensi jangka panjang. & \ref{subsubsec:keterbatasan-tx-block} \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Berdasarkan Tabel~\ref{tab:identifikasi-masalah}, keterbatasan pencatatan aktivitas pada DecMed tidak hanya dipandang sebagai persoalan komponen secara individual, tetapi sebagai rangkaian masalah yang saling bergantung. M-TA-01 merupakan masalah inti yang berkaitan dengan absennya wadah pengelola terpusat. Sementara itu, M-TA-02, M-TA-03, M-TA-04, dan M-TA-05 merupakan masalah turunan yang perlu diselesaikan agar sistem \textit{audit trail} yang dibangun dapat menjamin integritas data, konsistensi format, dan retensi penyimpanan jangka panjang. ID masalah tersebut kemudian digunakan sebagai dasar pemetaan kebutuhan, rancangan, implementasi, dan pengujian pada bagian selanjutnya.

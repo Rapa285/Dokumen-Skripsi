@@ -1,0 +1,216 @@
+\chapter{Dekomposisi Aplikasi DecMed}
+
+Tabel \ref{tab:dependensi-eksternal} sampai Tabel \ref{tab:trust-level} menjabarkan dekomposisi aplikasi decmed.
+
+% Dependensi Eksternal
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{1.2cm}|>{\raggedright\arraybackslash}p{4.5cm}|X|}
+    \caption{Dependensi Eksternal Sistem DecMed}
+    \label{tab:dependensi-eksternal} \\
+    \hline
+    \textbf{ID} & \textbf{Komponen} & \textbf{Deskripsi} \\
+    \hline
+    \endfirsthead
+    
+    \hline
+    \textbf{ID} & \textbf{Komponen} & \textbf{Deskripsi} \\
+    \hline
+    \endhead
+    
+    \hline
+    \endfoot
+    
+    \hline
+    \endlastfoot
+
+    DE-01 & IOTA Rebased & DLT berbasis Directed Acyclic Graph (DAG) dengan konsensus Mysticeti (Byzantine Fault Tolerant, Delegated Proof-of-Stake), finalitas transaksi $\sim$500 ms, mendukung lebih dari 50.000 TPS. \\
+    \hline
+
+    DE-02 & Smart Contract Move & \textit{package} \texttt{decmed} yang dipublikasikan pada IOTA Layer 1, terdiri atas modul \texttt{patient}, \texttt{admin}, \texttt{hospital\_personnel}, \texttt{proxy}, \texttt{shared}, serta modul struktur data \texttt{std\_struct\_*} dan \texttt{std\_enum\_*}. \\
+    \hline
+
+    DE-03 & PRE Server & diimplementasikan dengan Rust dan \textit{framework} Axum, menyediakan endpoint REST untuk proses autentikasi, pertukaran kunci, dan operasi RME. \\
+    \hline
+
+    DE-04 & IOTA Gas Station & terdiri atas Gas Station Server (endpoint reservasi dan eksekusi \textit{gas object}), Gas Station Storage (berbasis Redis dengan skrip LUA untuk akses konkuren), dan Key Store Manager/KSM (KMS eksternal atau penyimpanan kunci \textit{in-memory}). \\
+    \hline
+
+    DE-05 & Redis & digunakan oleh PRE Server untuk menyimpan data sementara seperti \textit{nonce} autentikasi (TTL 3 menit) dan material PRE seperti \textit{kfrag} (TTL 2 jam); juga digunakan oleh Gas Station sebagai \textit{storage} \textit{gas object}. \\
+    \hline
+
+    DE-06 & IPFS Cluster & penyimpanan \textit{off-chain} terdesentralisasi berbasis \textit{content-addressing} (CID) untuk data klinis pasien yang telah dienkripsi, digunakan karena ukuran data klinis dapat melebihi batas objek IOTA (250 KB). \\
+    \hline
+
+    DE-07 & Client Application Framework & Tauri (Rust + SvelteKit/TypeScript), dengan tiga varian: Patient Client (mobile), Hospital Client (desktop), dan Ministry Client (desktop). \\
+    \hline
+
+    DE-08 & Skema BIP39 & standar \textit{mnemonic} 12 kata untuk pembuatan dan pemulihan kunci kriptografis pasien dan tenaga fasyankes secara \textit{non-custodial}. \\
+    \hline
+
+    DE-09 & Mekanisme kriptografis Proxy Re-Encryption (PRE) dan AES-GCM & digunakan untuk enkripsi data administratif dan klinis serta proses re-enkripsi \textit{ciphertext} bagi penerima yang berwenang. \\
+    \hline
+
+\end{xltabular}
+
+% EntryPoints
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{1.4cm}|>{\raggedright\arraybackslash}p{4.2cm}|X|>{\centering\arraybackslash}p{2cm}|}
+    \caption{Titik Masuk Sistem DecMed}
+    \label{tab:titik-masuk} \\
+    \hline
+    \textbf{ID} & \textbf{Nama} & \textbf{Deskripsi} & \textbf{Level Kepercayaan} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Nama} & \textbf{Deskripsi} & \textbf{Level Kepercayaan} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+    \hline
+    \endlastfoot
+
+    TM-01 & \texttt{POST /nonce} & Endpoint PRE Server untuk memperoleh \textit{nonce} autentikasi 64-byte, divalidasi melalui \textit{Move call} \texttt{is\_account\_registered}. & LK1--LK2 \\
+    \hline
+
+    TM-02 & \texttt{POST /keys} & Endpoint PRE Server untuk menyimpan material PRE (\textit{kfrag}, kunci publik) dan menerbitkan token akses JWT bagi tenaga fasyankes. & LK2 \\
+    \hline
+
+    TM-03 & \texttt{GET /medical-record} & Endpoint PRE Server untuk mengambil metadata administratif dan klinis pasien beserta proses re-enkripsi, memerlukan token akses \textit{read} yang valid. & LK4 \\
+    \hline
+
+    TM-04 & \texttt{POST /medical-record} & Endpoint PRE Server untuk membuat entri RME klinis baru, memerlukan token akses \textit{update}. & LK4 \\
+    \hline
+
+    TM-05 & \texttt{PUT /medical-record} & Endpoint PRE Server untuk mengubah entri RME klinis yang sudah ada pada kunjungan yang sama. & LK4 \\
+    \hline
+
+    TM-06 & \texttt{GET /medical-record/update} & Endpoint PRE Server untuk mengambil metadata RME sebelum proses pengubahan (edit). & LK4 \\
+    \hline
+
+    TM-07 & \texttt{GET /administrative} & Endpoint PRE Server untuk mengambil metadata administratif pasien, dapat diakses oleh admin fasyankes maupun tenaga administratif. & LK3, LK5 \\
+    \hline
+
+    TM-08 & Modul \texttt{decmed::patient} & Kumpulan \textit{method on-chain} yang dapat dieksekusi pasien: \texttt{signup}, \texttt{create\_access}, \texttt{revoke\_access}, \texttt{update\_administrative\_metadata}, \texttt{get\_medical\_record(s)}, \texttt{get\_access\_log}, dan sejenisnya. & LK1--LK2 \\
+    \hline
+
+    TM-09 & Modul \texttt{decmed::hospital\_personnel} & Kumpulan \textit{method on-chain} bagi tenaga fasyankes: \texttt{signup}, \texttt{use\_activation\_key}, \texttt{create\_activation\_key}, \texttt{cleanup\_read/update\_access}, \texttt{get\_read/update\_access}, dan sejenisnya. & LK3--LK5 \\
+    \hline
+
+    TM-10 & Modul \texttt{decmed::admin} & Kumpulan \textit{method on-chain} bagi Kementerian Kesehatan: \texttt{create\_activation\_key} (registrasi fasyankes), \texttt{update\_activation\_key}, \texttt{get\_hospitals}. & LK6 \\
+    \hline
+
+    TM-11 & Modul \texttt{decmed::proxy} & Kumpulan \textit{method on-chain} yang dieksekusi oleh PRE Server: \texttt{create\_capability}, \texttt{create/update\_medical\_record}, \texttt{get\_administrative\_data}, \texttt{get\_hospital\_personnel\_role}, dan sejenisnya. & LK7 \\
+    \hline
+
+    TM-12 & Gas Station endpoint (\textit{reserve} \& \textit{execute}) & Dua endpoint utama Gas Station Server untuk mencadangkan objek \textit{gas} dan mengeksekusi transaksi tersponsori atas nama \textit{client}. & LK7, LK8 \\
+    \hline
+
+    TM-13 & QR Code Delegasi Akses & Antarmuka fisik/visual berisi \texttt{iota\_address} dan \texttt{pre\_public\_key} tenaga medis, dipindai oleh Patient Client untuk memulai proses delegasi akses. & LK2, LK4 \\
+    \hline
+
+    TM-14 & Sign-in lokal (PIN/biometrik) & Mekanisme autentikasi harian pasien/tenaga fasyankes menggunakan PIN atau biometrik terhadap kunci privat yang tersimpan terenkripsi di perangkat. & LK1--LK5 \\
+    \hline
+
+\end{xltabular}
+
+% Asset
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{1.2cm}|>{\raggedright\arraybackslash}p{3.5cm}|X|}
+    \caption{Aset Sistem DecMed}
+    \label{tab:aset} \\
+    \hline
+    \textbf{ID} & \textbf{Nama} & \textbf{Deskripsi} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Nama} & \textbf{Deskripsi} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+    \hline
+    \endlastfoot
+
+    A-01 & Data administratif RME & Identitas dan data sosial pasien (NIK, nama, dsb.), terenkripsi AES-GCM sebelum disimpan \textit{on-chain}. \\
+    \hline
+
+    A-02 & Data klinis RME & Data pemeriksaan, diagnosis, dan tindakan medis, terenkripsi AES-GCM dan disimpan pada IPFS sebagai \texttt{enc\_medical\_data}. \\
+    \hline
+
+    A-03 & Entri \textit{capability} akses (\textit{on-chain}) & Struktur data \texttt{hospital\_personnel\_access\_data} berisi \texttt{access\_data\_types}, \texttt{exp} (durasi kedaluwarsa), \texttt{metadata}, dan \texttt{medical\_metadata\_index} -- fondasi model CapBAC. \\
+    \hline
+
+    A-04 & \textit{Recovery phrase} (BIP39) \& kunci privat pasien/personel & \textit{Mnemonic} 12 kata dan kunci privat turunannya, disimpan terenkripsi pada perangkat menggunakan \textit{secure hardware}. \\
+    \hline
+
+    A-05 & Material PRE (\texttt{kfrag}, \texttt{cfrag}, \textit{pre\_secret/public\_key}) & Komponen kriptografis yang memungkinkan proses re-enkripsi data pasien kepada penerima yang berwenang. \\
+    \hline
+
+    A-06 & \textit{Nonce} autentikasi & Nilai acak 64-byte, TTL 3 menit, disimpan di Redis untuk mencegah serangan \textit{replay} pada proses autentikasi pasien. \\
+    \hline
+
+    A-07 & Token akses JWT & Token dengan klaim \textit{role} dan \textit{access type} (Read/Update); durasi berbeda antara tenaga medis (15 menit baca, 2 jam tulis) dan tenaga administratif. \\
+    \hline
+
+    A-08 & \textit{Activation key} & Kredensial sekali pakai yang diterbitkan Kementerian Kesehatan (untuk admin fasyankes) dan admin fasyankes (untuk personel), berfungsi sebagai \textit{cryptographic witness} atas tindakan yang diotorisasi. \\
+    \hline
+
+    A-09 & \texttt{GlobalAdminCap} \& \texttt{ProxyCapEnum} & Representasi \textit{capability} tertinggi pada sistem -- masing-masing untuk Kementerian Kesehatan dan PRE Server; kompromi terhadap aset ini setara dengan eskalasi privilese total. \\
+    \hline
+
+    A-10 & CID data klinis (IPFS) & \textit{Content Identifier} yang menjadi referensi lokasi dan \textit{fingerprint} integritas data klinis terenkripsi pada IPFS. \\
+    \hline
+
+    A-11 & \textit{Gas object} \& kunci penandatanganan Gas Station & Token IOTA yang dipecah menjadi objek \textit{gas} untuk mensponsori transaksi, beserta kunci penandatanganan yang dikelola KSM. \\
+    \hline
+
+    A-12 & Log akses RME & Catatan riwayat akses terhadap data RME pasien, dapat dilihat pasien melalui \texttt{get\_access\_log}. \\
+    \hline
+
+\end{xltabular}
+
+% Trust Level
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{1.2cm}|>{\raggedright\arraybackslash}p{3.3cm}|X|}
+    \caption{Level Kepercayaan Sistem DecMed}
+    \label{tab:trust-level} \\
+    \hline
+    \textbf{ID} & \textbf{Nama} & \textbf{Deskripsi} \\
+    \hline
+    \endfirsthead
+    \hline
+    \textbf{ID} & \textbf{Nama} & \textbf{Deskripsi} \\
+    \hline
+    \endhead
+    \hline
+    \endfoot
+    \hline
+    \endlastfoot
+
+    LK1 & Aktor belum teraktivasi/teregistrasi & Pengguna yang belum menyelesaikan proses \textit{signup} atau aktivasi \textit{client}; tidak memiliki \textit{capability} apa pun pada sistem. \\
+    \hline
+
+    LK2 & Pasien (teraktivasi) & Pasien yang telah teregistrasi; memiliki \textit{capability} membaca RME sendiri, memberi dan mencabut akses, serta melihat log akses. \\
+    \hline
+
+    LK3 & Administrative Personnel (dengan \textit{capability} aktif) & Tenaga administratif fasyankes yang telah diberi akses oleh pasien; \textit{scope} akses terbatas pada data administratif saja. \\
+    \hline
+
+    LK4 & Medical Personnel (dengan \textit{capability} aktif) & Tenaga medis fasyankes yang telah diberi akses oleh pasien; \textit{scope} akses mencakup data administratif dan klinis, termasuk hak tulis (tambah/ubah) data klinis. \\
+    \hline
+
+    LK5 & Hospital Admin & Administrator fasyankes; berwenang menambah personel dan menerbitkan \textit{activation key} pada lingkup fasyankesnya. \\
+    \hline
+
+    LK6 & Ministry of Health & Administrator Kementerian Kesehatan; berwenang meregistrasi fasyankes baru beserta admin-nya, otoritas tertinggi di antara aktor manusia. \\
+    \hline
+
+    LK7 & PRE Server (Proxy) & Proses \textit{backend} dengan \textit{capability} \texttt{ProxyCapEnum}; berwenang memverifikasi entri \textit{capability on-chain} dan melakukan re-enkripsi data. \\
+    \hline
+
+    LK8 & Gas Station Server & Proses \textit{backend} yang mensponsori dan mengeksekusi transaksi atas nama \textit{client}, memiliki akses terhadap kunci penandatanganan (KSM). \\
+    \hline
+
+    LK9 & IOTA Network Validator & Node jaringan yang berpartisipasi dalam konsensus Mysticeti untuk memvalidasi dan memfinalisasi transaksi pada ledger IOTA. \\
+    \hline
+
+\end{xltabular}
+
+Catatan: LK3 dan LK4 bersifat \textit{paralel}, bukan hierarkis -- keduanya diberikan \textit{capability} oleh pasien secara independen dengan cakupan data yang berbeda (administratif saja vs. administratif dan klinis), sehingga tidak dapat diasumsikan LK4 selalu memiliki privilese lebih tinggi dari LK3 di seluruh konteks ancaman.

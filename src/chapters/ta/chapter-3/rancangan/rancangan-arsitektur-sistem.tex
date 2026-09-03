@@ -1,0 +1,25 @@
+\subsection{Rancangan Arsitektur Solusi}
+
+Guna mengatasi permasalahan terfragmentasinya pencatatan dan kerentanan integritas log pada DecMed, penelitian ini mengusulkan penambahan satu komponen utama pada arsitektur sistem, yaitu \textbf{Audit Trail Service (ATS)}. ATS dirancang sebagai layanan \textit{backend} independen yang menjembatani pengumpulan bukti digital dari seluruh komponen DecMed menuju media penyimpanan terdesentralisasi.
+
+Penambahan ATS tidak mengubah alur bisnis maupun fungsionalitas utama DecMed yang telah berjalan pada komponen eksisting, seperti \textit{Patient Client}, \textit{Hospital Client}, PRE Server, maupun Gas Station Server. ATS bertindak sebagai pengumpul log terpusat yang memanfaatkan kembali (\textit{reuse}) infrastruktur \textit{off-chain} (IPFS Cluster) dan \textit{on-chain} (jaringan IOTA) yang sudah tersedia pada DecMed.
+
+Gambaran arsitektur solusi sistem DecMed beserta integrasi ATS ditunjukkan pada Gambar~\ref{fig:arsitektur-solusi}. Warna merah merepresentasikan komponen baru dan penyesuaian alur interaksi yang ditambahkan pada arsitektur DecMed.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=1\textwidth]{chapter-3/decmed_ats_architecture.png}
+\caption{Rancangan Arsitektur Solusi Audit Trail DecMed}
+\label{fig:arsitektur-solusi}
+\end{figure}
+
+Berdasarkan Gambar~\ref{fig:arsitektur-solusi}, alur interaksi dan integrasi ATS dalam arsitektur DecMed dirancang sebagai berikut:
+
+\begin{enumerate}
+    \item \textbf{Pengiriman Event dari Komponen DecMed:} Setiap kali terjadi aktivitas bernilai audit pada aplikasi klien (\textit{Patient Client} dan \textit{Hospital Client}) maupun komponen perantara (PRE Server dan Gas Station Server), komponen tersebut mengirimkan rekaman \textit{audit event} ke ATS melalui antarmuka komunikasi yang aman.
+    \item \textbf{Pemrosesan dan Pengelompokan Log:} ATS menerima \textit{event} tersebut, menyelaraskan formatnya sesuai skema terstruktur, membentuk rantai integritas (\textit{hash chain}), dan mengelompokkan rekaman log ke dalam satu berkas arsip (\textit{batch}) secara periodik.
+    \item \textbf{Penyimpanan Berkas Off-Chain di IPFS:} ATS mengunggah berkas arsip log ke IPFS Cluster eksisting DecMed dan menerapkan perintah \textit{pinning} agar berkas log tidak terhapus oleh proses \textit{Garbage Collection}.
+    \item \textbf{Pencatatan Metadata On-Chain di IOTA:} ATS menerbitkan transaksi ke jaringan IOTA melalui Gas Station Server untuk mencatatkan metadata berkas ke dalam \textit{smart contract} Move sebagai \textit{immutable trust anchor}.
+\end{enumerate}
+
+Dengan rancangan arsitektur ini, ATS berhasil memisahkan beban pemrosesan dan penyimpanan log dari transaksi data klinis utama, sekaligus menjamin bahwa seluruh rekam jejak aktivitas DecMed terekam secara utuh, \textit{immutable}, dan dapat diverifikasi.

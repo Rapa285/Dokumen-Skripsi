@@ -1,0 +1,114 @@
+\chapter{Atribut Tambahan Audit Event}
+
+\begin{xltabular}
+{\textwidth}
+{|>{\centering\arraybackslash}p{1.2cm}
+ |>{\raggedright\arraybackslash}p{5.8cm}
+ |X|}
+
+\caption{Atribut Audit Tambahan untuk Setiap Audit Event}
+\label{tab:detail-audit-record}\\
+
+\hline
+
+\textbf{ID Event} &
+\textbf{Atribut Tambahan} &
+\textbf{Alasan} \\
+
+\hline
+\endfirsthead
+
+\hline
+
+\textbf{ID Event} &
+\textbf{Atribut Tambahan} &
+\textbf{Alasan} \\
+
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\endlastfoot
+
+EV1 &
+\texttt{auth\_method}, \texttt{failed\_attempt\_count}, \texttt{device\_fingerprint}. &
+Mendukung identifikasi metode autentikasi, pola kegagalan autentikasi, serta perangkat yang digunakan untuk mendeteksi percobaan autentikasi yang mencurigakan. \\
+
+\hline
+
+EV2 &
+\texttt{qr\_payload\_id}, \texttt{qr\_payload}, \texttt{signature\_valid}, \texttt{recipient\_identity}. &
+Mendokumentasikan payload dan keaslian QR Access Delegation serta identitas pihak yang menerima atau menggunakan delegasi akses. \\
+
+\hline
+
+EV3 &
+\texttt{capability\_id}, \texttt{access\_scope}, \texttt{expiry\_duration}, \texttt{recipient\_identity}, \texttt{transaction\_digest}. &
+Mendokumentasikan capability yang dibuat, ruang lingkup akses yang diberikan, masa berlaku, pihak penerima akses, serta transaksi yang merekam pembuatan capability. \\
+
+\hline
+
+EV4 &
+\texttt{access\_type}, \texttt{medical\_record\_id}, \texttt{capability\_id}, \texttt{authorization\_token\_id}, \texttt{authorization\_result}. &
+Mengidentifikasi jenis operasi terhadap rekam medis serta mekanisme otorisasi yang digunakan dan hasil pemeriksaan otorisasi. \\
+
+\hline
+
+EV5 &
+\texttt{activation\_key\_id}, \texttt{personnel\_id}, \texttt{facility\_id}, \texttt{transaction\_digest}. &
+Mendokumentasikan activation key yang dihasilkan, personel yang menjadi penerima, fasilitas pelayanan kesehatan terkait, serta transaksi yang merekam aktivitas tersebut. \\
+
+\hline
+
+EV6 &
+\texttt{facility\_id}, \texttt{facility\_name}, \texttt{facility\_identifier}, \texttt{transaction\_digest}. &
+Mendokumentasikan identitas fasilitas pelayanan kesehatan yang diregistrasikan serta transaksi yang merekam proses registrasi. \\
+
+\hline
+
+EV7 &
+\texttt{endpoint\_called}, \texttt{request\_id}, \texttt{service\_type}, \texttt{caller\_component}, \texttt{channel\_encryption}. &
+Mengidentifikasi layanan PRE yang diminta, endpoint tujuan, komponen pemanggil, serta mekanisme pengamanan kanal komunikasi untuk mendukung investigasi terhadap penyalahgunaan layanan PRE. \\
+
+\hline
+
+EV8 &
+\texttt{transaction\_digest}, \texttt{payload\_hash}, \texttt{network\_confirmation\_status}. &
+Menyediakan bukti transaksi yang dikirim, identitas ringkas payload yang dikirim, serta status konfirmasi transaksi pada jaringan IOTA. \\
+
+\hline
+
+EV9 &
+\texttt{transaction\_digest}, \texttt{requested\_gas\_budget}, \texttt{sponsorship\_status}. &
+Mendokumentasikan transaksi yang meminta sponsorship, jumlah gas yang diminta, serta status pemrosesan sponsorship untuk mendukung investigasi terhadap penyalahgunaan layanan gas sponsorship. \\
+
+\hline
+
+EV10 &
+\texttt{redis\_key\_type}, \texttt{operation\_type}, \texttt{ttl\_remaining}, \texttt{request\_origin}. &
+Mendokumentasikan jenis objek Redis yang diakses, operasi yang dilakukan, masa berlaku objek, serta asal permintaan untuk mendeteksi perubahan, pembacaan, maupun pola akses Redis yang mencurigakan. \\
+
+\hline
+
+EV11 &
+\texttt{cid}, \texttt{operation\_type}, \texttt{data\_size}, \texttt{request\_origin}. &
+Mengidentifikasi objek IPFS yang diakses, jenis operasi, ukuran data, serta asal permintaan untuk mendukung investigasi terhadap akses tidak sah maupun permintaan dalam jumlah besar. \\
+
+\hline
+
+EV12 &
+\texttt{metadata\_type}, \texttt{object\_id}, \texttt{query\_parameters}. &
+Mendokumentasikan jenis metadata atau objek \textit{on-chain} yang diakses beserta parameter yang digunakan dalam permintaan pembacaan. \\
+
+\hline
+
+EV13 &
+\texttt{capability\_id}, \texttt{required\_scope}, \texttt{actual\_scope}, \texttt{validation\_result}, \texttt{rejection\_reason}. &
+Mendokumentasikan capability yang diperiksa, ruang lingkup akses yang dipersyaratkan dan dimiliki, serta alasan penolakan apabila hasil validasi tidak memenuhi persyaratan otorisasi. \\
+
+\hline
+
+\end{xltabular}

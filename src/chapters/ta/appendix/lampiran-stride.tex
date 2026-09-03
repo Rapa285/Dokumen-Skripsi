@@ -1,0 +1,98 @@
+\chapter{Hasil Analisis Ancaman STRIDE}
+
+\begin{xltabular}{\textwidth}{|>{\centering\arraybackslash}p{0.8cm}|X|>{\centering\arraybackslash}p{1.8cm}|}
+    \caption{Identifikasi Ancaman Sistem DecMed} 
+    \label{tab:klasifikasi-ancaman} \\
+    
+    \hline
+    \textbf{ID} & \textbf{Deskripsi Ancaman} & \textbf{STRIDE} \\
+    \hline
+    \endfirsthead
+
+    \hline
+    \textbf{ID} & \textbf{Deskripsi Ancaman} & \textbf{STRIDE} \\
+    \hline
+    \endhead
+
+    \hline
+    \endfoot
+
+    \hline
+    \endlastfoot
+
+    T1 & Penyerang mendapatkan kredensial atau membajak sesi lokal milik pengguna untuk berpura-pura menjadi pemilik identitas sah saat \textit{sign-in}. & S \\
+    \hline
+
+    T2 & Kredensial \textit{sign-in} (PIN) tersadap atau terekam melalui \textit{shoulder surfing}, \textit{keylogger}, atau malware pada perangkat saat dimasukkan ke Client. & I \\
+    \hline
+
+    T3 & Percobaan \textit{sign-in} berulang secara masif menghabiskan sumber daya Client (\textit{local resource exhaustion}). & D \\
+    \hline
+
+    T4 & Payload QR Access Delegation dipalsukan sebelum dipindai oleh Patient Client. & S \\
+    \hline
+
+    T5 & Payload QR Access Delegation disadap sehingga informasi delegasi akses bocor kepada pihak tidak berwenang. & I \\
+    \hline
+
+    T6 & Pasien menyangkal pernah memberikan akses (\texttt{create\_access}) kepada tenaga medis tertentu. & R \\
+    \hline
+
+    T7 & Tenaga medis atau tenaga administratif menyangkal pernah mengakses maupun mengubah data pasien tertentu. & R \\
+    \hline
+
+    T8 & Admin fasyankes menyangkal pernah menerbitkan \textit{activation key} kepada personel tertentu. & R \\
+    \hline
+
+    T9 & Ministry Administrator menyangkal pernah meregistrasi fasyankes tertentu beserta admin-nya. & R \\
+    \hline
+
+    T10 & Penyerang menyamar sebagai Proxy Re-encryption API (P4) yang sah (\textit{man-in-the-middle}) saat Client mengirim permintaan. & S \\
+    \hline
+
+    T11 & Penyerang menyadap komunikasi Client dengan PRE Server, mengungkap data sensitif seperti token JWT maupun data administratif. & I \\
+    \hline
+
+    T12 & Pihak eksternal membanjiri \textit{endpoint} dengan permintaan palsu untuk menghabiskan sumber daya PRE Server. & D \\
+    \hline
+
+    T13 & Token JWT dipalsukan atau diputar ulang (\textit{replay}) pada permintaan dari Client ke PRE Server. & S \\
+    \hline
+
+    T14 & Penyerang memodifikasi \textit{Move transaction} pada perjalanan dari IOTA Transaction Client menuju IOTA Network. & T \\
+    \hline
+
+    T15 & Penyerang menyamar sebagai IOTA Transaction Client (P8) yang sah saat berinteraksi dengan Gas Station untuk mengajukan sponsorship transaksi palsu. & S \\
+    \hline
+
+    T16 & PRE Server (P8) menyangkal telah mengajukan atau menerima keputusan sponsorship transaksi tertentu dari Gas Station. & R \\
+    \hline
+
+    T17 & Penyerang mengajukan permintaan sponsorship \textit{gas} secara berulang sehingga \textit{gas object} habis dan transaksi sah pengguna lain gagal tersponsori. & D \\
+    \hline
+
+    T18 & Pihak dengan akses tidak sah ke Redis memodifikasi nilai \textit{nonce} autentikasi atau \texttt{kfrag} sebelum digunakan. & T \\
+    \hline
+
+    T19 & Pihak dengan akses tidak sah ke Redis membaca \texttt{kfrag} atau \textit{nonce} sebelum masa berlakunya (TTL) berakhir. & I \\
+    \hline
+
+    T20 & Redis dipenuhi (\textit{memory exhaustion}) melalui permintaan \textit{nonce} baru secara berulang sehingga proses autentikasi pengguna sah terganggu. & D \\
+    \hline
+
+    T21 & Data klinis terenkripsi diunduh dari IPFS Cluster Storage oleh pihak tidak berwenang. & I \\
+    \hline
+
+    T22 & IPFS Cluster dibanjiri permintaan berukuran besar sehingga mengganggu ketersediaan data klinis bagi pengguna sah. & D \\
+    \hline
+
+    T23 & Metadata \textit{on-chain} yang tersimpan pada IOTA On-Chain State bersifat publik sehingga pola transaksi berpotensi dianalisis untuk mengungkap informasi tidak langsung mengenai pasien. & I \\
+    \hline
+
+    T24 & Kelemahan validasi \textit{capability on-chain} memungkinkan pembacaan atau pembuatan \texttt{ProxyCapEnum}/ \texttt{GlobalAdminCap} tanpa otorisasi sah, setara privilese tertinggi PRE Server/Kementerian Kesehatan. & E \\
+    \hline
+
+    T25 & Kegagalan validasi otorisasi pada Authentication \& Access Control memungkinkan Medical Record Management memproses permintaan dengan \textit{scope} lebih tinggi dari yang seharusnya. & E \\
+    \hline
+
+\end{xltabular}

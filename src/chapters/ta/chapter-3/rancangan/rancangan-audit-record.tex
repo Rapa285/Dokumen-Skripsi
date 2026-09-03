@@ -1,0 +1,72 @@
+\subsubsection{Atribut Umum Audit Record}
+
+Berdasarkan pemetaan ancaman terhadap audit event pada Tabel~\ref{tab:threat-event-mapping}, setiap audit event memiliki kebutuhan bukti yang berbeda sesuai dengan aktivitas dan ancaman yang direpresentasikan. Meskipun demikian, terdapat beberapa informasi yang memiliki fungsi umum dan dapat digunakan pada seluruh jenis audit event. Informasi tersebut diperlukan agar setiap audit record dapat menjelaskan pihak yang terlibat, waktu terjadinya aktivitas, objek yang berkaitan dengan aktivitas, serta hasil dari aktivitas tersebut.
+
+Empat kebutuhan bukti umum yang diidentifikasi adalah \textit{actor}, \textit{timestamp}, \textit{object}, dan \textit{result}. \textit{Actor} digunakan untuk mengidentifikasi pihak atau komponen yang melakukan atau memicu aktivitas yang dicatat. Identitas tersebut tidak selalu berupa identitas pengguna, karena beberapa aktivitas dapat dilakukan oleh komponen sistem secara otomatis. Oleh karena itu, atribut ini dapat merepresentasikan pengguna, administrator, proses, maupun komponen sistem yang terkait dengan suatu aktivitas.
+
+\textit{Timestamp} digunakan untuk mencatat waktu terjadinya aktivitas. Informasi waktu diperlukan untuk mengetahui urutan kejadian, melakukan korelasi antar-event, serta menganalisis pola aktivitas yang berkaitan dengan suatu ancaman. Pencatatan waktu juga memungkinkan audit record dikaitkan dengan kejadian lain yang terjadi pada periode yang sama.
+
+\textit{Object} digunakan untuk mengidentifikasi sumber daya atau entitas yang menjadi sasaran aktivitas. Bentuk objek bergantung pada jenis event, seperti rekam medis, \textit{capability}, transaksi IOTA, objek IPFS, objek Redis, maupun metadata \textit{on-chain}. Dengan menggunakan atribut umum \textit{object}, perbedaan jenis sumber daya tersebut dapat direpresentasikan tanpa harus menjadikan setiap jenis sumber daya sebagai atribut pada seluruh audit record.
+
+Sementara itu, \textit{result} digunakan untuk mencatat hasil dari aktivitas yang dilakukan. Hasil dapat berupa keberhasilan, kegagalan, penolakan, maupun status lain yang relevan dengan operasi. Informasi ini diperlukan untuk membedakan aktivitas yang berhasil dilakukan dari percobaan aktivitas yang gagal atau ditolak, sehingga dapat digunakan dalam investigasi maupun analisis ancaman.
+
+Keempat kebutuhan bukti tersebut kemudian dipetakan menjadi atribut umum pada struktur audit record, sebagaimana ditunjukkan pada Tabel~\ref{tab:general-audit-evidence}. Atribut lain yang hanya relevan terhadap jenis event tertentu tetap direpresentasikan sebagai atribut khusus pada masing-masing event.
+
+\begin{xltabular}
+    {\textwidth}
+    {|>{\raggedright\arraybackslash}p{3.2cm}
+     |>{\centering\arraybackslash}p{2.8cm}
+     |X|}
+    
+\caption{Pemetaan Kebutuhan Bukti Umum ke Atribut Audit Record}
+\label{tab:general-audit-evidence}\\
+
+\hline
+\textbf{Kebutuhan Bukti} &
+\textbf{Atribut Umum} &
+\textbf{Keterangan} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{Kebutuhan Bukti} &
+\textbf{Atribut Umum} &
+\textbf{Keterangan} \\
+\hline
+\endhead
+
+\hline
+\endfoot
+
+\hline
+\endlastfoot
+
+Identitas pihak atau komponen yang melakukan atau memicu aktivitas &
+\texttt{actor} &
+Mengidentifikasi pengguna, administrator, proses, atau komponen sistem yang melakukan atau memicu aktivitas audit. \\
+
+\hline
+
+Waktu terjadinya aktivitas &
+\texttt{timestamp} &
+Mencatat waktu terjadinya aktivitas untuk menentukan urutan kejadian dan melakukan korelasi antar-event. \\
+
+\hline
+
+Objek atau sumber daya yang menjadi sasaran aktivitas &
+\texttt{object} &
+Mengidentifikasi entitas yang berkaitan dengan aktivitas, seperti rekam medis, \textit{capability}, transaksi, objek IPFS, objek Redis, atau metadata \textit{on-chain}. \\
+
+\hline
+
+Hasil aktivitas atau pemrosesan &
+\texttt{result} &
+Mencatat hasil aktivitas, seperti berhasil, gagal, ditolak, atau status lain yang relevan. \\
+
+\hline
+
+\end{xltabular}
+
+\subsubsection{Atribut Khusus Audit Record}
+
+Selain atribut umum tersebut, setiap \textit{audit event} juga memiliki atribut tambahan yang disesuaikan dengan kebutuhan bukti digital terhadap ancaman yang dipetakan pada Tabel\ref{tab:threat-event-mapping}. Atribut tambahan tersebut disajikan pada Tabel~\ref{tab:detail-audit-record}.

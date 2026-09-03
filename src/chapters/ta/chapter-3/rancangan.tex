@@ -1,51 +1,58 @@
 \section{Rancangan}
 
-\subsection{Arsitektur Sistem Audit Trail}
+\subsection{Rancangan Audit Record}
 
-Untuk mengatasi permasalahan yang telah diidentifikasi pada Analisis Masalah penelitian ini
-mengusulkan penambahan satu komponen baru pada arsitektur DecMed, yaitu
-\textbf{Audit Trail Service (ATS)}. ATS dirancang sebagai layanan
-\textit{backend} berbasis Rust dan \textit{framework} Axum yang independen
-terhadap komponen DecMed yang telah ada (PRE Server, Gas Station Server,
-maupun \textit{smart contract}), sehingga penambahan mekanisme audit trail
-tidak mengubah alur bisnis maupun fungsionalitas DecMed yang sudah berjalan.
+\input{chapters/ta/chapter-3/rancangan/rancangan-audit-record.tex}
 
-ATS terdiri atas tiga komponen fungsional utama:
+\input{chapters/ta/chapter-3/rancangan/rancangan-arsitektur-sistem.tex}
 
-\begin{itemize}
-    \item \textbf{Audit Receiver} yang menyediakan \textit{endpoint}
-    \texttt{POST /api/events} sebagai titik masuk tunggal seluruh audit
-    \textit{event} dari berbagai sumber pada sistem DecMed (Client Apps,
-    PRE Server, Gas Station Server). Setiap \textit{event} dikirimkan
-    dalam format \textit{signed payload} yang berisi tanda tangan digital
-    Ed25519, memungkinkan ATS memverifikasi keaslian pengirim sebelum
-    \textit{event} diproses lebih lanjut.
+% \subsection{ Rancangan Arsitektur Sistem Audit Trail}
 
-    \item \textbf{Audit Logger} yang menerima \textit{event} yang telah
-    diverifikasi dari Audit Receiver melalui antrian asinkron internal
-    (\textit{mpsc channel}), membentuk \textit{audit record} dengan atribut
-    standar, dan menerapkan mekanisme \textit{hash-chaining} antar
-    \textit{record} sehingga setiap \textit{record} menyimpan
-    \texttt{prev\_record\_hash} dari \textit{record} sebelumnya. Mekanisme
-    ini menjamin bahwa modifikasi atau penghapusan satu \textit{record} akan
-    terdeteksi karena seluruh \textit{record} sesudahnya akan memiliki
-    nilai \texttt{record\_hash} yang tidak konsisten.
+% Untuk mengatasi permasalahan yang telah diidentifikasi pada Analisis Masalah penelitian ini
+% mengusulkan penambahan satu komponen baru pada arsitektur DecMed, yaitu
+% \textbf{Audit Trail Service (ATS)}. ATS dirancang sebagai layanan
+% \textit{backend} berbasis Rust dan \textit{framework} Axum yang independen
+% terhadap komponen DecMed yang telah ada (PRE Server, Gas Station Server,
+% maupun \textit{smart contract}), sehingga penambahan mekanisme audit trail
+% tidak mengubah alur bisnis maupun fungsionalitas DecMed yang sudah berjalan.
 
-    \item \textbf{Log Rotation \& Archival Worker} yang berjalan secara
-    periodik dan bertanggung jawab atas tiga tahap pengarsipan, yaitu:
-    (i) merotasi berkas log aktif menjadi berkas arsip baru,
-    (ii) mengunggah berkas arsip ke IPFS Cluster yang telah digunakan
-    DecMed sebagai penyimpanan \textit{off-chain}, sehingga menghasilkan
-    \textit{Content Identifier} (CID) sebagai penanda integritas berkas,
-    dan (iii) menerbitkan metadata rotasi log ke jaringan IOTA melalui
-    Gas Station Server yang telah ada, sebagai \textit{trust anchor}
-    yang \textit{immutable}.
-\end{itemize}
+% ATS terdiri atas tiga komponen fungsional utama:
 
-Dengan arsitektur tersebut, ATS tidak menambah infrastruktur penyimpanan
-baru, melainkan memanfaatkan kembali (\textit{reuse}) infrastruktur
-\textit{off-chain} (IPFS Cluster) dan \textit{on-chain} (IOTA via Gas
-Station Server) yang sudah tersedia pada DecMed.
+% \begin{itemize}
+%     \item \textbf{Audit Receiver} yang menyediakan \textit{endpoint}
+%     \texttt{POST /api/events} sebagai titik masuk tunggal seluruh audit
+%     \textit{event} dari berbagai sumber pada sistem DecMed (Client Apps,
+%     PRE Server, Gas Station Server). Setiap \textit{event} dikirimkan
+%     dalam format \textit{signed payload} yang berisi tanda tangan digital
+%     Ed25519, memungkinkan ATS memverifikasi keaslian pengirim sebelum
+%     \textit{event} diproses lebih lanjut.
+
+%     \item \textbf{Audit Logger} yang menerima \textit{event} yang telah
+%     diverifikasi dari Audit Receiver melalui antrian asinkron internal
+%     (\textit{mpsc channel}), membentuk \textit{audit record} dengan atribut
+%     standar, dan menerapkan mekanisme \textit{hash-chaining} antar
+%     \textit{record} sehingga setiap \textit{record} menyimpan
+%     \texttt{prev\_record\_hash} dari \textit{record} sebelumnya. Mekanisme
+%     ini menjamin bahwa modifikasi atau penghapusan satu \textit{record} akan
+%     terdeteksi karena seluruh \textit{record} sesudahnya akan memiliki
+%     nilai \texttt{record\_hash} yang tidak konsisten.
+
+%     \item \textbf{Log Rotation \& Archival Worker} yang berjalan secara
+%     periodik dan bertanggung jawab atas tiga tahap pengarsipan, yaitu:
+%     (i) merotasi berkas log aktif menjadi berkas arsip baru,
+%     (ii) mengunggah berkas arsip ke IPFS Cluster yang telah digunakan
+%     DecMed sebagai penyimpanan \textit{off-chain}, sehingga menghasilkan
+%     \textit{Content Identifier} (CID) sebagai penanda integritas berkas,
+%     dan (iii) menerbitkan metadata rotasi log ke jaringan IOTA melalui
+%     Gas Station Server yang telah ada, sebagai \textit{trust anchor}
+%     yang \textit{immutable}.
+% \end{itemize}
+
+% Dengan arsitektur tersebut, ATS tidak menambah infrastruktur penyimpanan
+% baru, melainkan memanfaatkan kembali (\textit{reuse}) infrastruktur
+% \textit{off-chain} (IPFS Cluster) dan \textit{on-chain} (IOTA via Gas
+% Station Server) yang sudah tersedia pada DecMed.
+
 
 \subsection{Mekanisme Pembangkitan dan Penerimaan Audit Event}
 

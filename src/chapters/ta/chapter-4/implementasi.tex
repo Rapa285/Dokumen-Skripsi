@@ -169,6 +169,3 @@ Fungsi \texttt{Utils::verify\_record} pada berkas \texttt{audit-trail/src/utils.
 
 Verifikasi rantai secara penuh dilakukan dengan memeriksa setiap \textit{record} secara berurutan: nilai \texttt{prev\_record\_hash} setiap \textit{record} harus sama persis dengan \texttt{record\_hash} dari \textit{record} sebelumnya. Apabila terdapat \textit{record} yang dihapus, ditambahkan, atau dimodifikasi di tengah rantai, nilai \texttt{record\_hash} seluruh \textit{record} sesudahnya akan menjadi tidak konsisten dan verifikasi akan gagal.
 
-\section{Pengujian}
-
-\textit{[Bagian pengujian akan ditambahkan setelah implementasi selesai diverifikasi.]}

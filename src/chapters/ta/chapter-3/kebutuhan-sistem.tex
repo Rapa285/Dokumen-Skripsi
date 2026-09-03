@@ -1,0 +1,83 @@
+\subsection{Kebutuhan Sistem}
+
+Berdasarkan masalah yang telah dipetakan pada Tabel~\ref{tab:identifikasi-masalah}, kebutuhan sistem pada Tugas Akhir ini dirumuskan khusus untuk membangun sistem \textit{audit trail} terintegrasi yang mampu mengelola, mevalidasi, dan menyimpan bukti digital dari berbagai komponen DecMed. Kebutuhan ini dirancang untuk menyelesaikan masalah belum terintegrasikannya log aktivitas, keterbatasan cakupan \textit{event}, kerentanan modifikasi log, ketidakstandaran format, serta ancaman \textit{data pruning} pada jaringan DLT.
+
+Kebutuhan sistem dibagi menjadi kebutuhan fungsional dan kebutuhan nonfungsional. Kebutuhan fungsional menjelaskan kemampuan otomatis yang harus disediakan oleh sistem dalam menangkap, memformat, dan menyimpan \textit{audit record}. Sementara itu, kebutuhan nonfungsional menjelaskan batasan kualitas, integritas, dan ketersediaan data log dalam jangka panjang.
+
+\subsubsection{Kebutuhan Fungsional}
+
+Kebutuhan fungsional dirumuskan dari sudut pandang interaksi antar-proses (\textit{system/process actors}) antara komponen internal DecMed dan repositori \textit{audit trail}. Rangkuman kebutuhan fungsional ditunjukkan pada Tabel~\ref{tab:kebutuhan-fungsional}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Kebutuhan Fungsional Sistem \textit{Audit Trail}}
+    \label{tab:kebutuhan-fungsional}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|p{2cm}|p{11.5cm}|}
+        \hline
+        \textbf{ID} & \textbf{Deskripsi Kebutuhan} \\
+        \hline
+        KF-TA-01 & Sistem harus dapat mengagregasi dan mengelola data log dari berbagai komponen DecMed ke dalam satu repositori \textit{audit trail} terpusat. \\
+        \hline
+        KF-TA-02 & Sistem harus dapat menangkap dan merekam keseluruhan jenis \textit{event} yang sudah ditentukan pada Tabel~\ref{tab:threat-event-mapping}. \\
+        \hline
+        KF-TA-03 & Sistem harus memformat dan menstandardisasi \textit{audit record} ke dalam skema data terstruktur sebelum disimpan. \\
+        \hline
+        KF-TA-04 & Sistem harus menyimpan rekaman \textit{audit trail} ke dalam media penyimpanan terdesentralisasi/terisolasi yang bersifat \textit{append-only} untuk mencegah modifikasi (\textit{overwrite}). \\
+        \hline
+        KF-TA-05 & Sistem harus menyediakan mekanisme penyimpanan cadangan/persistensi (\textit{long-term retention}) untuk mengantisipasi kehilangan data akibat \textit{pruning} pada jaringan DLT. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\subsubsection{Kebutuhan Nonfungsional}
+
+Kebutuhan nonfungsional difokuskan untuk memastikan atribut kualitas keamanan, integritas, dan keandalan data log. Rangkuman kebutuhan nonfungsional ditunjukkan pada Tabel~\ref{tab:kebutuhan-nonfungsional}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Kebutuhan Nonfungsional Sistem \textit{Audit Trail}}
+    \label{tab:kebutuhan-nonfungsional}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|p{2cm}|p{11.5cm}|}
+        \hline
+        \textbf{ID} & \textbf{Deskripsi Kebutuhan} \\
+        \hline
+        KNF-TA-01 & \textbf{Integritas (\textit{Immutability}):} Sistem harus menjamin bahwa data \textit{audit record} yang telah disimpan bersifat \textit{tamper-proof} dan tidak dapat diubah atau dihapus oleh pihak mana pun. \\
+        \hline
+        KNF-TA-02 & \textbf{Interoperabilitas \& Keterbacaan:} Format data log yang dihasilkan harus konsisten, terstruktur, dan mudah dibaca/diproses oleh komponen sistem. \\
+        \hline
+        KNF-TA-03 & \textbf{Ketersediaan Data (\textit{Availability}):} Sistem harus menjamin ketersediaan dan keteraksesan data \textit{audit trail} dalam jangka panjang. \\
+        \hline
+        KNF-TA-04 & \textbf{Konsistensi Pencatatan:} Sistem harus memastikan setiap \textit{event} yang terjadi dicatat secara presisi tanpa ada kejadian bernilai audit tinggi yang terlewat. \\
+        \hline
+    \end{tabular}
+\end{table}
+
+\subsubsection{Pemetaan Masalah terhadap Kebutuhan Sistem}
+
+Untuk memastikan bahwa setiap masalah yang diidentifikasi pada Tabel~\ref{tab:identifikasi-masalah} memiliki solusi yang sesuai, dilakukan pemetaan terhadap kebutuhan fungsional dan nonfungsional. Hasil pemetaan ditunjukkan pada Tabel~\ref{tab:pemetaan-masalah}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Pemetaan Masalah terhadap Kebutuhan Sistem \textit{Audit Trail}}
+    \label{tab:pemetaan-masalah}
+    \renewcommand{\arraystretch}{1.3}
+    \begin{tabular}{|p{2.5cm}|p{5cm}|p{5.5cm}|}
+        \hline
+        \textbf{ID Masalah} & \textbf{Kebutuhan Fungsional} & \textbf{Kebutuhan Nonfungsional} \\
+        \hline
+        M-TA-01 & KF-TA-01 & KNF-TA-02, KNF-TA-04 \\
+        \hline
+        M-TA-02 & KF-TA-02 & KNF-TA-04 \\
+        \hline
+        M-TA-03 & KF-TA-04 & KNF-TA-01 \\
+        \hline
+        M-TA-04 & KF-TA-03 & KNF-TA-02 \\
+        \hline
+        M-TA-05 & KF-TA-05 & KNF-TA-03 \\
+        \hline
+    \end{tabular}
+\end{table}
+
+Tabel~\ref{tab:pemetaan-masalah} menunjukkan bahwa seluruh masalah (M-TA-01 hingga M-TA-05) telah ditangani secara langsung oleh kombinasi kebutuhan fungsional dan nonfungsional. Pemetaan ini menjadi dasar penentuan rancangan arsitektur dan skenario pengujian pada bab selanjutnya.
