@@ -1,1 +1,23 @@
 \usepackage{amssymb}
+\usepackage{minted}
+
+\usepackage{caption}
+
+\captionsetup[listing]{
+    name=Kode,
+    labelsep=period,
+    justification=raggedright,
+    singlelinecheck=false
+}
+
+\setminted{
+    linenos,
+    frame=single,
+    framesep=2mm,
+    fontsize=\small,
+    breaklines,
+    numbersep=8pt,
+    style=bw
+}
+
+\renewcommand{\theFancyVerbLine}{\scriptsize\arabic{FancyVerbLine}}

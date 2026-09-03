@@ -1,0 +1,103 @@
+\chapter{Implementasi Tipe AuditEventDetails}
+
+\begin{minted}[
+    linenos,
+    frame=single,
+    framesep=2mm,
+    fontsize=\small,
+    breaklines,
+    numbersep=8pt,
+    style=bw
+]{rust}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "event_type")]
+pub enum AuditEventDetails {
+    #[serde(rename = "EV1")]
+    Authentication {
+        auth_method: String,
+        authentication_result: String,
+        failed_attempt_count: u32,
+        device_fingerprint: String,
+    },
+    #[serde(rename = "EV2")]
+    QRDelegation {
+        qr_payload_id: String,
+        recipient_identity: String,
+        signature_valid: bool,
+    },
+    #[serde(rename = "EV3")]
+    CapabilityIssuance {
+        capability_id: String,
+        access_scope: String,
+        expiry_duration: u64,
+        transaction_digest: String,
+    },
+    #[serde(rename = "EV4")]
+    MedicalRecordAccess {
+        access_type: String,
+        medical_record_id: String,
+        capability_id: String,
+        authorization_token_id: String,
+    },
+    #[serde(rename = "EV5")]
+    HospitalPersonnelKeyGeneration {
+        facility_id: String,
+        personnel_id: String,
+        activation_key_id: String,
+    },
+    #[serde(rename = "EV6")]
+    HealthcareFacilityRegistration {
+        facility_id: String,
+        facility_name: String,
+        administrator_id: String,
+    },
+    #[serde(rename = "EV7")]
+    PREServiceRequest {
+        endpoint_called: String,
+        request_id: String,
+        caller_component: String,
+        channel_encryption: String,
+    },
+    #[serde(rename = "EV8")]
+    IotaTransactionSubmission {
+        transaction_digest: String,
+        signer_identity: String,
+        payload_hash: String,
+        network_confirmation_status: String,
+    },
+    #[serde(rename = "EV9")]
+    GasSponsorshipRequest {
+        requested_gas_budget: u64,
+        requester_id: String,
+        transaction_digest: String,
+    },
+    #[serde(rename = "EV10")]
+    RedisOperation {
+        redis_key_type: String,
+        operation_type: String,
+        process_identifier: String,
+        ttl_remaining: i64,
+    },
+    #[serde(rename = "EV11")]
+    IPFSObjectAccess {
+        cid: String,
+        operation_type: String,
+        requester_id: String,
+    },
+    #[serde(rename = "EV12")]
+    OnChainMetadataAccess {
+        onchain_object_id: String,
+        requester_id: String,
+    },
+    #[serde(rename = "EV13")]
+    CapabilityValidation {
+        capability_id: String,
+        requester_id: String,
+        validation_result: bool,
+        rejection_reason: Option<String>,
+    },
+}
+\end{minted}
+
+\captionof{listing}{Implementasi \texttt{AuditEventDetails}}
+\label{code:audit-event-details}
