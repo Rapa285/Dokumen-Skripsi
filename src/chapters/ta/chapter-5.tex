@@ -1,7 +1,27 @@
 \chapter{Penutup}
 
 \section{Kesimpulan}
-\blindtext
+
+Penelitian ini menyimpulkan dua hal berikut.
+
+\begin{enumerate}
+    \item Kebutuhan \textit{audit event} pada sistem DecMed ditentukan melalui analisis ancaman menggunakan metode STRIDE terhadap arsitektur sistem yang telah didekomposisi. Dari dekomposisi sistem yang mencakup identifikasi dependensi eksternal, titik masuk, aset, dan level kepercayaan, dihasilkan \textit{Data Flow Diagram} yang menjadi basis identifikasi ancaman. Analisis STRIDE menghasilkan 25 ancaman (T1--T25) yang mencakup seluruh enam kategori STRIDE: \textit{Spoofing}, \textit{Tampering}, \textit{Repudiation}, \textit{Information Disclosure}, \textit{Denial of Service}, dan \textit{Elevation of Privilege}. Pemetaan ancaman tersebut menghasilkan 13 jenis \textit{audit event} (EV1--EV13) yang perlu dicatat beserta atribut bukti spesifik yang dibutuhkan untuk keperluan investigasi dan mitigasi, sehingga cakupan pencatatan tidak ditentukan secara ad hoc melainkan berbasis risiko yang terukur.
+
+    \item Layanan \textit{audit trail} yang terintegrasi dengan arsitektur DecMed dirancang dan diimplementasikan sebagai komponen \textit{Audit Trail Service} (ATS) yang berdiri sendiri. ATS mengadopsi pola \textit{centralized audit collector} dengan pengiriman \textit{event} secara \textit{asynchronous push-based} dari empat \textit{event source}, yaitu \textit{Patient Client}, \textit{Hospital Client}, \textit{Ministry Client}, dan PRE Server. Setiap \textit{event} dibungkus dalam format \textit{signed payload} Ed25519 untuk menjamin keaslian dan \textit{non-repudiation}. Integritas berkas log lokal dijamin melalui mekanisme \textit{hash-chaining} antar \textit{audit record}, di mana setiap \textit{record} menyertakan nilai \textit{hash} SHA-256 dari \textit{record} sebelumnya. Retensi jangka panjang diwujudkan melalui rotasi log periodik, pengarsipan berkas log ke IPFS Cluster dengan \textit{pinning}, dan publikasi metadata rotasi sebagai \textit{frozen object} pada \textit{smart contract} Move di jaringan IOTA melalui Gas Station Server yang sudah tersedia pada DecMed. ATS tidak mengubah alur bisnis maupun fungsionalitas utama DecMed yang telah berjalan, melainkan memanfaatkan ulang infrastruktur IPFS dan IOTA yang sudah ada.
+\end{enumerate}
 
 \section{Saran}
-\blindtext
+
+Berdasarkan batasan dan hasil evaluasi Tugas Akhir ini, beberapa saran untuk pengembangan berikutnya adalah sebagai berikut.
+
+\begin{enumerate}
+    \item Mekanisme pengelolaan kunci Ed25519 pada setiap \textit{event source} perlu diperkuat. Pada implementasi saat ini, pasangan kunci dibangkitkan secara acak setiap kali komponen diinisialisasi tanpa persistensi, sehingga tidak ada kontinuitas kriptografis antar-sesi. Pengembangan berikutnya dapat mengintegrasikan penyimpanan kunci yang aman dan persisten, misalnya berbasis \textit{secure enclave} atau modul HSM, agar \textit{non-repudiation} dapat ditegakkan secara penuh dalam jangka panjang.
+
+    \item Pembacaan dan analisis \textit{audit trail} perlu dikembangkan sebagai komponen tersendiri. Implementasi saat ini hanya menyediakan \textit{endpoint} \texttt{GET /api/logs} untuk membaca metadata rotasi log \textit{on-chain}, tetapi belum menyediakan fasilitas pencarian, penyaringan, maupun korelasi \textit{audit record} berdasarkan atribut seperti \texttt{actor\_id}, \texttt{target\_object}, rentang waktu, atau jenis \textit{event}. Fasilitas tersebut dibutuhkan agar investigasi insiden keamanan dapat dilakukan secara efektif.
+
+    \item Pengujian dan penerapan pada jaringan IOTA Testnet maupun Mainnet perlu dilakukan untuk memvalidasi perilaku sistem pada jaringan publik yang sesungguhnya, termasuk implikasi biaya \textit{gas}, latensi transaksi, dan ketahanan infrastruktur Gas Station terhadap beban produksi.
+
+    \item Cakupan \textit{audit event} dapat diperluas seiring berkembangnya fungsionalitas DecMed, misalnya dengan menambahkan jenis \textit{event} untuk skenario akses darurat (\textit{break-glass access}), integrasi dengan standar interoperabilitas data kesehatan seperti SATUSEHAT atau FHIR, maupun pencatatan aktivitas pada komponen Gas Station Server yang saat ini diperlakukan sebagai infrastruktur eksternal di luar cakupan ATS.
+
+    \item Pengujian keamanan lebih lanjut terhadap ATS itu sendiri, termasuk pengujian penetrasi terhadap \textit{endpoint} penerimaan \textit{event} dan analisis ketahanan mekanisme \textit{hash-chaining} terhadap serangan yang terkoordinasi, dapat dijadikan penelitian lanjutan untuk meningkatkan kepercayaan terhadap sistem \textit{audit trail} yang dihasilkan.
+\end{enumerate}
