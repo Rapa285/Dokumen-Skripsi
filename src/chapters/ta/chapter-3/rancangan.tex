@@ -78,74 +78,8 @@ arsitektur DecMed dirancang sebagai berikut.
 
 \input{chapters/ta/chapter-3/rancangan/rancangan-audit-event.tex}
 
-\subsection{Rancangan Mekanisme Pembangkitan dan Penerimaan Audit Event}
-\label{subsec:rancangan-pembangkitan-event}
+\input{chapters/ta/chapter-3/rancangan/rancangan-mekanisme-send-recieve-event.tex}
 
-Berdasarkan analisis pada Subbab~\ref{sec:analisis-event-source} dan
-analisis mekanisme pengiriman log, \textit{audit event} dibangkitkan dari empat
-\textit{event source} yang telah diidentifikasi, yaitu \textit{Patient Client},
-\textit{Hospital Client}, \textit{Ministry Client}, dan PRE Server. Setiap
-\textit{event source} mengirimkan \textit{event} ke ATS melalui \textit{endpoint}
-HTTP dalam format \texttt{SignedEvent} yang terdiri atas tiga bidang.
-
-\begin{enumerate}
-    \item \texttt{payload}, berupa representasi JSON dari \textit{audit event}
-    yang memuat seluruh atribut kontekstual aktivitas yang dicatat.
-    \item \texttt{signature}, berupa tanda tangan digital Ed25519 atas
-    \texttt{payload} dalam representasi heksadesimal (64 byte).
-    \item \texttt{public\_key}, berupa kunci publik Ed25519 pengirim dalam
-    representasi heksadesimal (32 byte).
-\end{enumerate}
-
-Setelah diterima oleh Audit Receiver pada ATS, tanda tangan digital diverifikasi
-menggunakan \texttt{public\_key} yang disertakan, untuk memastikan bahwa
-\texttt{payload} tidak mengalami perubahan sejak ditandatangani dan berasal dari
-entitas yang memiliki kunci privat yang bersesuaian. Apabila verifikasi berhasil,
-\texttt{payload} diurai menjadi objek \texttt{AuditEvent} dan diteruskan ke
-komponen Audit Logger melalui antrian asinkron internal. Apabila verifikasi
-gagal, \textit{event} ditolak tanpa diproses lebih lanjut.
-
-Setiap \texttt{AuditEvent} memuat atribut umum yang wajib tersedia pada seluruh
-jenis \textit{event}, mengacu pada skema atribut umum yang telah ditetapkan pada
-Subbab~\ref{subsec:rancangan-audit-record}. Selain atribut umum, bidang
-\texttt{event\_type} memuat atribut tambahan yang spesifik terhadap jenis
-\textit{event} sebagaimana ditunjukkan pada
-Tabel~\ref{tab:atribut-umum-event}.
-
-\begin{table}[htbp]
-\centering
-\caption{Atribut Umum \textit{Audit Event}}
-\label{tab:atribut-umum-event}
-\renewcommand{\arraystretch}{1.3}
-\begin{tabular}{|p{3.8cm}|p{8.5cm}|}
-\hline
-\textbf{Atribut} & \textbf{Deskripsi} \\
-\hline
-\texttt{source\_component} &
-Komponen sumber pembangkit \textit{event}, yaitu nama modul atau layanan
-yang menginstrumentasi \textit{event} tersebut. \\
-\hline
-\texttt{actor\_id} &
-Identitas aktor yang memicu aktivitas, seperti \textit{IOTA address} atau
-identitas sesi pengguna. \\
-\hline
-\texttt{target\_object} &
-Identitas objek atau sumber daya yang menjadi target aktivitas. \\
-\hline
-\texttt{outcome} &
-Hasil pelaksanaan aktivitas, berupa \texttt{Success}, \texttt{Failure},
-\texttt{Denied}, atau \texttt{Unknown}. \\
-\hline
-\texttt{action\_type} &
-Jenis tindakan yang dilakukan pada aktivitas yang dicatat. \\
-\hline
-\texttt{event\_type} &
-Jenis \textit{audit event} yang merujuk pada katalog EV1 hingga EV18,
-beserta atribut tambahan yang spesifik terhadap jenis tersebut sesuai
-Tabel~\ref{tab:detail-audit-record}. \\
-\hline
-\end{tabular}
-\end{table}
 
 \subsection{Rancangan Mekanisme Pembentukan dan Penyimpanan Audit Record}
 \label{subsec:rancangan-pembentukan-record}

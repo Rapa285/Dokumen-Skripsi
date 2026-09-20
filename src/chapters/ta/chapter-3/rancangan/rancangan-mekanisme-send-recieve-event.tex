@@ -1,0 +1,323 @@
+\subsection{Rancangan Mekanisme Pembangkitan dan Penerimaan Audit Event}
+\label{subsec:rancangan-pembangkitan-event}
+
+Berdasarkan analisis pada Subbab~\ref{sec:analisis-event-source} dan
+analisis mekanisme pengiriman log pada
+Subbab~\ref{subsubsec:analisis-mekanisme-pengiriman-log}, \textit{audit
+event} dibangkitkan dari empat \textit{event source} yang telah
+diidentifikasi, yaitu \textit{Patient Client}, \textit{Hospital Client},
+\textit{Ministry Client}, dan PRE Server. Rancangan mekanisme ini mencakup
+tiga aspek utama yang saling berkaitan: enkapsulasi \textit{event} dalam
+format terenkripsi dan tertandatangani untuk menjamin kerahasiaan dan
+\textit{non-repudiation}, mekanisme pengiriman dengan jaminan ketercapaian
+untuk memastikan tidak ada \textit{event} yang hilang, serta penerimaan dan
+verifikasi pada sisi ATS.
+
+\subsubsection{Rancangan Enkapsulasi Audit Event}
+\label{subsubsec:rancangan-enkapsulasi-event}
+
+Analisis pada Subbab~\ref{subsubsec:analisis-jaminan-keasilan-log}
+menetapkan bahwa setiap \textit{event source} harus membungkus
+\textit{audit event} dalam format yang menjamin keaslian pengirim dan
+\textit{non-repu- diation}. Namun, terdapat kebutuhan keamanan tambahan yang
+perlu dipenuhi, yaitu kerahasiaan isi \textit{event} selama transit. \textit{Audit event} memuat atribut
+yang berpotensi sensitif, seperti identitas aktor, jenis tindakan yang
+dilakukan, dan informasi objek yang diakses. Meskipun kanal komunikasi
+umumnya dilindungi oleh TLS, perlindungan pada lapisan transport bersifat
+\textit{hop-by-hop} dan tidak memberikan jaminan kerahasiaan yang melekat
+pada data itu sendiri setelah transit selesai.
+
+Untuk memenuhi kedua kebutuhan tersebut secara bersamaan, rancangan
+mengadopsi pendekatan \textit{Encrypt-then-Sign}, yaitu \textit{payload
+event} dienkripsi terlebih dahulu kemudian \textit{ciphertext} yang
+dihasilkan ditandatangani. Pola ini dipilih karena tanda tangan diberikan
+atas \textit{ciphertext}, bukan \textit{plaintext}, sehingga secara
+kriptografis membuktikan bahwa pengirim yang menciptakan \textit{ciphertext}
+tersebut dan bertanggung jawab atas isinya, bukan sekadar memiliki akses
+atas informasi yang terkandung di dalamnya. Rancangan enkapsulasi terdiri
+atas dua lapisan mekanisme yang diuraikan pada subbab-subbab berikut.
+
+\paragraph{Lapisan Enkripsi: AES-256-GCM dengan Distribusi Kunci ECIES}
+
+\textit{Payload audit event} yang telah diserialisasi ke JSON dienkripsi
+menggunakan algoritma AES-256-GCM dengan kunci sesi yang dibangkitkan secara
+acak pada setiap pengiriman. AES-256-GCM dipilih karena bersifat
+\textit{authenticated encryption}, yaitu selain menjamin kerahasiaan,
+algoritma ini juga menghasilkan \textit{authentication tag} yang memastikan
+integritas \textit{ciphertext} tidak dapat dirusak tanpa terdeteksi.
+
+Distribusi kunci sesi AES ke ATS dilakukan menggunakan mekanisme ECIES
+(\textit{Elliptic Curve Integrated Encryption Scheme}) berbasis kurva P-256.
+Alur distribusi kunci dirancang sebagai berikut:
+
+\begin{enumerate}
+    \item Pengirim membangkitkan pasangan kunci \textit{ephemeral} P-256
+    untuk setiap pengiriman.
+    \item Pengirim melakukan operasi ECDH antara kunci privat \textit{ephemeral}
+    dengan kunci publik ATS yang telah dikonfigurasi sebelumnya, menghasilkan
+    \textit{shared secret}.
+    \item \textit{Shared secret} diturunkan menjadi kunci pembungkus
+    (\textit{wrapping key}) 256-bit menggunakan KDF SHA-256.
+    \item Kunci sesi AES dienkripsi menggunakan kunci pembungkus tersebut
+    dengan AES-256-GCM, menghasilkan kunci sesi terenkripsi.
+    \item Kunci publik \textit{ephemeral}, \textit{nonce} pembungkus, dan
+    kunci sesi terenkripsi digabungkan menjadi satu bidang \texttt{enc\_aes\_key}
+    dalam format \texttt{<base64(epheme- ral\_pubkey)>.<base64(wrap\_nonce)>
+    .<base64(enc\_aes\_key)>}.
+\end{enumerate}
+
+Dengan skema ini, kunci sesi AES hanya dapat dipulihkan oleh ATS menggunakan
+kunci privatnya melalui operasi ECDH yang berkebalikan, tanpa memerlukan
+pertukaran kunci awal (\textit{key exchange}) yang terpisah antara pengirim
+dan penerima. Setiap pengiriman menggunakan kunci \textit{ephemeral} yang
+berbeda, sehingga kompromi atas satu kunci sesi tidak mengancam kerahasiaan
+\textit{event} lainnya (\textit{forward secrecy}).
+
+\paragraph{Lapisan Penandatanganan: Ed25519 dengan Kunci Privat IOTA Aktor}
+
+Setelah \textit{payload} dienkripsi, \textit{ciphertext} yang dihasilkan
+ditandatangani menggunakan kunci privat IOTA Ed25519 dari aktor yang memicu
+\textit{event}. Penggunaan kunci privat IOTA aktor, bukan kunci yang
+dibangkitkan sementara oleh modul ATS pada komponen pengirim, merupakan
+keputusan rancangan yang krusial untuk memperkuat sifat
+\textit{non-repudiation}.
+
+Dasar pertimbangannya adalah sebagai berikut. Kunci privat IOTA setiap aktor
+telah terikat secara kriptografis dengan identitas aktor melalui mekanisme
+BIP39 dan derivasi kunci yang digunakan DecMed; setiap aktor memiliki satu
+pasang kunci yang konsisten sepanjang siklus hidupnya dalam sistem dan yang
+sama digunakannya untuk menandatangani transaksi IOTA yang tercatat secara
+\textit{on-chain}. Dengan demikian, tanda tangan pada \textit{audit event}
+dapat dihubungkan langsung ke \textit{IOTA address} pengirim yang tercatat
+pada \textit{ledger}. Apabila suatu aktor menyangkal telah membangkitkan
+sebuah \textit{audit event}, tanda tangan yang ada pada \textit{event}
+tersebut dapat diverifikasi terhadap kunci publik yang terhubung ke
+\textit{IOTA address} yang sama yang digunakan aktor tersebut untuk
+bertransaksi di jaringan IOTA, sehingga penyangkalan menjadi tidak dapat
+diterima selama kunci privat tidak dikompromikan.
+
+Tanda tangan Ed25519 dibuat menggunakan skema \textit{personal message} yang
+konsisten dengan mekanisme penandatanganan pada ekosistem IOTA, yaitu pesan
+yang ditandatangani adalah \textit{byte-byte ciphertext} yang dibungkus dalam
+\texttt{IntentMessage} dengan \texttt{Intent::personal\_message()}. Hasilnya
+diserialisasi ke dalam representasi Base64.
+
+\paragraph{Format Akhir: EncryptedSignedEvent}
+
+Hasil akhir enkapsulasi adalah objek \texttt{EncryptedSignedEvent} yang
+memuat lima bidang sebagaimana ditunjukkan pada
+Tabel~\ref{tab:encrypted-signed-event}.
+
+\begin{table}[htbp]
+\centering
+\caption{Bidang pada Struktur \texttt{EncryptedSignedEvent}}
+\label{tab:encrypted-signed-event}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{Bidang} & \textbf{Deskripsi} \\
+\hline
+\texttt{enc\_aes\_key} &
+Kunci sesi AES yang dienkripsi dengan ECIES, dalam format
+\texttt{<ephemeral\_pubkey>.<wrap\_nonce>.<enc\_key>} yang masing-masing
+dikodekan Base64 dan dipisahkan titik. \\
+\hline
+\texttt{ciphertext} &
+\textit{Payload audit event} yang dienkripsi menggunakan AES-256-GCM,
+dikodekan Base64. \\
+\hline
+\texttt{nonce} &
+\textit{Nonce} AES-GCM sepanjang 12 byte, dikodekan Base64. \\
+\hline
+\texttt{signature} &
+Tanda tangan Ed25519 atas \textit{byte-byte ciphertext}, dikodekan Base64. \\
+\hline
+\texttt{iota\_address} &
+\textit{IOTA address} pengirim yang terhubung ke kunci publik Ed25519 yang
+digunakan untuk membuat tanda tangan, digunakan oleh ATS untuk keperluan
+verifikasi. \\
+\hline
+\end{tabular}
+\end{table}
+
+Skema ini memisahkan secara tegas antara mekanisme kerahasiaan (ECIES +
+AES-256-GCM) dan mekanisme \textit{non-repudiation} (Ed25519 atas
+\textit{ciphertext}), sehingga kedua properti keamanan dapat diverifikasi
+secara independen oleh pihak yang berwenang.
+
+\subsubsection{Rancangan Mekanisme Pengiriman dengan Jaminan Ketercapaian}
+\label{subsubsec:rancangan-pengiriman-event}
+
+Analisis pada Subbab~\ref{subsubsec:analisis-mekanisme-pengiriman-log}
+menetapkan bahwa pengiriman \textit{event} harus bersifat
+\textit{asynchronous push-based} agar tidak mengganggu latensi layanan
+utama. Namun, sifat asinkron menimbulkan risiko kehilangan \textit{event}
+apabila ATS tidak dapat dijangkau pada saat \textit{event} dibangkitkan,
+misalnya karena gangguan jaringan sementara atau ATS sedang tidak beroperasi.
+Kegagalan pencatatan \textit{event} yang tidak terdeteksi merupakan ancaman
+terhadap kelengkapan audit trail sebagaimana disyaratkan oleh KNF-TA-04,
+sehingga mekanisme pengiriman harus memberikan jaminan ketercapaian
+(\textit{delivery guarantee}) yang kuat di samping tetap bersifat
+\textit{non-blocking}.
+
+Untuk menjawab kebutuhan ini, rancangan mengadopsi pola
+\textit{persistent queue} pada sisi pengirim yang digabungkan dengan
+pengiriman asinkron. Perbandingan antara pendekatan pengiriman murni
+\textit{fire-and-forget} dan pendekatan \textit{persistent queue} yang
+diusulkan ditunjukkan pada Tabel~\ref{tab:analisis-pengiriman-event}.
+
+\begin{table}[htbp]
+\centering
+\caption{Analisis Pendekatan Mekanisme Pengiriman \textit{Audit Event}}
+\label{tab:analisis-pengiriman-event}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3cm}|p{4.5cm}|p{5cm}|}
+\hline
+\textbf{Pendekatan} & \textbf{Keunggulan} & \textbf{Keterbatasan} \\
+\hline
+\textit{Fire-and-Forget} Murni &
+\textit{Non-blocking}, tidak menambah kompleksitas komponen pengirim. &
+\textit{Event} hilang secara permanen apabila ATS tidak dapat dijangkau
+saat pengiriman; tidak ada mekanisme pemulihan. \\
+\hline
+\textit{Persistent Queue} + Pengiriman Asinkron &
+Menjamin setiap \textit{event} akan terkirim pada akhirnya melalui
+mekanisme \textit{retry}; tahan terhadap gangguan jaringan sementara dan
+\textit{restart} komponen. &
+Membutuhkan pengelolaan berkas antrian lokal dan \textit{background worker}
+pada setiap \textit{event source}. \\
+\hline
+\end{tabular}
+\end{table}
+
+Berdasarkan Tabel~\ref{tab:analisis-pengiriman-event}, pendekatan
+\textit{persistent queue} dipilih karena jaminan ketercapaian yang
+diberikannya jauh lebih penting bagi integritas audit trail dibandingkan
+kompleksitas implementasi tambahan yang ditimbulkannya. Alur pengiriman
+\textit{event} yang dirancang adalah sebagai berikut.
+
+\begin{enumerate}
+    \item \textbf{Konstruksi \texttt{EncryptedSignedEvent}.} Setiap kali
+    sebuah \textit{event} dibangkitkan, komponen modul \texttt{ats} pada
+    \textit{event source} mengonstruksi \texttt{EncryptedSignedEvent} sesuai
+    mekanisme enkapsulasi pada
+    Subbab~\ref{subsubsec:rancangan-enkapsulasi-event}.
+
+    \item \textbf{Penyimpanan ke antrian persisten.} Sebelum percobaan
+    pengiriman apa pun dilakukan, \texttt{EncryptedSignedEvent} yang telah
+    dikonstruksi disimpan terlebih dahulu ke dalam berkas antrian persisten
+    berbasis \textit{append-only} pada penyimpanan lokal \textit{event source}.
+    Berkas antrian menggunakan format JSON-Lines, di mana setiap baris merupakan
+    satu entri antrian (\texttt{QueueEntry}) yang memuat \textit{signed payload},
+    pengenal unik entri, label konteks, waktu pembuatan, dan jumlah percobaan
+    pengiriman yang telah dilakukan. Penyimpanan ke antrian dilakukan terlebih
+    dahulu agar \textit{event} aman tersimpan secara lokal terlepas dari hasil
+    pengiriman berikutnya.
+
+    \item \textbf{Percobaan pengiriman langsung.} Setelah entri berhasil
+    tersimpan di antrian, pengirim segera mencoba mengirimkan
+    \texttt{EncryptedSignedEvent} ke \textit{endpoint}
+    \texttt{POST /api/events} pada ATS secara langsung dalam \textit{task}
+    asinkron yang tidak memblokir alur layanan utama. Apabila pengiriman
+    langsung berhasil (ATS mengembalikan respons sukses), entri yang
+    bersangkutan dihapus dari antrian.
+
+    \item \textbf{Pengiriman ulang oleh \textit{background retry worker}.}
+    Apabila pengiriman langsung gagal karena ATS tidak dapat dijangkau atau
+    mengembalikan respons \textit{error}, entri tetap berada di antrian.
+    \textit{Background retry worker} yang berjalan secara periodik pada setiap
+    \textit{event source} membaca seluruh entri yang tersisa di antrian dan
+    mencoba mengirimkannya kembali. \textit{Worker} ini menggunakan strategi
+    \textit{exponential backoff} untuk menentukan interval antar-percobaan,
+    sehingga menghindari pembanjiran ATS saat baru pulih dari gangguan.
+    Entri yang telah melebihi batas percobaan pengiriman dikecualikan
+    sementara dari percobaan ulang, tetapi tetap disimpan di antrian agar
+    tidak hilang secara permanen dan dapat diinspeksi oleh operator.
+\end{enumerate}
+
+Rancangan ini menjamin bahwa setiap \textit{event} yang berhasil dikonstruksi
+dan disimpan ke antrian akan terkirim ke ATS pada akhirnya, bahkan jika
+\textit{event source} mengalami \textit{restart} di antara percobaan
+pengiriman, selama berkas antrian tidak rusak secara fisik. Pemisahan antara
+tahap penyimpanan ke antrian dan tahap pengiriman ke ATS juga memastikan bahwa
+kegagalan jaringan tidak menyebabkan \textit{event} hilang secara diam-diam
+tanpa sepengetahuan operator.
+
+\subsubsection{Rancangan Penerimaan dan Verifikasi Event pada ATS}
+\label{subsubsec:rancangan-penerimaan-event}
+
+Pada sisi ATS, \texttt{EncryptedSignedEvent} yang diterima melalui
+\textit{endpoint} \texttt{POST /api/events} diproses dalam dua fase sebelum
+diteruskan ke komponen Audit Logger.
+
+\paragraph{Fase Pertama: Verifikasi Tanda Tangan}
+
+ATS mengekstrak \texttt{iota\_address} dari \textit{event} yang diterima,
+kemudian memverifikasi tanda tangan Ed25519 yang terdapat pada bidang
+\texttt{signature} terhadap \textit{byte-byte ciphertext} pada bidang
+\texttt{ciphertext}. Verifikasi menggunakan kunci publik Ed25519 yang
+diturunkan dari \texttt{iota\_address} pengirim. Apabila verifikasi
+berhasil, ATS dapat menyatakan bahwa \textit{event} berasal dari pemegang
+kunci privat yang terhubung ke \texttt{iota\_address} yang diklaim, dan bahwa
+\textit{ciphertext} tidak mengalami perubahan sejak ditandatangani. Apabila
+verifikasi gagal, \textit{event} ditolak tanpa diproses lebih lanjut,
+mencegah injeksi \textit{event} palsu ke dalam rantai audit.
+
+Pada fase ini, ATS tidak mendekripsi isi \textit{event}. Verifikasi tanda
+tangan dilakukan sepenuhnya terhadap \textit{ciphertext}, konsisten dengan
+pola \textit{Encrypt-then-Sign} yang diadopsi. Keputusan untuk memisahkan
+fase verifikasi dari fase dekripsi merupakan keputusan rancangan yang disengaja:
+verifikasi adalah hak ATS sebagai penjaga gerbang pencatatan, sedangkan
+dekripsi adalah hak pihak yang berwenang melakukan audit atau investigasi.
+
+\paragraph{Fase Kedua: Penerusan ke Antrian Internal}
+
+\texttt{EncryptedSignedEvent} yang telah terverifikasi tanda tangannya
+dikirimkan ke antrian asinkron internal yang menghubungkan komponen Audit
+Receiver dengan komponen Audit Logger. Antrian ini diimplementasikan sebagai
+kanal \textit{multi-producer single-consumer} (mpsc) dengan kapasitas yang
+cukup untuk menyerap lonjakan kedatangan \textit{event}. Desain ini memisahkan
+proses penerimaan HTTP dari proses pembentukan dan penulisan \textit{audit
+record}, sehingga keduanya dapat berjalan secara konkuren tanpa saling
+memblokir. Antrian internal bertindak sebagai penyangga (\textit{buffer})
+yang mencegah lonjakan \textit{event} menghambat penerimaan \textit{event}
+baru berikutnya.
+
+\subsubsection{Rancangan Penyimpanan Audit Record dalam Kondisi Terenkripsi}
+\label{subsubsec:rancangan-penyimpanan-terenkripsi}
+
+Setelah \texttt{EncryptedSignedEvent} terverifikasi dan diteruskan oleh Audit
+Logger, \textit{event} tersebut disimpan ke dalam \textit{audit record} dan
+kemudian ke berkas log lokal serta IPFS dalam kondisi masih terenkripsi.
+Keputusan rancangan untuk tidak mendekripsi \textit{event} pada titik ini
+didasarkan pada dua pertimbangan berikut.
+
+Pertama, pemisahan tanggung jawab. ATS berperan sebagai penyimpan bukti
+digital yang andal, bukan sebagai pemroses isi \textit{event}. Mendekripsi
+\textit{event} sebelum penyimpanan akan memperluas permukaan serangan karena
+kunci privat ATS harus tersedia secara aktif setiap kali \textit{event}
+diproses. Dengan menyimpan \textit{event} dalam kondisi terenkripsi, kunci
+privat ATS hanya perlu tersedia saat audit atau investigasi dilakukan.
+
+Kedua, kerahasiaan jangka panjang. Berkas log yang tersimpan di IPFS dapat
+diakses oleh pihak mana pun yang mengetahui CID-nya. Apabila \textit{event}
+disimpan dalam kondisi \textit{plaintext}, kerahasiaan isi audit trail
+bergantung sepenuhnya pada keamanan akses ke IPFS. Dengan menyimpan
+\textit{event} dalam kondisi terenkripsi, kerahasiaan isi audit trail
+dijamin secara kriptografis: hanya pemegang kunci privat ATS yang dapat
+mendekripsi dan membaca isi \textit{event}, terlepas dari siapa yang dapat
+mengakses berkas log di IPFS.
+
+Implikasi praktis dari keputusan ini adalah bahwa mekanisme
+\textit{hash-chaining} pada Subbab~\ref{subsec:rancangan-pembentukan-record}
+diterapkan terhadap \texttt{EncryptedSignedEvent} sebagai satu kesatuan,
+bukan terhadap isi \textit{plaintext event}. Nilai \texttt{record\_hash}
+dihitung dari kombinasi \texttt{record\_id}, \texttt{timestamp},
+\texttt{prev\_record\_hash}, dan seluruh bidang \texttt{EncryptedSignedEvent}
+yang mencakup \texttt{ciphertext} dan \texttt{signature}. Dengan demikian,
+integritas rantai \textit{audit record} tetap dapat diverifikasi tanpa perlu
+mendekripsi isi \textit{event} terlebih dahulu: perubahan pada
+\textit{ciphertext} mana pun akan merusak \texttt{record\_hash} dan
+mengakibatkan kegagalan verifikasi rantai, sebagaimana berlaku pada
+mekanisme \textit{hash-chaining} yang telah dianalisis pada
+Subbab~\ref{subsubsec:analisis-hash-chaining}.
