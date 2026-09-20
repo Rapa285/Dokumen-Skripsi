@@ -463,34 +463,29 @@ apabila variabel tidak dikonfigurasi.
 merupakan aplikasi \textit{client} berbasis Tauri. Pada ketiga aplikasi tersebut,
 modul \texttt{ats} diimplementasikan pada sisi \textit{backend} Rust dari aplikasi
 Tauri, sehingga penandatanganan dan pengiriman \textit{event} tidak terekspos ke
-lapisan antarmuka SvelteKit/TypeScript. Distribusi \textit{event} berdasarkan
-\textit{event source} ditunjukkan pada Tabel~\ref{tab:pemetaan-event-source}.
+lapisan antarmuka SvelteKit/TypeScript. Distribusi \textit{event} berdasarkan \textit{event source} ditunjukkan pada Tabel~\ref{tab:oevent-source-distribution}.
 
-\begin{table}[htbp]
-\centering
-\caption{Distribusi \textit{Audit Event} per \textit{Event Source}}
-\label{tab:pemetaan-event-source}
-\renewcommand{\arraystretch}{1.3}
-\begin{tabular}{|p{2.8cm}|p{1.8cm}|p{7.5cm}|}
-\hline
-\textbf{\textit{Event Source}} & \textbf{Jumlah \textit{Event}} & \textbf{Kode \textit{Audit Event}} \\
-\hline
-PRE Server & 9 & EV7, EV8, EV9, EV10, EV11, EV12, EV13 \\
-\hline
-\textit{Patient Client} & 6 & EV1, EV2, EV3, EV8, EV9, EV10 \\
-\hline
-\textit{Hospital Client} & 5 & EV1, EV4, EV8, EV9, EV10 \\
-\hline
-\textit{Ministry Client} & 4 & EV5, EV6, EV8, EV9 \\
-\hline
-\end{tabular}
-\end{table}
+% \begin{table}[htbp]
+% \centering
+% \caption{Distribusi \textit{Audit Event} per \textit{Event Source}}
+% \label{tab:pemetaan-event-source}
+% \renewcommand{\arraystretch}{1.3}
+% \begin{tabular}{|p{2.8cm}|p{1.8cm}|p{7.5cm}|}
+% \hline
+% \textbf{\textit{Event Source}} & \textbf{Jumlah \textit{Event}} & \textbf{Kode \textit{Audit Event}} \\
+% \hline
+% PRE Server & 9 & EV7, EV8, EV9, EV10, EV11, EV12, EV13 \\
+% \hline
+% \textit{Patient Client} & 6 & EV1, EV2, EV3, EV8, EV9, EV10 \\
+% \hline
+% \textit{Hospital Client} & 5 & EV1, EV4, EV8, EV9, EV10 \\
+% \hline
+% \textit{Ministry Client} & 4 & EV5, EV6, EV8, EV9 \\
+% \hline
+% \end{tabular}
+% \end{table}
 
-Perlu dicatat bahwa \textit{event} EV9 (Gas Sponsorship Request) dan EV8 (IOTA
-Transaction Submission) tercatat pada sisi pemohon, bukan pada Gas Station Server.
-Gas Station Server diperlakukan sebagai infrastruktur pendukung yang tidak
-diinstrumentasi sebagai \textit{event source} tersendiri; keputusan \textit{sponsorship}
-yang dihasilkannya cukup direkam oleh komponen pemanggil.
+Perlu dicatat bahwa \textit{event} EV8 (IOTA Transaction Submission) dan EV9 (Gas Sponsorship Request) tercatat pada sisi pemohon, bukan pada Gas Station Server. Gas Station Server diperlakukan sebagai infrastruktur pendukung yang tidak diinstrumentasi sebagai \textit{event source} tersendiri..
 
 \subsection{Implementasi Verifikasi Integritas Audit Record}
 

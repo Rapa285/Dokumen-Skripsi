@@ -1,5 +1,5 @@
 \subsection{Analisis Solusi}
-
+\label{sec:analisis-solusi}
 Guna mengatasi permasalahan pencatatan dan pengelolaan bukti digital pada DecMed yang telah dipetakan pada Subbab III.1.1, diperlukan perancangan sistem \textit{audit trail} terintegrasi dan terdesentralisasi. Berdasarkan kebutuhan sistem pada Subbab III.1.3, analisis solusi disusun dalam urutan berikut. Pertama, analisis pendekatan arsitektur agregasi log untuk menyatukan pencatatan terpisah. Kedua, analisis skema pembentukan struktur data audit terstandar. Ketiga, analisis mekanisme penyimpanan \textit{immutable} berbasis \textit{smart contract} Move di jaringan IOTA untuk mencegah modifikasi data log. Keempat, analisis strategi persistensi data (\textit{long-term retention}) untuk mengantisipasi risiko \textit{data pruning} pada jaringan DLT. Analisis ini menjadi dasar pemilihan pendekatan sebelum rancangan teknis dijelaskan pada Subbab III.3.
 
 \subsubsection{Analisis \textit{Event Source}}
@@ -42,13 +42,13 @@ Berdasarkan hasil pemetaan tersebut, terdapat empat komponen utama yang bertinda
 \hline
 \endlastfoot
 
-PRE Server & 10 & EV6, EV7, EV8, EV9, EV10, EV11, EV12, EV13, EV14, EV15 \\
+PRE Server & 7 & EV7, EV8, EV9, EV10, EV11, EV12, EV13 \\
 \hline
-Patient Client & 7 & EV1, EV2, EV3, EV8, EV9, EV10, EV14 \\
+Patient Client & 5 & EV1, EV2, EV3, EV8, EV9 \\
 \hline
-Hospital Client & 5 & EV1, EV4, EV8, EV9, EV10 \\
+Hospital Client & 4 & EV1, EV4, EV5, EV8, EV9 \\
 \hline
-Ministry Client & 4 & EV5, EV8, EV9, EV10 \\
+Ministry Client & 3 & EV6, EV8, EV9 \\
 
 \end{xltabular}
 

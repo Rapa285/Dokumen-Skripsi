@@ -1,0 +1,87 @@
+\section{Keamanan Informasi dan Akuntabilitas}
+\label{sec:keamanan-informasi}
+
+\subsection{Prinsip Dasar Keamanan Informasi}
+\label{subsec:prinsip-keamanan-informasi}
+
+Keamanan informasi secara klasik didefinisikan melalui tiga properti utama yang dikenal sebagai \textit{CIA Triad}: \textit{Confidentiality} (kerahasiaan), \textit{Integrity} (integritas), dan \textit{Availability} (ketersediaan) (\cite{nist80053r5}). Ketiga properti ini membentuk landasan konseptual bagi sebagian besar standar dan kerangka kerja keamanan sistem informasi, termasuk NIST SP 800-53 dan ISO/IEC 27002.
+
+\textit{Confidentiality} merujuk pada jaminan bahwa informasi hanya dapat diakses oleh pihak-pihak yang berwenang, sehingga melindungi data dari pengungkapan yang tidak sah (\cite{nist80053r5}). Dalam konteks RME, kerahasiaan berarti bahwa data klinis dan administratif pasien tidak boleh dapat dibaca oleh pihak mana pun tanpa otorisasi yang sah dari pasien maupun prosedur yang berlaku.
+
+\textit{Integrity} merujuk pada jaminan bahwa informasi tidak dimodifikasi atau dihancurkan dengan cara yang tidak sah, termasuk jaminan ketidakpenyangkalan dan keaslian informasi (\cite{nist80053r5}). Integritas tidak hanya mencakup perlindungan terhadap perubahan isi data, tetapi juga mencakup jaminan bahwa data yang tersimpan mencerminkan kondisi yang sesungguhnya terjadi pada sistem, bukan hasil manipulasi pihak tidak berwenang.
+
+\textit{Availability} merujuk pada jaminan bahwa sistem informasi dan data yang dikelolanya dapat diakses dan digunakan oleh pihak yang berwenang pada saat dibutuhkan (\cite{nist80053r5}). Ketersediaan menjadi relevan tidak hanya bagi fungsionalitas layanan, tetapi juga bagi sistem audit trail: rekaman yang tidak dapat diakses saat dibutuhkan untuk investigasi tidak dapat berfungsi sebagai bukti yang andal.
+
+Ketiga properti tersebut saling berkaitan dan dalam praktiknya sering kali memiliki tegangan satu sama lain. Upaya meningkatkan kerahasiaan melalui enkripsi data, misalnya, dapat mempersulit verifikasi integritas secara langsung. Sebaliknya, mekanisme yang menjamin ketersediaan data secara luas dapat meningkatkan risiko terhadap kerahasiaannya. Ketegangan ini menjadi salah satu alasan mengapa perancangan sistem keamanan perlu dilakukan secara holistik dengan mempertimbangkan ketiga properti secara bersamaan (\cite{shostack2014}).
+
+\subsection{Properti Keamanan yang Diperluas}
+\label{subsec:properti-keamanan-diperluas}
+
+Seiring perkembangan sistem informasi yang semakin kompleks, komunitas keamanan informasi mengakui bahwa \textit{CIA Triad} tidak sepenuhnya mencakup seluruh kebutuhan keamanan yang relevan. Beberapa properti tambahan telah diidentifikasi sebagai pelengkap yang diperlukan, khususnya dalam konteks sistem yang melibatkan banyak pihak dengan tingkat kepercayaan yang berbeda (\cite{iso27789_2021}).
+
+\textbf{\textit{Authenticity}} (keaslian) adalah properti yang menjamin bahwa suatu entitas --- baik pengguna, proses, maupun data --- benar-benar merupakan entitas yang diklaim, bukan pihak lain yang berpura-pura (\cite{nist80053r5}). Keaslian mencakup verifikasi identitas aktor yang berinteraksi dengan sistem, maupun verifikasi bahwa data yang diterima berasal dari sumber yang sah dan tidak mengalami perubahan selama pengiriman. Dalam konteks audit trail, keaslian berarti bahwa setiap catatan peristiwa harus dapat dibuktikan berasal dari komponen sistem yang diklaim sebagai sumbernya.
+
+\textbf{\textit{Non-Repudiation}} (ketidakpenyangkalan) adalah properti yang menjamin bahwa suatu entitas tidak dapat menyangkal telah melakukan suatu tindakan tertentu setelah tindakan tersebut terjadi (\cite{nist80053r5}). Non-repudiation merupakan properti yang beroperasi pada lapisan bisnis dan hukum, bukan semata pada lapisan teknis: tujuannya adalah menyediakan bukti yang secara meyakinkan dapat membuktikan keterlibatan suatu entitas dalam suatu peristiwa, sehingga penyangkalan atas peristiwa tersebut tidak dapat diterima. Non-repudiation umumnya diwujudkan melalui kombinasi tanda tangan digital dan sistem pencatatan yang tidak dapat dimanipulasi (\cite{shostack2014}).
+
+\textbf{\textit{Accountability}} (akuntabilitas) adalah properti yang menjamin bahwa tindakan suatu entitas pada suatu sistem dapat ditelusuri secara unik kepada entitas tersebut (\cite{nist80053r5}). Akuntabilitas merupakan properti yang lebih luas dari non-repudiation: non-repudiation berfokus pada pembuktian bahwa suatu tindakan tertentu pernah dilakukan oleh entitas tertentu, sedangkan akuntabilitas mencakup kemampuan sistem untuk menghubungkan setiap tindakan yang terjadi dengan pelakunya secara menyeluruh, tidak hanya pada kasus yang disengketakan. Standar NIST SP 800-53 menetapkan akuntabilitas sebagai prasyarat bagi penerapan tanggung jawab individual (\textit{individual accountability}) pada sistem informasi, yang mensyaratkan bahwa setiap pengguna sistem dapat dimintai pertanggungjawaban atas tindakannya (\cite{nist80053r5}).
+
+\textbf{\textit{Reliability}} (keandalan) dan \textbf{\textit{Trustworthiness}} (keterpercayaan) merupakan properti pendukung yang menjamin bahwa sistem berperilaku secara konsisten sesuai dengan yang dimaksudkan, dan bahwa keluaran yang dihasilkan oleh sistem dapat dipercaya sebagai representasi yang akurat dari kondisi yang sesungguhnya terjadi (\cite{iso27789_2021}).
+
+\subsection{Keterkaitan antara Properti Keamanan dan Audit Trail}
+\label{subsec:keterkaitan-properti-audit-trail}
+
+Sistem audit trail tidak hanya merupakan mekanisme untuk memenuhi kebutuhan keamanan tertentu, tetapi juga merupakan komponen yang secara langsung merealisasikan beberapa properti keamanan sekaligus. Keterkaitan antara properti-properti keamanan yang telah diuraikan dan mekanisme audit trail dapat dijabarkan sebagai berikut.
+
+Pertama, audit trail berkontribusi secara langsung terhadap \textit{integrity}. Ketika suatu sistem memiliki rekaman kronologis atas setiap tindakan yang dilakukan terhadap data, rekaman tersebut dapat digunakan untuk memverifikasi bahwa status data saat ini konsisten dengan seluruh tindakan yang pernah tercatat. Apabila terdapat perbedaan antara status data yang teramati dan riwayat tindakan yang tercatat, hal tersebut mengindikasikan kemungkinan adanya modifikasi yang tidak tercatat, yaitu pelanggaran integritas (\cite{iso27789_2021}).
+
+Kedua, audit trail merupakan mekanisme utama untuk mewujudkan \textit{accountability}. Tanpa pencatatan yang menyeluruh atas tindakan yang dilakukan oleh setiap pengguna dan komponen sistem, akuntabilitas hanya bersifat normatif (kebijakan yang menyatakan siapa bertanggung jawab atas apa) tanpa dapat diwujudkan secara teknis (kemampuan sistem untuk membuktikan siapa melakukan apa dan kapan). NIST SP 800-53 secara eksplisit menempatkan keluarga kontrol \textit{Audit and Accountability} (AU) sebagai mekanisme teknis utama untuk merealisasikan akuntabilitas pada sistem informasi (\cite{nist80053r5}).
+
+Ketiga, audit trail yang dilengkapi dengan mekanisme tanda tangan digital merealisasikan properti \textit{non-repudiation}. Apabila setiap catatan peristiwa ditandatangani secara kriptografis oleh komponen yang membangkitkannya, maka komponen tersebut tidak dapat menyangkal pernah membangkitkan peristiwa tersebut selama kunci privatnya tidak dikompromikan (\cite{shostack2014}). Dalam konteks sistem multipartai seperti DecMed, non-repudiation melalui audit trail menjadi penting karena banyak tindakan yang memiliki konsekuensi hukum --- seperti pemberian akses ke data pasien, pembuatan rekam medis, atau pencabutan akses --- perlu dapat dibuktikan secara meyakinkan bahwa tindakan tersebut benar-benar dilakukan oleh pihak yang mengklaim atau yang diklaim melakukannya.
+
+Keempat, audit trail yang bersifat \textit{tamper-evident} dan disimpan secara terpisah dari data operasional berkontribusi terhadap \textit{availability} dalam arti yang lebih luas: ketersediaan bukti. Dalam investigasi insiden keamanan, ketersediaan bukti yang otentik, lengkap, dan tidak dapat dimanipulasi menentukan apakah investigasi tersebut dapat menghasilkan kesimpulan yang meyakinkan atau tidak (\cite{iso27789_2021}).
+
+Hubungan antara properti keamanan dan mekanisme audit trail disarikan pada Tabel~\ref{tab:properti-audit-trail}.
+
+\begin{table}[h]
+\centering
+\caption{Keterkaitan Properti Keamanan dengan Mekanisme Audit Trail}
+\label{tab:properti-audit-trail}
+\begin{tabular}{|p{3cm}|p{4cm}|p{5.5cm}|}
+\hline
+\textbf{Properti Keamanan} & \textbf{Mekanisme Audit Trail} & \textbf{Kontribusi} \\
+\hline
+\textit{Integrity} &
+\textit{Hash-chaining}, penyimpanan \textit{append-only} &
+Memungkinkan deteksi modifikasi data yang tidak tercatat melalui inkonsistensi antara status data dan riwayat tindakan. \\
+\hline
+\textit{Availability} &
+Retensi jangka panjang, penyimpanan terdesentralisasi &
+Menjamin ketersediaan bukti saat dibutuhkan untuk investigasi, tidak hanya ketersediaan layanan operasional. \\
+\hline
+\textit{Authenticity} &
+Tanda tangan digital pada \textit{audit event} &
+Membuktikan bahwa catatan peristiwa berasal dari komponen yang diklaim sebagai sumbernya. \\
+\hline
+\textit{Non-Repudiation} &
+Tanda tangan digital, pencatatan \textit{immutable} &
+Mencegah penyangkalan atas tindakan yang telah dilakukan dan tercatat dalam sistem. \\
+\hline
+\textit{Accountability} &
+Pencatatan menyeluruh atas seluruh tindakan dan aktornya &
+Menghubungkan setiap tindakan pada sistem dengan identitas pelakunya secara dapat dibuktikan. \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Implikasi terhadap Perancangan Sistem}
+\label{subsec:implikasi-perancangan}
+
+Pemahaman terhadap properti-properti keamanan tersebut memiliki implikasi langsung terhadap perancangan sistem audit trail pada Tugas Akhir ini. Setiap keputusan rancangan yang diambil pada Bab~III idealnya dapat ditelusuri kembali kepada satu atau lebih properti keamanan yang ingin dipenuhi.
+
+Pertama, kebutuhan akan \textit{non-repudiation} dan \textit{authenticity} menjadi alasan utama penggunaan tanda tangan digital Ed25519 pada setiap \textit{audit event} yang dikirimkan oleh komponen DecMed ke layanan audit trail. Tanpa mekanisme ini, layanan audit trail tidak dapat membedakan antara \textit{event} yang benar-benar dibangkitkan oleh komponen sah dengan \textit{event} palsu yang mungkin disuntikkan oleh pihak tidak berwenang.
+
+Kedua, kebutuhan akan \textit{integrity} menjadi alasan utama penerapan mekanisme \textit{hash-chaining} antar \textit{audit record} pada berkas log lokal. Mekanisme ini menjamin bahwa modifikasi pada rekaman yang tersimpan secara lokal --- sebelum berkas log diarsipkan ke IPFS --- dapat terdeteksi melalui pemeriksaan konsistensi rantai nilai \textit{hash}.
+
+Ketiga, kebutuhan akan \textit{accountability} menjadi acuan dalam penentuan cakupan \textit{audit event} yang perlu dicatat. Sistem yang hanya mencatat sebagian tindakan tidak dapat mewujudkan akuntabilitas secara menyeluruh, karena tindakan yang tidak tercatat tidak dapat dipertanggungjawabkan. Hal ini sejalan dengan persyaratan kelengkapan (\textit{completeness}) pada karakteristik audit trail yang baik sebagaimana diuraikan pada Subbab~\ref{subsec:karakteristik-audit-trail}.
+
+Keempat, kebutuhan akan \textit{availability} dalam arti ketersediaan bukti jangka panjang menjadi alasan penggunaan kombinasi \textit{IPFS pinning} dan pencatatan metadata \textit{immutable} pada \textit{smart contract} Move di jaringan IOTA, yang dirancang untuk mengantisipasi risiko kehilangan data akibat mekanisme \textit{data pruning} pada jaringan DLT sebagaimana diidentifikasi pada masalah M-TA-05.

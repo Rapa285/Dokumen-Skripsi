@@ -18,300 +18,36 @@ Data RME tergolong sebagai data yang sensitif karena memuat informasi identitas 
 
 Kebutuhan penelusuran kembali (\textit{traceability}) inilah yang menjadikan akuntabilitas sebagai aspek keamanan yang tidak dapat dipisahkan dari kerahasiaan dan integritas data RME. Akuntabilitas dalam konteks ini merujuk pada kemampuan suatu sistem untuk menghubungkan setiap tindakan yang dilakukan terhadap data dengan identitas pihak yang melakukannya, sehingga setiap pihak yang mengakses maupun mengubah data RME dapat dimintai pertanggungjawaban atas tindakannya. Sebagai contoh, kerangka kerja DecMed yang menjadi basis pengembangan pada Tugas Akhir ini dirancang agar seluruh akses terhadap data RME hanya dapat dilakukan atas persetujuan aktif pasien melalui mekanisme kontrol akses berbasis \textit{capability} (\cite{DecMed}). Namun demikian, tanpa mekanisme yang menjamin akuntabilitas, kontrol akses yang ketat sekalipun tidak dapat membuktikan bahwa suatu pelanggaran keamanan benar-benar terjadi, siapa pihak yang bertanggung jawab, maupun bagaimana kronologi pelanggaran tersebut (\cite{DecMed}). Kebutuhan inilah yang menjadi latar belakang pentingnya mekanisme audit trail sebagai pelengkap dari kontrol akses pada sistem manajemen RME, yang akan dibahas lebih lanjut pada Subbab~\ref{sec:audit-trail}.
 
+
+% Input
 \input{chapters/ta/chapter-2/audit-trail.tex}
 
-\section{Threat Modeling dengan STRIDE}
-\label{sec:stride}
+\input{chapters/ta/chapter-2/cybersecurity.tex}
+% 
 
-\subsection{Konsep dan Kategori STRIDE}
-\label{subsec:konsep-kategori-stride}
+\section{Kerja DecMed}
+\label{sec:decmed}
 
-\textit{Threat modeling} (pemodelan ancaman) merupakan proses terstruktur
-untuk mengidentifikasi, mengenumerasi, dan memprioritaskan ancaman
-keamanan pada suatu sistem sebelum ancaman tersebut benar-benar
-dieksploitasi (\cite{shostack2014}). Proses ini umumnya terdiri atas empat
-pertanyaan pokok: apa yang sedang dibangun, apa yang dapat salah,
-apa yang perlu dilakukan terhadap hal tersebut, dan apakah pekerjaan
-tersebut telah dilakukan dengan cukup baik (\cite{shostack2014}).
+\subsection{Gambaran Umum dan Latar Belakang DecMed}
+\label{subsec:decmed-gambaran-umum}
 
-STRIDE merupakan salah satu kerangka kerja \textit{threat modeling} yang
-dikembangkan oleh Loren Kohnfelder dan Praerit Garg di Microsoft, dengan
-nama yang dibentuk dari huruf pertama masing-masing kategori ancaman
-(\cite{shostack2014}). Kerangka kerja ini dirancang untuk membantu
-pengembang perangkat lunak mengidentifikasi jenis-jenis serangan yang
-cenderung dialami suatu sistem. Setiap kategori STRIDE merupakan
-kebalikan dari properti keamanan yang diinginkan pada suatu sistem,
-sebagaimana ditunjukkan pada Tabel~\ref{tab:stride-kategori}.
+DecMed adalah kerangka kerja manajemen RME terdesentralisasi yang dikembangkan untuk menjawab kebutuhan pengelolaan data rekam medis yang aman, akuntabel, dan berpusat pada kendali pasien (\cite{DecMed}). Kerangka kerja ini mengintegrasikan tiga teknologi utama: DLT IOTA sebagai lapisan penyimpanan \textit{on-chain} yang \textit{immutable} untuk data kontrol akses, IPFS sebagai penyimpanan \textit{off-chain} untuk berkas klinis terenkripsi berukuran besar, serta PRE sebagai mekanisme kriptografi yang memungkinkan distribusi akses data kepada pihak yang berwenang tanpa mengungkap isi data kepada perantara (\cite{DecMed}). Kombinasi ketiga teknologi ini dirancang agar setiap akses terhadap data RME hanya dapat dilakukan atas persetujuan aktif pasien, dengan durasi dan cakupan akses yang dapat dibatasi oleh pasien sendiri melalui mekanisme CapBAC (\cite{DecMed}).
 
-\begin{table}[h]
-\centering
-\caption{Kategori Ancaman STRIDE dan Properti Keamanan yang Dilanggar}
-\label{tab:stride-kategori}
-\begin{tabular}{|p{2.5cm}|p{3cm}|p{7cm}|}
-\hline
-\textbf{Kategori} & \textbf{Properti yang Dilanggar} & \textbf{Definisi} \\
-\hline
-Spoofing & Authentication &
-Berpura-pura menjadi sesuatu atau seseorang selain diri sendiri. \\
-\hline
-Tampering & Integrity &
-Memodifikasi sesuatu pada disk, jaringan, atau memori. \\
-\hline
-Repudiation & Non-repudiation &
-Mengklaim tidak melakukan sesuatu atau tidak bertanggung jawab
-atas suatu tindakan. \\
-\hline
-Information Disclosure & Confidentiality &
-Memberikan informasi kepada pihak yang tidak berwenang
-untuk melihatnya. \\
-\hline
-Denial of Service & Availability &
-Menyerap sumber daya yang dibutuhkan untuk menyediakan layanan. \\
-\hline
-Elevation of Privilege & Authorization &
-Memungkinkan seseorang melakukan sesuatu yang tidak
-diizinkan untuk dilakukan. \\
-\hline
-\end{tabular}
-\end{table}
+Arsitektur DecMed mengikuti pola tiga lapis yang telah diuraikan pada Subbab~\ref{subsec:pola-layanan-decmed}. Tiga aplikasi \textit{client} utama, yaitu \textit{Patient Client} (berbasis mobile), \textit{Hospital Client} (berbasis desktop), dan \textit{Ministry Client} (berbasis desktop), berfungsi sebagai antarmuka bagi masing-masing peran aktor dalam sistem. Seluruh aplikasi \textit{client} dibangun menggunakan Tauri dengan \textit{frontend} SvelteKit/TypeScript, sementara logika \textit{backend} ditulis dalam Rust (\cite{DecMed}). Identitas kriptografi pengguna dikelola secara \textit{non-custodial} menggunakan skema BIP39, di mana setiap pengguna menyimpan kunci privat mereka sendiri dalam bentuk \textit{mnemonic} 12 kata tanpa bergantung pada pihak ketiga (\cite{DecMed}).
 
-Kategori \textit{Repudiation} memiliki karakteristik yang berbeda dari
-kategori lainnya: ancaman ini beroperasi pada lapisan bisnis, bukan
-semata pada lapisan teknis jaringan atau aplikasi (\cite{shostack2014}).
-Penting untuk dipahami bahwa repudiasi tidak selalu merupakan tindakan
-jahat, misalnya seseorang dapat secara jujur menyatakan tidak melakukan sesuatu
-karena kegagalan teknologi atau proses. Oleh karena itu, pertanyaan
-kunci bagi perancang sistem adalah: \textit{bukti apa yang dimiliki sistem
-untuk membantah atau membuktikan suatu klaim?} Apabila sistem tidak
-memiliki log, tidak menyimpan log, atau tidak dapat menganalisis log,
-ancaman repudiasi menjadi sangat sulit untuk dibantah (\cite{shostack2014}).
-Hal ini menegaskan keterkaitan langsung antara kategori \textit{Repudiation}
-pada STRIDE dengan kebutuhan mekanisme audit trail pada suatu sistem.
+\subsection{Mekanisme Kontrol Akses pada DecMed}
+\label{subsec:decmed-kontrol-akses}
 
-\subsection{Dekomposisi Sistem dan Data Flow Diagram dalam Threat Modeling}
-\label{subsec:dfd-threat-modeling}
+Mekanisme kontrol akses pada DecMed dibangun di atas model CapBAC yang memanfaatkan \textit{smart contract} Move pada jaringan IOTA sebagai repositori \textit{capability} yang \textit{immutable} (\cite{DecMed}). Ketika seorang pasien memberikan akses kepada tenaga medis atau tenaga administratif, pasien membuat entri \textit{capability} pada \textit{smart contract} yang memuat atribut seperti identitas penerima akses, jenis akses yang diberikan (\textit{read} atau \textit{update}), dan waktu kedaluwarsa akses. Entri ini tersimpan secara \textit{on-chain} dan tidak dapat diubah oleh pihak lain selain pasien selaku pemilik data (\cite{DecMed}).
 
-Sebelum mengidentifikasi ancaman menggunakan STRIDE, suatu sistem
-perlu didekomposisi terlebih dahulu untuk memperoleh pemahaman
-menyeluruh mengenai cara kerja sistem dan bagaimana sistem tersebut
-berinteraksi dengan entitas eksternal (\cite{shostack2014}). Dekomposisi
-ini umumnya mencakup identifikasi deskripsi sistem, dependensi eksternal,
-titik masuk (\textit{entry points}), aset yang perlu dilindungi, dan
-tingkat kepercayaan (\textit{trust level}) dari setiap entitas yang
-terlibat.
+Setiap kali tenaga medis mengajukan permintaan akses terhadap data RME, PRE Server memverifikasi keberadaan entri \textit{capability} yang bersesuaian pada \textit{smart contract} sebelum melakukan \textit{re-encryption} data. Proses ini memastikan bahwa akses hanya diberikan kepada pihak yang memiliki \textit{capability} aktif dan belum kedaluwarsa (\cite{DecMed}). Selain memberikan akses, pasien juga dapat mencabut akses (\textit{revoke access}) sewaktu-waktu, yang menyebabkan entri \textit{capability} pada \textit{smart contract} diperbarui dengan status \textit{revoked} (\cite{DecMed}).
 
-\textit{Data Flow Diagram} (DFD) merupakan alat utama yang digunakan
-dalam tahap dekomposisi ini. DFD menggambarkan bagaimana data mengalir
-di antara elemen-elemen sistem, sehingga memungkinkan analis untuk
-mengidentifikasi di mana ancaman keamanan paling mungkin muncul
-(\cite{shostack2014}). DFD dalam konteks \textit{threat modeling} terdiri
-atas empat elemen dasar:
+\subsection{Keterbatasan Audit Trail pada DecMed}
+\label{subsec:decmed-keterbatasan-audit}
 
-\begin{itemize}
-    \item (\textit{Process}) : elemen yang menerima,
-    mengolah, dan mengirimkan data, biasanya direpresentasikan sebagai lingkaran
-    atau persegi panjang dengan sudut membulat.
-    \item (\textit{Data Store}) : tempat data
-    disimpan secara persisten; direpresentasikan sebagai dua garis
-    paralel.
-    \item (\textit{Data Flow}) : perpindahan data
-    antar elemen; direpresentasikan sebagai panah berlabel.
-    \item (\textit{External Entity}) :
-    aktor atau sistem di luar kendali sistem yang dianalisis;
-    direpresentasikan sebagai persegi panjang.
-\end{itemize}
+DecMed mengklaim menghasilkan mekanisme kontrol akses yang didukung oleh audit trail yang tahan terhadap perusakan (\textit{tamper-evident audit trails}) (\cite{DecMed}). Klaim tersebut didasarkan pada mekanisme bahwa setiap akses yang diberikan oleh pasien dicatat sebagai entri \textit{capability} pada penyimpanan \textit{on-chain} di jaringan IOTA, dan sifat \textit{immutability} dari penyimpanan \textit{on-chain} tersebut menjamin bahwa entri tidak dapat diubah oleh pihak lain, dengan setiap permintaan akses divalidasi terhadap keberadaan entri yang bersesuaian melalui \textit{smart contract} (\cite{DecMed}). Peristiwa akses, pemberian persetujuan (\textit{consent}), dan pelanggaran kebijakan pada DecMed dinyatakan tercatat secara \textit{tamper-evident}, sehingga menyediakan audit trail yang dapat diandalkan untuk mendukung akuntabilitas lintas batas organisasi (\cite{DecMed}).
 
-Elemen tambahan yang krusial dalam \textit{threat modeling} adalah
-\textbf{batas kepercayaan} (\textit{trust boundary}), yang memisahkan
-bagian-bagian sistem dengan tingkat kepercayaan berbeda dan
-direpresentasikan sebagai garis putus-putus. Ancaman paling signifikan
-umumnya muncul pada aliran data yang melintasi batas kepercayaan ini,
-karena pada titik itulah asumsi mengenai kepercayaan terhadap data
-maupun pengirimnya berubah (\cite{shostack2014}).
-
-\subsection{Pendekatan STRIDE-per-Interaction}
-\label{subsec:stride-per-interaction}
-
-Terdapat dua pendekatan utama dalam menerapkan STRIDE pada DFD suatu
-sistem: STRIDE-per-element dan STRIDE-per-interaction (\cite{shostack2014}).
-
-\textbf{STRIDE-per-element} merupakan pendekatan yang lebih sederhana,
-di mana setiap elemen DFD (proses, penyimpanan data, aliran data, entitas
-eksternal) diperiksa terhadap subset kategori STRIDE yang paling relevan
-bagi tipe elemen tersebut. Pendekatan ini mudah dipelajari dan dapat
-digunakan tanpa memerlukan tabel referensi yang kompleks, namun cenderung
-menghasilkan ancaman yang serupa berulang kali pada model yang besar
-(\cite{shostack2014}).
-
-\textbf{STRIDE-per-interaction} merupakan pendekatan yang lebih rinci,
-di mana ancaman diperiksa berdasarkan setiap interaksi antar elemen
-dalam bentuk tuple (asal, tujuan, jenis interaksi), bukan berdasarkan
-elemen secara individual (\cite{shostack2014}). Pendekatan ini
-dikembangkan oleh Larry Osterman dan Douglas MacIver di Microsoft.
-Keunggulan utamanya adalah bahwa ancaman diidentifikasi dalam konteks
-interaksi nyata yang terjadi pada sistem, sehingga lebih mudah dipahami
-dan lebih langsung terhubung ke keputusan perancangan yang perlu diambil
-(\cite{shostack2014}).
-
-Pada STRIDE-per-interaction, tidak semua kategori STRIDE relevan untuk
-setiap tipe interaksi. Tabel~\ref{tab:stride-per-interaction} menunjukkan
-kategori STRIDE yang relevan untuk setiap tipe interaksi berdasarkan
-kerangka yang dikembangkan oleh Shostack (\cite{shostack2014}).
-
-\begin{table}[h]
-\centering
-\caption{Relevansi Kategori STRIDE per Tipe Interaksi}
-\label{tab:stride-per-interaction}
-\begin{tabular}{|p{5.5cm}|c|c|c|c|c|c|}
-\hline
-\textbf{Tipe Interaksi} & \textbf{S} & \textbf{T} & \textbf{R} &
-\textbf{I} & \textbf{D} & \textbf{E} \\
-\hline
-Proses mengirim output ke proses lain &
-\checkmark & \checkmark & \checkmark & \checkmark & & \checkmark \\
-\hline
-Proses mengirim output ke entitas eksternal (kode) &
-\checkmark & & \checkmark & \checkmark & & \\
-\hline
-Proses mengirim output ke entitas eksternal (manusia) &
-& & \checkmark & & & \\
-\hline
-Proses menerima input dari penyimpanan data &
-\checkmark & \checkmark & \checkmark & \checkmark & & \\
-\hline
-Proses menerima input dari proses lain &
-\checkmark & & \checkmark & & \checkmark & \checkmark \\
-\hline
-Proses menerima input dari entitas eksternal &
-\checkmark & & \checkmark & & \checkmark & \checkmark \\
-\hline
-Proses mengirim output ke penyimpanan data &
-& \checkmark & \checkmark & \checkmark & \checkmark & \\
-\hline
-Aliran data melintasi batas mesin/jaringan &
-\checkmark & \checkmark & & \checkmark & \checkmark & \\
-\hline
-Penyimpanan data menerima aliran data dari proses &
-& \checkmark & \checkmark & \checkmark & \checkmark & \\
-\hline
-Penyimpanan data mengirim aliran data ke proses &
-& \checkmark & \checkmark & \checkmark & \checkmark & \\
-\hline
-Entitas eksternal mengirim input ke proses &
-\checkmark & & \checkmark & \checkmark & & \\
-\hline
-Entitas eksternal menerima input dari proses &
-\checkmark & & \checkmark & & & \\
-\hline
-\end{tabular}
-\end{table}
-
-Sebagai ilustrasi penerapan tabel tersebut: ketika sebuah proses
-menerima \textit{input} dari entitas eksternal, ancaman yang relevan
-adalah \textit{Spoofing} (entitas eksternal yang mengirim data mungkin
-bukan entitas yang sebenarnya), \textit{Repudiation} (entitas eksternal
-dapat menyangkal pernah mengirimkan data tersebut), dan
-\textit{Elevation of Privilege} (entitas eksternal dapat mengirim data
-yang memaksa proses melakukan sesuatu di luar kewenangan pengirim).
-Sebaliknya, \textit{Tampering} dan \textit{Denial of Service} kurang
-relevan pada interaksi ini karena proses yang menerima data umumnya
-sudah memiliki kendali penuh atas cara data tersebut diproses
-(\cite{shostack2014}).
-
-STRIDE-per-interaction memerlukan tabel referensi untuk digunakan
-secara efektif, namun menghasilkan ancaman yang lebih kontekstual
-dan lebih mudah dihubungkan ke keputusan mitigasi yang spesifik
-(\cite{shostack2014}).
-
-\subsection{Penurunan Kebutuhan Audit Event dari Analisis Ancaman}
-\label{subsec:penurunan-event-stride}
-
-Hasil identifikasi ancaman menggunakan STRIDE pada suatu sistem selanjutnya dapat dinilai tingkat risikonya menggunakan metodologi DREAD (\textit{Damage potential}, \textit{Reproducibility}, \textit{Exploitability}, \textit{Affected user}, \textit{Discoverability}), sehingga dapat disusun peringkat ancaman yang menjadi dasar prioritas penyusunan langkah mitigasi (\cite{laksono2021stride}). Setiap kategori ancaman STRIDE pada dasarnya berkaitan dengan bidang keamanan (\textit{security control}) tertentu yang relevan sebagai acuan mitigasinya, misalnya kategori \textit{Spoofing} berkaitan dengan bidang \textit{authentication}, kategori \textit{Tampering} berkaitan dengan bidang \textit{integrity}, dan kategori \textit{Repudiation} berkaitan dengan bidang \textit{non-repudiation} (\cite{laksono2021stride}).
-
-Penerapan STRIDE pada studi kasus sistem informasi akademik menunjukkan keterkaitan langsung antara ancaman kategori \textit{Repudiation} dengan kebutuhan pencatatan log. Salah satu ancaman kategori \textit{Repudiation} yang teridentifikasi pada studi tersebut adalah pencatatan log yang minim sebagai bukti penanganan klaim penyangkalan (\cite{laksono2021stride}). Langkah mitigasi yang diusulkan untuk ancaman kategori \textit{Repudiation} pada studi tersebut mencakup ketentuan bahwa segala tindakan yang dilakukan pada sistem harus dicatat pada log sebagai bahan pembuktian atas terjadinya suatu tindakan, disertai penerapan tanda tangan digital (\textit{digital signature}) yang tercatat secara otomatis pada log setiap kali terjadi perubahan data (\cite{laksono2021stride}).
-
-% ======================================================================
-% CATATAN REFERENSI UNTUK SUBBAB II.3
-% ======================================================================
-% Key yang dipakai: laksono2021stride (sudah ada di .bib kamu).
-%
-% CATATAN PENTING:
-%   - Kali ini saya baca FULL TEXT paper laksono2021stride (bukan cuma
-%     abstrak), termasuk Tabel 1 (definisi 6 kategori STRIDE) dan
-%     bagian 3.4 Mitigasi (yang menunjukkan kaitan Repudiation dengan
-%     kebutuhan logging). Kutipan di atas relatif akurat terhadap isi
-%     aslinya, tapi tetap baca ulang paper-nya sendiri untuk validasi.
-%   - Paper ini menyebut STRIDE "dikembangkan oleh Microsoft" dengan
-%     mengutip sumber sekunder (Jouini, Rabai, dan Aissa, 2014) --
-%     saya ikut menuliskan itu karena memang begitu yang tertulis di
-%     paper, TAPI saya tidak menambahkan Jouini et al. sebagai
-%     referensi terpisah karena kamu tidak punya itu di .bib. Kalau
-%     dosbing ingin rujukan primer langsung ke penemu STRIDE
-%     (Loren Kohnfelder & Praerit Garg / Microsoft, atau buku Shostack
-%     2014), beri tahu saya untuk saya carikan.
-%   - Sesuai arahanmu, saya TIDAK menambahkan kalimat analisis yang
-%     mengaitkan STRIDE dengan DecMed di sini -- itu akan menjadi
-%     bagian Bab III.
-
-\section{Kontrol Akses}
-\label{sec:kontrol-akses}
-
-\subsection{Definisi dan Jenis Kontrol Akses}
-\label{subsec:definisi-jenis-kontrol-akses}
-
-Kontrol akses merupakan mekanisme yang bertujuan membatasi tindakan atau operasi yang dapat dilakukan oleh pengguna sah dalam suatu sistem komputer, termasuk mengatur tindakan dari program yang berjalan atas nama pengguna tersebut. Terdapat beberapa model kontrol akses yang umum digunakan, di antaranya Role-Based Access Control (RBAC), yang mengatur akses pengguna berdasarkan peran (\textit{role}) yang dimilikinya, dan Attribute-Based Access Control (ABAC), yang mengatur akses dengan menilai atribut yang melekat pada subjek, objek, serta kondisi lingkungan yang relevan (\cite{DecMed}).
-
-Model kontrol akses lain yang relevan dengan Tugas Akhir ini adalah Capability-Based Access Control (CapBAC). Konsep utama CapBAC adalah \textit{capability}, yaitu suatu objek yang berisi hak akses dan dapat diberikan kepada suatu entitas sehingga entitas tersebut dapat mengakses data milik entitas lain (\cite{hernandezramos2013capbac}). Setiap entitas pemilik data dapat membuat capability dan mendistribusikannya secara langsung kepada penerima yang dituju, maupun menyimpannya pada suatu lokasi yang menjamin integritasnya (\cite{DecMed}). CapBAC menawarkan kontrol akses dengan granularitas tinggi, karena setiap capability dapat memuat berbagai atribut akses seperti metadata pemberi akses, bagian data yang dapat diakses, jenis akses, dan waktu kedaluwarsa akses, serta cocok digunakan pada lingkungan terdesentralisasi karena tidak membutuhkan otoritas terpusat untuk memvalidasi maupun memberikan akses (\cite{DecMed}).
-
-\subsection{Keterkaitan Kontrol Akses dan Audit Trail dalam Tata Kelola Akses}
-\label{subsec:keterkaitan-kontrol-akses-audit-trail}
-
-Kontrol akses dan audit trail merupakan dua mekanisme yang berbeda secara konseptual namun saling melengkapi dalam tata kelola akses terhadap suatu sistem. Otorisasi (\textit{authorization}) didefinisikan sebagai pemberian hak, termasuk pemberian akses berdasarkan hak akses (\textit{access rights}) yang dimiliki (\cite{iso27789_2021}), sedangkan audit trail -- sebagaimana telah dibahas pada Subbab~\ref{subsec:definisi-audit-trail} -- merupakan rekaman kronologis atas aktivitas yang benar-benar terjadi pada sistem. Kedua konsep tersebut saling terhubung melalui kebijakan akses (\textit{access policy}), yaitu bahwa audit trail dari suatu rekam medis elektronik disyaratkan untuk dapat mendukung kesesuaian terhadap etika profesi, kebijakan organisasi, dan regulasi yang berlaku, meskipun audit trail semata tidak cukup untuk menilai kelengkapan suatu rekam medis elektronik (\cite{iso27789_2021}).
-
-Keterkaitan antara kontrol akses dan audit trail juga tercermin pada tingkat akses terhadap audit trail itu sendiri. Akses terhadap audit trail disyaratkan untuk diatur oleh suatu kebijakan akses tersendiri, yang ditetapkan oleh organisasi yang bertanggung jawab atas pengelolaan audit log (\cite{iso27789_2021}). Standar yang sama turut mendefinisikan bidang \textit{Participant Object Permission PolicySet} pada format audit record, yang berfungsi untuk merujuk kebijakan akses aktual yang berlaku pada suatu peristiwa (\cite{iso27789_2021}), yang menunjukkan bahwa kebijakan kontrol akses dan catatan audit trail pada praktiknya perlu saling terhubung dan tidak dirancang sebagai dua mekanisme yang terpisah sepenuhnya.
-
-% ======================================================================
-% CATATAN REFERENSI UNTUK SUBBAB II.4
-% ======================================================================
-% Key yang SUDAH ADA di .bib kamu dan dipakai lagi di sini:
-%   - DecMed
-%   - iso27789_2021
-%
-% Key BARU yang saya usulkan:
-%
-% \begin{verbatim}
-% @article{hernandezramos2013capbac,
-%   author       = {Hern{\'a}ndez-Ramos, Jos{\'e} L. and Jara, Antonio J.
-%                   and Marin, Leandro and Skarmeta, Antonio F.},
-%   title        = {Distributed Capability-Based Access Control for the
-%                   Internet of Things},
-%   journaltitle = {Journal of Internet Services and Information
-%                   Security (JISIS)},
-%   volume       = {3},
-%   number       = {3/4},
-%   pages        = {1--16},
-%   year         = {2013}
-% }
-% \end{verbatim}
-%
-% Ini adalah referensi [25] pada final.pdf dan referensi [22] pada
-% paper Sensors DecMed, jadi sudah dua kali dipakai sebagai sumber
-% primer definisi CapBAC pada penelitian sebelumnya -- risikonya
-% relatif kecil, tapi tetap baca ulang paper aslinya untuk validasi
-% definisi yang saya parafrasekan.
-%
-% CATATAN:
-%   - Definisi RBAC dan ABAC di atas SENGAJA saya buat sangat ringkas
-%     dan hanya bersandar pada DecMed (\cite{DecMed}), bukan pada
-%     sumber primer keduanya (mis. Ferraiolo et al. untuk RBAC, NIST
-%     SP 800-162 untuk ABAC seperti pada final.pdf referensi [22] dan
-%     [24]), karena kamu memilih untuk mempersingkat subbab ini. Kalau
-%     kamu ingin definisi RBAC/ABAC yang lebih dalam dengan sumber
-%     primernya sendiri, beri tahu saya untuk saya carikan referensi
-%     tambahan.
-%   - Tidak ada kalimat analisis yang mengaitkan ke DecMed secara
-%     spesifik pada subbab II.4.2 -- murni pernyataan fakta dari
-%     ISO 27789.
+Meskipun demikian, apabila ditinjau terhadap karakteristik audit trail yang baik sebagaimana diuraikan pada Subbab~\ref{subsec:karakteristik-audit-trail}, mekanisme pencatatan yang tersedia pada DecMed memiliki sejumlah keterbatasan mendasar. Pertama, sebagian besar mekanisme yang tercatat pada jaringan IOTA merupakan entri \textit{capability} atau izin akses (\textit{access grant}), yaitu metadata yang menyatakan siapa berhak mengakses data apa dan sampai kapan, bukan catatan atas peristiwa akses yang benar-benar terjadi (\textit{access event}), sehingga sistem belum dapat merekonstruksi riwayat siapa yang benar-benar membaca atau mengubah data RME pada waktu tertentu. Kedua, sejumlah operasi pada DecMed, seperti pencabutan akses (\texttt{revoke\_access}) dan pembaruan data administratif maupun klinis, menyebabkan entri lama pada state tergantikan oleh entri baru alih-alih ditambahkan sebagai riwayat baru yang bersifat \textit{append-only}, yang bertentangan dengan karakteristik dasar audit trail mengenai integritas dan \textit{non-repudiation} (\cite{DecMed}). Keterbatasan-keterbatasan inilah yang menjadi motivasi utama pengembangan sistem audit trail terintegrasi pada Tugas Akhir ini, sebagaimana akan dianalisis lebih lanjut pada Bab III.
 
 \section{Distributed Ledger Technology dan Immutability}
 \label{sec:dlt}
@@ -332,30 +68,40 @@ IOTA Rebased menandai evolusi signifikan dari protokol IOTA, bertransisi dari st
 
 Untuk menyederhanakan interaksi pengguna dengan jaringan IOTA, tersedia IOTA Gas Station yang memungkinkan transaksi bersponsor (\textit{sponsored transactions}), sehingga pengguna tidak perlu mengelola \textit{token} untuk membayar biaya transaksi (\cite{DecMed}). Arsitektur IOTA Gas Station terdiri atas tiga komponen, yaitu Gas Station Server sebagai komponen utama yang menyediakan API untuk mereservasi \textit{gas object} dan mengeksekusi transaksi, Gas Station Storage sebagai penyimpanan persisten untuk \textit{gas object} dan status transaksi bersponsor, serta Key Store Manager (KSM) yang mengelola kunci untuk menandatangani transaksi, baik melalui layanan eksternal (\textit{External Key Management Service}) maupun penyimpanan kunci dalam memori (\cite{DecMed}).
 
-% ======================================================================
-% CATATAN REFERENSI UNTUK SUBBAB II.5
-% ======================================================================
-% Key yang dipakai: DecMed (satu-satunya key, sudah ada di .bib kamu).
-%
-% CATATAN PENTING:
-%   - Seluruh isi II.5.1 dan II.5.2 saya parafrasekan langsung dari
-%     paper Sensors (DecMed), khususnya Bagian 2.1/2.4-2.8, BUKAN dari
-%     final.pdf -- karena paper Sensors adalah versi yang sudah
-%     dipublikasi/lebih baru dan sudah ada di .bib kamu sebagai satu
-%     key. Saya sengaja tidak menambahkan key .bib baru untuk sumber
-%     primer DLT/IOTA yang aslinya dikutip DecMed (mis. Bellaj et al.
-%     untuk definisi DLT, Popov untuk IOTA, IOTA Foundation blog untuk
-%     Rebased, dsb.) supaya subbab ini tetap ringkas sesuai instruksi
-%     kamu -- tapi konsekuensinya adalah SELURUH klaim teknis di sini
-%     hanya bersandar pada satu sumber (DecMed). Kalau dosbing merasa
-%     ini kurang kuat secara akademis (karena idealnya definisi teknis
-%     sebaiknya merujuk sumber primer, bukan cuma karya sebelumnya di
-%     lab yang sama), beri tahu saya untuk saya tambahkan sumber primer
-%     yang sesuai.
-%   - Saya TIDAK menuliskan subbab "Batasan Immutability On-Chain untuk
-%     Kebutuhan Audit Trail" (II.5.3 pada kerangka awal) karena bersifat
-%     analitis dan akan lebih tepat dibahas di Bab III sesuai arahanmu
-%     sebelumnya.
+% Tambahkan setelah paragraf tentang IOTA Gas Station (paragraf terakhir subbab IOTA)
+
+Setiap entitas yang berinteraksi dengan jaringan IOTA Rebased diidentifikasi
+melalui \textit{IOTA address}, yaitu pengenal 32-byte yang secara kriptografis
+diturunkan dari kunci publik entitas tersebut (\cite{iotadocs_keys_addresses}).
+Pada skema penandatanganan bawaan Ed25519, \textit{address} diperoleh dengan
+menghitung \textit{hash} BLAKE2b-256 dari kunci publik Ed25519 secara langsung,
+tanpa awalan \textit{flag}; sedangkan untuk skema penandatanganan lainnya seperti
+Secp256k1 dan Secp256r1, satu byte \textit{flag} skema penandatanganan
+dikombinasikan terlebih dahulu dengan kunci publik sebelum dihitung nilai
+\textit{hash}-nya (\cite{iotadocs_keys_addresses}). Hasil \textit{hash} yang
+dihasilkan direpresentasikan sebagai \textit{string} heksadesimal dengan awalan
+\texttt{0x}, misalnya \texttt{0x02a212de6a9dfa3a69e22387acfbafbb1a9e591bd9d636e7895dcfc8de05f331}
+(\cite{iotadocs_keys_addresses}). Setiap \textit{address} bersifat unik dan
+secara kriptografis terikat pada kunci privat yang bersesuaian: hanya pemegang
+kunci privat tersebut yang dapat mengotorisasi transaksi yang dikirimkan atas
+nama \textit{address} bersangkutan, tanpa memerlukan inisialisasi \textit{on-chain}
+terlebih dahulu (\cite{iotadocs_exchange_integration}).
+
+Dalam arsitektur DecMed, \textit{IOTA address} berperan ganda: sebagai
+identitas \textit{on-chain} yang digunakan untuk kepemilikan objek dan
+penandatanganan transaksi, sekaligus sebagai pengenal aktor dalam mekanisme
+kontrol akses berbasis \textit{capability} (CapBAC). Setiap pasien, tenaga
+fasyankes, dan administrator memiliki \textit{IOTA address} masing-masing yang
+diturunkan dari \textit{recovery phrase} BIP39 mereka (\cite{DecMed}). Ketika
+suatu \textit{capability} akses dibuat oleh pasien untuk diberikan kepada tenaga
+medis tertentu, \textit{address} tenaga medis tersebut dicantumkan secara
+eksplisit sebagai penerima \textit{capability}, sehingga validasi otorisasi pada
+\textit{smart contract} Move dapat memverifikasi kesesuaian antara pengirim
+transaksi dan penerima \textit{capability} yang tercatat (\cite{DecMed}).
+Peran ini menjadikan \textit{IOTA address} sebagai basis identifikasi aktor
+yang relevan untuk dicatat pada setiap \textit{audit event}, sebagaimana
+digunakan pada atribut \texttt{actor\_id} dalam skema audit trail yang
+dikembangkan pada Tugas Akhir ini.
 
 \section{Arsitektur Layanan Pendukung dalam Sistem Terdesentralisasi}
 \label{sec:arsitektur-layanan-pendukung}
@@ -374,74 +120,92 @@ Proxy Re-Encryption (PRE) memanfaatkan \textit{proxy} yang bersifat \textit{semi
 
 InterPlanetary File System (IPFS) adalah suatu sistem berkas terdistribusi \textit{peer-to-peer} yang bertujuan menghubungkan seluruh perangkat komputasi ke dalam satu sistem berkas (\cite{benet2014ipfscontentaddressed}). Berbeda dengan protokol Hypertext Transfer Protocol (HTTP) konvensional yang menggunakan pengalamatan berbasis lokasi (\textit{location-based addressing}), IPFS menggunakan pengalamatan berbasis konten (\textit{content-based addressing}), yaitu data diidentifikasi dan diambil berdasarkan \textit{hash} kriptografisnya yang disebut \textit{Content Identifier} (CID) (\cite{DecMed}). Ketika suatu berkas ditambahkan ke jaringan IPFS, berkas tersebut dipecah menjadi bagian-bagian kecil, di-\textit{hash} secara kriptografis, dan diberikan CID yang unik sebagai penanda permanen dan \textit{immutable} dari data tersebut; apabila isi berkas berubah, \textit{hash} kriptografisnya turut berubah dan menghasilkan CID yang sepenuhnya baru, sehingga karakteristik \textit{immutability} ini menjadikan IPFS sangat kompatibel dengan DLT dalam menjaga integritas data (\cite{DecMed}). Dalam konteks penyimpanan data kesehatan, IPFS memungkinkan penyimpanan \textit{off-chain} untuk berkas medis terenkripsi berukuran besar, sementara hanya CID berukuran kecil yang perlu disimpan pada \textit{ledger} yang \textit{immutable} (\textit{on-chain}), sehingga mengatasi keterbatasan ukuran penyimpanan yang umum ditemukan pada jaringan DLT maupun \textit{blockchain} tanpa mengorbankan arsitektur terdesentralisasi yang bebas dari \textit{single point of failure} (\cite{DecMed}).
 
-% ======================================================================
-% CATATAN REFERENSI UNTUK SUBBAB II.6
-% ======================================================================
-% Key yang dipakai: DecMed dan benet2014ipfscontentaddressed (keduanya
-% sudah ada di .bib kamu, tidak ada key baru yang perlu ditambahkan).
-%
-% CATATAN PENTING:
-%   - Seluruh isi subbab ini saya parafrasekan langsung dari paper
-%     Sensors (DecMed), terutama Bagian 2.4-2.5 (definisi PRE dan IPFS)
-%     dan Bagian 4.2 (arsitektur tiga lapis, PRE Server, Gas Station
-%     Server). Sama seperti catatan di II.5, definisi primer PRE
-%     (Blaze et al. 1998) dan IPFS content-addressing di luar definisi
-%     dasar hanya dikutip via DecMed, bukan sumber primernya sendiri,
-%     kecuali definisi dasar IPFS peer-to-peer yang saya kutip langsung
-%     dari benet2014ipfscontentaddressed.
-%   - Poin soal PRE sebagai single point of failure (rentan terhadap
-%     DoS/gangguan pada satu entitas semi-trusted) adalah temuan
-%     literatur yang genuinely baru dan relevan -- ini bisa jadi bahan
-%     pertimbangan penting ketika kamu merancang audit trail service
-%     baru di Bab III/IV (apakah service tersebut juga akan punya
-%     kelemahan single point of failure yang serupa), tapi saya
-%     sengaja TIDAK menuliskan kaitan itu di sini karena bersifat
-%     analisis -- silakan diangkat sendiri nanti di bab rancangan.
+% Tambahkan setelah paragraf tentang IPFS (paragraf terakhir tentang IPFS
+% yang membahas CID dan penyimpanan off-chain)
+
+Meskipun IPFS menyediakan mekanisme pengalamatan berbasis konten yang menjamin
+identifikasi data secara permanen melalui CID, keberadaan suatu berkas pada
+jaringan IPFS tidak secara otomatis berarti berkas tersebut akan tersedia
+selamanya. Setiap \textit{node} IPFS hanya menyimpan data yang secara eksplisit
+dimintanya atau yang pernah diaksesnya, dan \textit{node} tersebut dapat
+menjalankan proses \textit{Garbage Collection} secara berkala untuk menghapus
+data yang tidak lagi direferensikan secara aktif demi membebaskan kapasitas
+penyimpanan (\cite{benet2014ipfscontentaddressed}). Akibatnya, sebuah berkas
+yang diunggah ke IPFS tanpa penanganan khusus berpotensi menjadi tidak dapat
+diakses apabila seluruh \textit{node} yang menyimpan salinannya memutuskan
+untuk menghapusnya melalui \textit{Garbage Collection}.
+
+Untuk mengatasi persoalan ini, IPFS menyediakan mekanisme \textit{pinning},
+yaitu penanda eksplisit yang diberikan kepada suatu CID untuk memberitahu
+\textit{node} bahwa data yang dirujuk oleh CID tersebut harus dipertahankan
+dan tidak boleh dihapus oleh proses \textit{Garbage Collection}
+(\cite{benet2014ipfscontentaddressed}). Sebuah berkas yang telah di-\textit{pin}
+pada suatu \textit{node} akan tetap tersimpan pada \textit{node} tersebut
+selama penanda \textit{pin} tidak dicabut secara eksplisit, terlepas dari
+seberapa jarang berkas tersebut diakses. Dalam konteks penyimpanan data yang
+membutuhkan retensi jangka panjang, seperti berkas log audit trail, mekanisme
+\textit{pinning} menjadi prasyarat agar data yang diunggah ke IPFS dapat
+diandalkan ketersediaannya dalam jangka waktu yang panjang. IPFS Cluster,
+yang digunakan oleh DecMed untuk penyimpanan data klinis, menyediakan
+fungsionalitas \textit{pinning} terdistribusi yang memastikan CID yang
+di-\textit{pin} direplikasi dan dipertahankan pada seluruh \textit{node}
+dalam klaster, sehingga ketidaktersediaan satu \textit{node} tidak
+menyebabkan hilangnya data (\cite{DecMed}).
+
+\section{Threat Modeling dengan STRIDE}
+\label{sec:stride}
+
+\subsection{Konsep dan Kategori STRIDE}
+\label{subsec:konsep-kategori-stride}
+
+\textit{Threat modeling} (pemodelan ancaman) merupakan proses terstruktur untuk mengidentifikasi, mengenumerasi, dan memprioritaskan ancaman keamanan pada suatu sistem sebelum ancaman tersebut benar-benar dieksploitasi (\cite{shostack2014}). Proses ini umumnya terdiri atas empat pertanyaan pokok: apa yang sedang dibangun, apa yang dapat salah, apa yang perlu dilakukan terhadap hal tersebut, dan apakah pekerjaan tersebut telah dilakukan dengan cukup baik (\cite{shostack2014}).
+
+STRIDE merupakan salah satu kerangka kerja \textit{threat modeling} yang dikembangkan oleh Loren Kohnfelder dan Praerit Garg di Microsoft, dengan nama yang dibentuk dari huruf pertama masing-masing kategori ancaman (\cite{shostack2014}). Kerangka kerja ini dirancang untuk membantu pengembang perangkat lunak mengidentifikasi jenis-jenis serangan yang cenderung dialami suatu sistem. Setiap kategori STRIDE merupakan kebalikan dari properti keamanan yang diinginkan pada suatu sistem, sebagaimana ditunjukkan pada Tabel~\ref{tab:stride-kategori}.
+
+\begin{table}[h]
+\centering
+\caption{Kategori Ancaman STRIDE dan Properti Keamanan yang Dilanggar}
+\label{tab:stride-kategori}
+\begin{tabular}{|p{2.5cm}|p{3cm}|p{7cm}|}
+\hline
+\textbf{Kategori} & \textbf{Properti yang Dilanggar} & \textbf{Definisi} \\
+\hline
+Spoofing & Authentication & Berpura-pura menjadi sesuatu atau seseorang selain diri sendiri. \\
+\hline
+Tampering & Integrity & Memodifikasi sesuatu pada disk, jaringan, atau memori. \\
+\hline
+Repudiation & Non-repudiation & Mengklaim tidak melakukan sesuatu atau tidak bertanggung jawab atas suatu tindakan. \\
+\hline
+Information Disclosure & Confidentiality & Memberikan informasi kepada pihak yang tidak berwenang untuk melihatnya. \\
+\hline
+Denial of Service & Availability & Menyerap sumber daya yang dibutuhkan untuk menyediakan layanan. \\
+\hline
+Elevation of Privilege & Authorization & Memungkinkan seseorang melakukan sesuatu yang tidak diizinkan untuk dilakukan. \\
+\hline
+\end{tabular}
+\end{table}
+
+Kategori \textit{Repudiation} memiliki karakteristik yang berbeda dari kategori lainnya: ancaman ini beroperasi pada lapisan bisnis, bukan semata pada lapisan teknis jaringan atau aplikasi (\cite{shostack2014}). Penting untuk dipahami bahwa repudiasi tidak selalu merupakan tindakan jahat, misalnya seseorang dapat secara jujur menyatakan tidak melakukan sesuatu karena kegagalan teknologi atau proses. Oleh karena itu, pertanyaan kunci bagi perancang sistem adalah: \textit{bukti apa yang dimiliki sistem untuk membantah atau membuktikan suatu klaim?} Apabila sistem tidak memiliki log, tidak menyimpan log, atau tidak dapat menganalisis log, ancaman repudiasi menjadi sangat sulit untuk dibantah (\cite{shostack2014}). Hal ini menegaskan keterkaitan langsung antara kategori \textit{Repudiation} pada STRIDE dengan kebutuhan mekanisme audit trail pada suatu sistem.
+
+\subsection{Dekomposisi Sistem dan Data Flow Diagram dalam Threat Modeling}
+\label{subsec:dfd-threat-modeling}
+
+Sebelum mengidentifikasi ancaman menggunakan STRIDE, suatu sistem perlu didekomposisi terlebih dahulu untuk memperoleh pemahaman menyeluruh mengenai cara kerja sistem dan bagaimana sistem tersebut berinteraksi dengan entitas eksternal (\cite{owasp_threat_modeling}). Dekomposisi ini umumnya mencakup identifikasi deskripsi sistem, dependensi eksternal, titik masuk (\textit{entry points}), aset yang perlu dilindungi, dan tingkat kepercayaan (\textit{trust level}) dari setiap entitas yang terlibat.
+
+\textit{Data Flow Diagram} (DFD) merupakan alat utama yang digunakan dalam tahap dekomposisi ini. DFD menggambarkan bagaimana data mengalir di antara elemen-elemen sistem, sehingga memungkinkan analis untuk mengidentifikasi di mana ancaman keamanan paling mungkin muncul (\cite{owasp_threat_modeling}). DFD dalam konteks \textit{threat modeling} terdiri atas empat elemen dasar:
+
+\begin{itemize}
+    \item (\textit{Process}): elemen yang menerima, mengolah, dan mengirimkan data, biasanya direpresentasikan sebagai lingkaran atau persegi panjang dengan sudut membulat.
+    \item (\textit{Data Store}): tempat data disimpan secara persisten; direpresentasikan sebagai dua garis paralel.
+    \item (\textit{Data Flow}): perpindahan data antar elemen; direpresentasikan sebagai panah berlabel.
+    \item (\textit{External Entity}): aktor atau sistem di luar kendali sistem yang dianalisis; direpresentasikan sebagai persegi panjang.
+\end{itemize}
+
+Elemen tambahan yang krusial dalam \textit{threat modeling} adalah \textbf{batas kepercayaan} (\textit{trust boundary}), yang memisahkan bagian-bagian sistem dengan tingkat kepercayaan berbeda dan direpresentasikan sebagai garis putus-putus. Ancaman paling signifikan umumnya muncul pada aliran data yang melintasi batas kepercayaan ini, karena pada titik itulah asumsi mengenai kepercayaan terhadap data maupun pengirimnya berubah (\cite{owasp_threat_modeling}).
+
+
 
 \section{Penelitian Terkait}
 \label{sec:penelitian-terkait}
 
-DecMed, sebagai kerangka kerja manajemen RME yang menjadi basis pengembangan Tugas Akhir ini, mengklaim menghasilkan mekanisme kontrol akses yang didukung oleh audit trail yang tahan terhadap perusakan (\textit{tamper-evident audit trails}) (\cite{DecMed}). Klaim tersebut didasarkan pada mekanisme bahwa setiap akses yang diberikan oleh pasien dicatat sebagai entri \textit{capability} pada penyimpanan \textit{on-chain} di jaringan IOTA, dan sifat \textit{immutability} dari penyimpanan \textit{on-chain} tersebut menjamin bahwa entri tidak dapat diubah oleh pihak lain, dengan setiap permintaan akses divalidasi terhadap keberadaan entri yang bersesuaian melalui \textit{smart contract} (\cite{DecMed}). Peristiwa akses, pemberian persetujuan (\textit{consent}), dan pelanggaran kebijakan pada DecMed dinyatakan tercatat secara \textit{tamper-evident}, sehingga menyediakan audit trail yang dapat diandalkan untuk mendukung akuntabilitas lintas batas organisasi (\cite{DecMed}).
-
 Salah satu contoh sistem audit trail yang secara khusus dibangun dengan memanfaatkan kombinasi DLT dan IPFS adalah LogStamping (\cite{islam2025logstamping}). Sistem tersebut menggunakan Ethereum sebagai platform \textit{blockchain} dengan konsensus \textit{Proof of Authority}, di mana log dikelompokkan menjadi beberapa \textit{chunk} berdasarkan jumlah baris maupun interval waktu, kemudian dihitung \textit{hash} SHA-256 dari setiap \textit{chunk} tersebut dan disimpan pada \textit{blockchain}, sementara berkas log asli yang telah terenkripsi dan terverifikasi diarsipkan secara terpisah pada IPFS untuk menjamin keberadaannya secara \textit{tamper-proof} dan persisten (\cite{islam2025logstamping}). Pendekatan tersebut menghasilkan audit trail yang ringan (\textit{lightweight}) dan dapat diverifikasi, karena \textit{blockchain} hanya menyimpan \textit{hash} sebagai bukti integritas alih-alih menyimpan seluruh data log secara langsung, sedangkan mekanisme verifikasi bekerja dengan menghitung ulang \textit{hash} dari suatu kelompok log dan membandingkannya dengan \textit{hash} yang tersimpan pada \textit{blockchain} untuk mendeteksi adanya perubahan (\cite{islam2025logstamping}). Hasil pengujian pada sistem tersebut menunjukkan tingkat deteksi perusakan (\textit{tamper detection}) sebesar 100\% terhadap simulasi injeksi log palsu, serta pengurangan kebutuhan penyimpanan hingga 92\% dibandingkan penyimpanan log mentah secara langsung pada \textit{blockchain} (\cite{islam2025logstamping}).
-
-% ======================================================================
-% CATATAN REFERENSI UNTUK SUBBAB II.7
-% ======================================================================
-% Key yang SUDAH ADA di .bib kamu dan dipakai lagi di sini:
-%   - DecMed
-%
-% Key BARU yang saya usulkan:
-%
-% \begin{verbatim}
-% @misc{islam2025logstamping,
-%   title  = {LogStamping: A Blockchain-Based Log Auditing Approach for
-%             Large-Scale Systems},
-%   author = {Islam, Md Shariful and Rahman, M. Sohel},
-%   year   = {2025},
-%   eprint = {2505.17236},
-%   archiveprefix = {arXiv},
-%   primaryclass  = {cs.CR},
-%   url    = {https://arxiv.org/abs/2505.17236}
-% }
-% \end{verbatim}
-%
-% CATATAN PENTING:
-%   - Saya baca FULL TEXT paper LogStamping (bukan cuma abstrak),
-%     termasuk bagian metodologi (5.1-5.5) dan hasil evaluasi (7.1-7.5),
-%     jadi detail teknis di atas (Ethereum PoA, SHA-256, chunking,
-%     100% tamper detection, 92% storage reduction) relatif akurat.
-%     Tetap baca ulang papernya sendiri untuk validasi, terutama karena
-%     ini masih berstatus PREPRINT arXiv (belum melalui peer review di
-%     jurnal/konferensi), yang mungkin jadi pertimbangan dosbing soal
-%     kredibilitasnya dibanding sumber lain yang sudah published.
-%   - Paper ini TIDAK menggunakan IOTA (memakai Ethereum), tapi tetap
-%     relevan sebagai contoh pola arsitektur "DLT untuk hash/metadata +
-%     IPFS untuk penyimpanan log utama" yang bisa dijadikan pembanding,
-%     sesuai konfirmasimu bahwa belum ada penelitian audit trail yang
-%     spesifik menggunakan kombinasi IOTA+IPFS.
-%   - Paragraf pertama (DecMed) murni menyatakan ulang klaim yang ada
-%     di paper Sensors tanpa kritik/analisis -- kesenjangan antara
-%     klaim ini dengan implementasi aktualnya (yang sudah kita bahas di
-%     Bab I) sengaja tidak diulang di sini karena sudah dibahas di
-%     tempat lain.

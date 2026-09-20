@@ -38,32 +38,28 @@
 
 EV1 & Authentication & Pencatatan setiap percobaan autentikasi pengguna ke Patient Client maupun Hospital Client, baik berhasil maupun gagal. & Patient Client, Hospital Client \\
 \hline
-EV2 & QR Access Delegation Validation & Pencatatan proses validasi \textit{payload} QR Access Delegation sebelum akses diberikan kepada tenaga fasyankes. & Patient Client \\
+EV2 & QR Delegation & Pencatatan proses validasi \textit{payload} QR Access Delegation sebelum akses diberikan kepada tenaga fasyankes. & Patient Client \\
 \hline
-EV3 & Capability Creation & Pencatatan aktivitas pembuatan \textit{capability} akses oleh pasien kepada tenaga fasyankes. & Patient Client \\
+EV3 & Capability Issuance & Pencatatan aktivitas penerbitan dan pembuatan \textit{capability} akses oleh pasien kepada tenaga fasyankes. & Patient Client \\
 \hline
 EV4 & Medical Record Access & Pencatatan aktivitas pembacaan maupun perubahan data rekam medis. & Hospital Client \\
 \hline
-EV5 & Healthcare Facility Registration & Pencatatan aktivitas registrasi fasyankes beserta administratornya. & Ministry Client \\
+EV5 & Hospital Personnel Key Generation & Pencatatan aktivitas pembuatan \textit{activation key} untuk personel/tenaga fasyankes. & Hospital Client \\
 \hline
-EV6 & PRE Service Request & Pencatatan setiap permintaan layanan yang diterima PRE Server. & PRE Server \\
+EV6 & Healthcare Facility Registration & Pencatatan aktivitas registrasi fasyankes beserta administratornya. & Ministry Client \\
 \hline
-EV7 & Re-encryption Operation & Pencatatan aktivitas \textit{re-encryption} data oleh PRE Server. & PRE Server \\
+EV7 & PRE Service Request & Pencatatan setiap permintaan layanan yang diterima PRE Server. & PRE Server \\
 \hline
 EV8 & IOTA Transaction Submission & Pencatatan aktivitas pembuatan, penandatanganan, dan pengiriman transaksi ke jaringan IOTA. & Patient Client, Hospital Client, Ministry Client, PRE Server \\
 \hline
 EV9 & Gas Sponsorship Request & Pencatatan aktivitas permintaan \textit{sponsorship} transaksi kepada Gas Station. & Patient Client, Hospital Client, Ministry Client, PRE Server \\
 \hline
-EV10 & Gas Sponsorship Decision & Pencatatan keputusan Gas Station terhadap permintaan \textit{sponsorship} transaksi. & Patient Client, Hospital Client, Ministry Client, PRE Server \\
+EV10 & Redis Operation & Pencatatan aktivitas penyimpanan, pembaruan, maupun operasi objek sensitif pada Redis. & PRE Server \\
 \hline
-EV11 & Redis Operation & Pencatatan aktivitas penyimpanan maupun perubahan objek sensitif pada Redis. & PRE Server \\
+EV11 & IPFS Object Access & Pencatatan aktivitas pengunggahan maupun pengunduhan objek pada IPFS. & PRE Server \\
 \hline
-EV12 & IPFS Object Access & Pencatatan aktivitas pengunggahan maupun pengunduhan objek pada IPFS. & PRE Server \\
+EV12 & On-chain Metadata Access & Pencatatan aktivitas pembacaan metadata maupun objek pada \textit{ledger} IOTA. & PRE Server, Patient Client \\
 \hline
-EV13 & IPFS Object Upload & Pencatatan proses verifikasi integritas objek yang tersimpan pada IPFS. & PRE Server \\
-\hline
-EV14 & On-chain Metadata Access & Pencatatan aktivitas pembacaan metadata maupun objek pada \textit{ledger} IOTA. & PRE Server, Patient Client \\
-\hline
-EV15 & Capability Validation & Pencatatan proses validasi \textit{capability} sebelum permintaan diproses lebih lanjut. & PRE Server \\
+EV13 & Capability Validation & Pencatatan proses validasi \textit{capability} sebelum permintaan diproses lebih lanjut. & PRE Server \\
 
 \end{xltabular}

@@ -276,7 +276,7 @@ format UTC. Bidang \texttt{prev\_tx\_digest} menyimpan \textit{transaction diges
 publikasi metadata rotasi sebelumnya dan bernilai \texttt{null} pada rotasi pertama.
 
 Metadata tersebut diterbitkan melalui \textit{smart contract} Move pada modul
-\texttt{ats::audit\_log} yang menyediakan fungsi \texttt{create\_log}. Fungsi ini
+\texttt{ats::audit \_log} yang menyediakan fungsi \texttt{create\_log}. Fungsi ini
 menerima representasi JSON dari metadata rotasi, membuat objek \texttt{LogRecord}
 pada \textit{ledger} IOTA, kemudian langsung membekukannya melalui
 \texttt{transfer::freeze\_object}. Pembekuan objek menjadikan \texttt{LogRecord}
@@ -350,7 +350,7 @@ rotasi. Digunakan untuk menentukan urutan kronologis arsip log tanpa
 bergantung pada \textit{timestamp} semata. \\
 \hline
 \texttt{rotation\_time} &
-\texttt{String} (ISO 8601) &
+\texttt{String} &
 Waktu pelaksanaan rotasi dalam format UTC. Digunakan untuk merekonstruksi
 garis waktu pengarsipan log. \\
 \hline
@@ -377,7 +377,7 @@ yang menerima representasi JSON dari metadata rotasi dan menghasilkan objek
 \texttt{LogRecord} baru pada \textit{ledger} IOTA.
 
 Aspek terpenting dari rancangan \textit{smart contract} ini adalah bahwa modul
-\texttt{ats::audit\_log} tidak menyediakan fungsi apa pun untuk mengubah atau
+\texttt{ats::audit \_log} tidak menyediakan fungsi apa pun untuk mengubah atau
 menghapus objek \texttt{LogRecord} yang telah dibuat. Satu-satunya operasi yang
 tersedia adalah \texttt{create\_log}, sehingga setiap entri metadata yang telah
 tercatat pada \textit{ledger} hanya dapat ditambah, bukan diubah atau dihapus.
@@ -467,8 +467,7 @@ S-TA-03 \\
 \hline
 R-TA-05 &
 Rancangan mekanisme rotasi log, pengarsipan berkas ke IPFS dengan
-\textit{pinning}, dan publikasi metadata \textit{immutable} ke IOTA melalui
-\textit{frozen object} pada \textit{smart contract} Move. &
+\textit{pinning}, dan publikasi metadata \textit{immutable} ke IOTA melalui \textit{smart contract} Move. &
 S-TA-03, S-TA-05 \\
 \hline
 \end{tabular}
@@ -518,14 +517,12 @@ Penulisan ke berkas log lokal menggunakan mode \textit{append} dikombinasikan de
 KF-TA-05 & Menyediakan mekanisme retensi jangka panjang untuk mengantisipasi
 \textit{pruning} pada jaringan DLT. &
 \textit{Pinning} berkas arsip pada IPFS Cluster dan pencatatan CID beserta
-\textit{file\_hash} sebagai \textit{frozen object} pada \textit{smart contract}
+\textit{file\_hash} pada \textit{smart contract}
 Move di IOTA (R-TA-05). \\
 \hline
 
 KNF-TA-01 & Integritas \textit{audit record} yang \textit{tamper-proof}. &
-\textit{Hash-chaining} antar \textit{record} pada level berkas lokal (R-TA-04);
-\textit{frozen object} \textit{on-chain} memastikan metadata tidak dapat diubah
-setelah diterbitkan (R-TA-05). \\
+\textit{Hash-chaining} antar \textit{record} pada level berkas lokal (R-TA-04) dan penyimpanan object \textit{on-chain} memastikan metadata tidak dapat diubah setelah diterbitkan (R-TA-05). \\
 \hline
 
 KNF-TA-02 & Format data log yang konsisten dan mudah diproses. &
@@ -540,9 +537,7 @@ referensi CID yang tercatat \textit{immutable} di IOTA (R-TA-05). \\
 
 KNF-TA-04 & Konsistensi pencatatan tanpa ada \textit{event} bernilai audit
 tinggi yang terlewat. &
-Pengiriman \textit{asynchronous push-based} dengan antrian internal berkapasitas
-besar menjamin \textit{event} tidak terblokir; verifikasi tanda tangan mencegah
-\textit{event} palsu masuk ke rantai (R-TA-03). \\
+Pengiriman \textit{asynchronous push-based} dengan antrian internal berkapasitas besar menjamin \textit{event} tidak terblokir dan verifikasi tanda tangan mencegah \textit{event} palsu masuk ke rantai (R-TA-03). \\
 \hline
 
 \end{xltabular}

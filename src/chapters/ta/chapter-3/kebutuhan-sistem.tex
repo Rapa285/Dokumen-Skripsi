@@ -23,7 +23,7 @@ Kebutuhan fungsional dirumuskan dari sudut pandang interaksi antar-proses (\text
         \hline
         KF-TA-03 & Sistem harus memformat dan menstandardisasi \textit{audit record} ke dalam skema data terstruktur sebelum disimpan. \\
         \hline
-        KF-TA-04 & Sistem harus menyimpan rekaman \textit{audit trail} ke dalam media penyimpanan terdesentralisasi/terisolasi yang bersifat \textit{append-only} untuk mencegah modifikasi (\textit{overwrite}). \\
+        KF-TA-04 & Sistem harus menyimpan rekaman \textit{audit trail} ke dalam media penyimpanan yang bersifat \textit{append-only} untuk mencegah modifikasi (\textit{overwrite}). \\
         \hline
         KF-TA-05 & Sistem harus menyediakan mekanisme penyimpanan cadangan/persistensi (\textit{long-term retention}) untuk mengantisipasi kehilangan data akibat \textit{pruning} pada jaringan DLT. \\
         \hline
@@ -43,11 +43,11 @@ Kebutuhan nonfungsional difokuskan untuk memastikan atribut kualitas keamanan, i
         \hline
         \textbf{ID} & \textbf{Deskripsi Kebutuhan} \\
         \hline
-        KNF-TA-01 & \textbf{Integritas (\textit{Immutability}):} Sistem harus menjamin bahwa data \textit{audit record} yang telah disimpan bersifat \textit{tamper-proof} dan tidak dapat diubah atau dihapus oleh pihak mana pun. \\
+        KNF-TA-01 & \textbf{Integritas:} Sistem harus menjamin bahwa data \textit{audit record} yang telah disimpan bersifat \textit{tamper-proof} dan tidak dapat diubah atau dihapus oleh pihak mana pun. \\
         \hline
         KNF-TA-02 & \textbf{Interoperabilitas \& Keterbacaan:} Format data log yang dihasilkan harus konsisten, terstruktur, dan mudah dibaca/diproses oleh komponen sistem. \\
         \hline
-        KNF-TA-03 & \textbf{Ketersediaan Data (\textit{Availability}):} Sistem harus menjamin ketersediaan dan keteraksesan data \textit{audit trail} dalam jangka panjang. \\
+        KNF-TA-03 & \textbf{Ketersediaan Data:} Sistem harus menjamin ketersediaan dan keteraksesan data \textit{audit trail} dalam jangka panjang. \\
         \hline
         KNF-TA-04 & \textbf{Konsistensi Pencatatan:} Sistem harus memastikan setiap \textit{event} yang terjadi dicatat secara presisi tanpa ada kejadian bernilai audit tinggi yang terlewat. \\
         \hline
