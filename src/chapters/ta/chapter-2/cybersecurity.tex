@@ -72,16 +72,3 @@ Menghubungkan setiap tindakan pada sistem dengan identitas pelakunya secara dapa
 \hline
 \end{tabular}
 \end{table}
-
-\subsection{Implikasi terhadap Perancangan Sistem}
-\label{subsec:implikasi-perancangan}
-
-Pemahaman terhadap properti-properti keamanan tersebut memiliki implikasi langsung terhadap perancangan sistem audit trail pada Tugas Akhir ini. Setiap keputusan rancangan yang diambil pada Bab~III idealnya dapat ditelusuri kembali kepada satu atau lebih properti keamanan yang ingin dipenuhi.
-
-Pertama, kebutuhan akan \textit{non-repudiation} dan \textit{authenticity} menjadi alasan utama penggunaan tanda tangan digital Ed25519 pada setiap \textit{audit event} yang dikirimkan oleh komponen DecMed ke layanan audit trail. Tanpa mekanisme ini, layanan audit trail tidak dapat membedakan antara \textit{event} yang benar-benar dibangkitkan oleh komponen sah dengan \textit{event} palsu yang mungkin disuntikkan oleh pihak tidak berwenang.
-
-Kedua, kebutuhan akan \textit{integrity} menjadi alasan utama penerapan mekanisme \textit{hash-chaining} antar \textit{audit record} pada berkas log lokal. Mekanisme ini menjamin bahwa modifikasi pada rekaman yang tersimpan secara lokal --- sebelum berkas log diarsipkan ke IPFS --- dapat terdeteksi melalui pemeriksaan konsistensi rantai nilai \textit{hash}.
-
-Ketiga, kebutuhan akan \textit{accountability} menjadi acuan dalam penentuan cakupan \textit{audit event} yang perlu dicatat. Sistem yang hanya mencatat sebagian tindakan tidak dapat mewujudkan akuntabilitas secara menyeluruh, karena tindakan yang tidak tercatat tidak dapat dipertanggungjawabkan. Hal ini sejalan dengan persyaratan kelengkapan (\textit{completeness}) pada karakteristik audit trail yang baik sebagaimana diuraikan pada Subbab~\ref{subsec:karakteristik-audit-trail}.
-
-Keempat, kebutuhan akan \textit{availability} dalam arti ketersediaan bukti jangka panjang menjadi alasan penggunaan kombinasi \textit{IPFS pinning} dan pencatatan metadata \textit{immutable} pada \textit{smart contract} Move di jaringan IOTA, yang dirancang untuk mengantisipasi risiko kehilangan data akibat mekanisme \textit{data pruning} pada jaringan DLT sebagaimana diidentifikasi pada masalah M-TA-05.

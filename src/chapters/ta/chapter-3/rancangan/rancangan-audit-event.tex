@@ -1,0 +1,1032 @@
+
+
+Subbab ini merinci spesifikasi setiap \textit{audit event} yang telah
+diidentifikasi pada Tabel~\ref{tab:threat-event-mapping}. Untuk setiap
+\textit{event}, dijelaskan konteks aktivitas yang dicatat, kemungkinan nilai
+pada atribut umum, serta atribut tambahan beserta kemungkinan nilainya.
+
+Atribut umum yang terdapat pada seluruh jenis \textit{audit event} adalah
+\texttt{source\_component}, \texttt{actor\_id}, \texttt{target\_object},
+\texttt{outcome}, dan \texttt{action\_type}. Kemungkinan nilai dari atribut
+\texttt{outcome} dan \texttt{action\_type} berlaku seragam di seluruh
+\textit{event} dan dijelaskan pada Tabel~\ref{tab:nilai-outcome} dan
+Tabel~\ref{tab:nilai-action-type}.
+
+\begin{table}[htbp]
+\centering
+\caption{Kemungkinan Nilai Atribut \texttt{outcome}}
+\label{tab:nilai-outcome}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{2.5cm}|p{9.5cm}|}
+\hline
+\textbf{Nilai} & \textbf{Kondisi} \\
+\hline
+\texttt{Success} &
+Aktivitas berhasil diselesaikan sesuai dengan yang dimaksudkan. \\
+\hline
+\texttt{Failure} &
+Aktivitas gagal diselesaikan akibat kesalahan teknis, kondisi yang tidak
+terpenuhi, atau kegagalan pada komponen yang dihubungi (mis. IOTA, IPFS,
+Redis tidak merespons). \\
+\hline
+\texttt{Denied} &
+Aktivitas ditolak secara eksplisit karena tidak memenuhi persyaratan
+otorisasi, misalnya \textit{capability} tidak valid, JWT kadaluarsa, atau
+peran tidak sesuai. \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Kemungkinan Nilai Atribut \texttt{action\_type}}
+\label{tab:nilai-action-type}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{2.5cm}|p{9.5cm}|}
+\hline
+\textbf{Nilai} & \textbf{Kondisi} \\
+\hline
+\texttt{CREATE} &
+Membuat atau menginisialisasi objek, entri, atau sumber daya baru.
+Contoh: mendaftarkan akun, menerbitkan \textit{activation key}, membuat
+entri rekam medis, mengunggah konten ke IPFS. \\
+\hline
+\texttt{READ} &
+Membaca atau mengambil data dari objek yang sudah ada tanpa melakukan
+perubahan. Contoh: membaca rekam medis, mengambil data administratif,
+mengunduh konten dari IPFS. \\
+\hline
+\texttt{UPDATE} &
+Memperbarui atau memodifikasi objek yang sudah ada. Contoh: memperbarui
+entri rekam medis, memperbarui \textit{activation key}, memperbarui
+metadata administratif. \\
+\hline
+\texttt{DELETE} &
+Menghapus atau mencabut objek, entri, atau izin yang sudah ada. Contoh:
+mencabut delegasi akses (\texttt{revoke\_access}), \textit{sign out},
+menghapus \textit{nonce} dari Redis setelah digunakan. \\
+\hline
+\texttt{VALIDATE} &
+Memverifikasi keabsahan, keaslian, atau kelengkapan suatu objek atau
+klaim tanpa mengubah \textit{state}. Contoh: memvalidasi QR \textit{payload},
+memvalidasi JWT, memvalidasi \textit{capability on-chain}. \\
+\hline
+\texttt{EXECUTE} &
+Menjalankan proses yang telah dipersiapkan sebelumnya. Berbeda dari
+\texttt{CREATE} karena objeknya sudah ada dan tinggal dieksekusi. Contoh:
+mengeksekusi transaksi yang telah disponsori \textit{gas}. \\
+\hline
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+\subsubsection{EV1 --- Authentication}
+\label{subsec:ev1-authentication}
+
+EV1 mencatat setiap percobaan autentikasi pengguna pada \textit{Patient Client}
+maupun \textit{Hospital Client}, baik yang berhasil maupun yang gagal. Aktivitas
+yang tercakup meliputi proses \textit{sign-in} menggunakan \textit{activation key},
+\textit{patient ID}, atau \textit{seed words}, serta proses \textit{sign-out}.
+Pencatatan \textit{event} ini diperlukan untuk mendeteksi pola percobaan autentikasi
+yang mencurigakan, seperti percobaan berulang yang mengindikasikan serangan
+\textit{brute force}.
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Umum EV1 Authentication}
+\label{tab:ev1-umum}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai} \\
+\hline
+\texttt{source\_component} &
+\texttt{HospitalTauriBackend} | \texttt{PatientTauriBackend} \\
+\hline
+\texttt{actor\_id} &
+IOTA \textit{address} pengguna yang melakukan autentikasi. \\
+\hline
+\texttt{target\_object} &
+\texttt{activation\_key} | \texttt{patient\_id} | \texttt{seed\_words}
+--- menyatakan mekanisme autentikasi yang digunakan. \\
+\hline
+\texttt{action\_type} &
+\texttt{VALIDATE} | \texttt{CREATE} | \texttt{DELETE} --- \texttt{VALIDATE}
+untuk verifikasi kredensial, \texttt{CREATE} untuk inisialisasi sesi,
+\texttt{DELETE} untuk \textit{sign-out}. \\
+\hline
+\texttt{outcome} &
+\texttt{Success} | \texttt{Failure} | \texttt{Denied} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Tambahan EV1 Authentication}
+\label{tab:ev1-detail}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4cm}|p{7.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai dan Keterangan} \\
+\hline
+\texttt{auth\_method} &
+\texttt{activation\_key} | \texttt{patient\_id} | \texttt{seed\_words}
+--- metode spesifik yang digunakan dalam percobaan autentikasi. \\
+\hline
+\texttt{role} &
+\texttt{Pasien} | \texttt{PersonnelMedis} | \texttt{PersonnelAdministratif}
+| \texttt{AdminFasyankes} --- peran pengguna yang sedang melakukan autentikasi. \\
+\hline
+\texttt{attempt\_count} &
+Bilangan bulat positif --- jumlah percobaan autentikasi yang telah dilakukan
+pada sesi atau dalam periode tertentu. \\
+\hline
+\texttt{failure\_reason} &
+\texttt{invalid\_credentials} | \texttt{account\_not\_found} |
+\texttt{session\_expired} | \texttt{null} apabila \texttt{outcome} bukan
+\texttt{Failure}. \\
+\hline
+\texttt{device\_info} &
+Informasi perangkat yang digunakan, misalnya \textit{fingerprint} perangkat
+atau platform sistem operasi. \\
+\hline
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+\subsubsection{EV2 --- QR Validation}
+\label{subsec:ev2-qr-validation}
+
+EV2 mencatat proses validasi \textit{payload} QR Access Delegation yang dipindai
+oleh pasien dari QR \textit{code} yang ditampilkan oleh \textit{hospital personnel}.
+\textit{Payload} QR berisi IOTA \textit{address} dan PRE \textit{public key}
+\textit{personnel} dalam format \texttt{<iota\_address>@<hex\_pre\_pub\_key>}.
+Pencatatan \textit{event} ini diperlukan untuk mendeteksi pemalsuan
+\textit{payload} QR maupun kebocoran informasi delegasi akses.
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Umum EV2 QR Validation}
+\label{tab:ev2-umum}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai} \\
+\hline
+\texttt{source\_component} &
+\texttt{PatientTauriBackend} \\
+\hline
+\texttt{actor\_id} &
+IOTA \textit{address} pasien yang memindai QR. \\
+\hline
+\texttt{target\_object} &
+IOTA \textit{address} \& PRE \textit{public key hospital personnel} yang
+terdapat dalam QR. \\
+\hline
+\texttt{action\_type} &
+\texttt{READ} | \texttt{VALIDATE} \\
+\hline
+\texttt{outcome} &
+\texttt{Success} | \texttt{Failure} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Tambahan EV2 QR Validation}
+\label{tab:ev2-detail}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4cm}|p{7.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai dan Keterangan} \\
+\hline
+\texttt{qr\_content\_hash} &
+Nilai \textit{hash} SHA-256 dari \textit{payload} QR yang dipindai ---
+digunakan untuk membuktikan konten yang diterima tanpa menyimpan nilai
+aslinya. \\
+\hline
+\texttt{hospital\_personnel\_iota\_address} &
+IOTA \textit{address} \textit{hospital personnel} yang terkandung dalam
+QR. \\
+\hline
+\texttt{hospital\_personnel\_pre\_public\_key\_fingerprint} &
+\textit{Fingerprint} (hash) dari PRE \textit{public key personnel} yang
+terkandung dalam QR. \\
+\hline
+\texttt{hospital\_name} &
+Nama fasyankes tempat \textit{personnel} bernaung, apabila tersedia dalam
+\textit{payload}. \\
+\hline
+\texttt{hospital\_personnel\_name} &
+Nama \textit{personnel} yang ditampilkan dalam QR, apabila tersedia. \\
+\hline
+\texttt{validation\_step} &
+\texttt{parse} | \texttt{format\_check} | \texttt{address\_lookup} ---
+tahapan validasi terakhir yang berhasil atau gagal. \\
+\hline
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+\subsubsection{EV3 --- Capability Creation}
+\label{subsec:ev3-capability-creation}
+
+EV3 mencatat proses pembuatan dan pencabutan \textit{capability} akses yang
+diberikan pasien kepada \textit{hospital personnel}. \textit{Capability} ini
+tersimpan sebagai entri \textit{on-chain} (HospitalPersonnelAccess) dan \textit{kfrag}
+di Redis. Pencatatan \textit{event} ini diperlukan untuk membuktikan bahwa
+pasien benar-benar telah memberikan atau mencabut delegasi akses kepada
+\textit{personnel} tertentu, sehingga menangkal ancaman penyangkalan (T6).
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Umum EV3 Capability Creation}
+\label{tab:ev3-umum}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai} \\
+\hline
+\texttt{source\_component} &
+\texttt{PatientTauriBackend} | \texttt{ProxyReencryption} \\
+\hline
+\texttt{actor\_id} &
+IOTA \textit{address} pasien yang mendelegasikan akses. \\
+\hline
+\texttt{target\_object} &
+IOTA \textit{address} \textit{hospital personnel} penerima akses. \\
+\hline
+\texttt{action\_type} &
+\texttt{CREATE} | \texttt{DELETE} --- \texttt{CREATE} untuk pemberian
+akses, \texttt{DELETE} untuk pencabutan akses. \\
+\hline
+\texttt{outcome} &
+\texttt{Success} | \texttt{Failure} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Tambahan EV3 Capability Creation}
+\label{tab:ev3-detail}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4cm}|p{7.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai dan Keterangan} \\
+\hline
+\texttt{access\_type} &
+\texttt{read} | \texttt{update} --- cakupan akses yang diberikan. \\
+\hline
+\texttt{exp\_duration\_ms} &
+Durasi kedaluwarsa \textit{capability} dalam milidetik. \\
+\hline
+\texttt{k\_frag\_fingerprint} &
+\textit{Fingerprint} (hash) dari \textit{kfrag} yang disimpan di Redis,
+tanpa mengekspos nilai \textit{kfrag} asli. \\
+\hline
+\texttt{transaction\_digest} &
+\textit{Digest} transaksi IOTA yang merekam pembuatan atau pencabutan
+\textit{capability on-chain}. \\
+\hline
+\texttt{hospital\_name} &
+Nama fasyankes tempat \textit{personnel} penerima akses bernaung. \\
+\hline
+\texttt{nonce\_used} &
+\textit{Nonce} yang digunakan dalam proses pemberian akses untuk mencegah
+\textit{replay attack}. \\
+\hline
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+\subsubsection{EV4 --- Medical Record Access}
+\label{subsec:ev4-medical-record-access}
+
+EV4 mencatat setiap aktivitas pembacaan maupun penulisan data rekam medis
+yang dieksekusi oleh PRE Server atas permintaan \textit{hospital personnel}.
+Aktivitas ini mencakup pengambilan data administratif, pengambilan data klinis
+beserta proses \textit{re-encryption}, pembuatan entri rekam medis baru, dan
+pembaruan entri rekam medis. Pencatatan \textit{event} ini diperlukan untuk
+membuktikan bahwa akses terhadap data sensitif pasien dilakukan dengan otorisasi
+yang sah (T7, T13).
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Umum EV4 Medical Record Access}
+\label{tab:ev4-umum}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai} \\
+\hline
+\texttt{source\_component} &
+\texttt{ProxyReencryption} \\
+\hline
+\texttt{actor\_id} &
+IOTA \textit{address} \textit{hospital personnel} yang mengakses. \\
+\hline
+\texttt{target\_object} &
+IPFS CID rekam medis (untuk data klinis) | IOTA \textit{address} pasien
+(untuk data administratif). \\
+\hline
+\texttt{action\_type} &
+\texttt{CREATE} | \texttt{READ} | \texttt{UPDATE} \\
+\hline
+\texttt{outcome} &
+\texttt{Success} | \texttt{Failure} | \texttt{Denied} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Tambahan EV4 Medical Record Access}
+\label{tab:ev4-detail}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4cm}|p{7.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai dan Keterangan} \\
+\hline
+\texttt{patient\_iota\_address} &
+IOTA \textit{address} pasien pemilik data yang diakses. \\
+\hline
+\texttt{record\_index} &
+Indeks rekam medis yang diakses atau dibuat, apabila relevan. \\
+\hline
+\texttt{role\_used} &
+\texttt{MedicalPersonnel} | \texttt{AdministrativePersonnel} --- peran
+\textit{personnel} yang tercantum pada JWT saat akses dilakukan. \\
+\hline
+\texttt{purpose\_used} &
+\texttt{read} | \texttt{update} --- tujuan akses yang tercantum pada JWT. \\
+\hline
+\texttt{jwt\_sub} &
+\textit{Subject} JWT yang digunakan --- biasanya IOTA \textit{address
+personnel}. \\
+\hline
+\texttt{capability\_valid} &
+\texttt{true} | \texttt{false} --- hasil validasi \textit{capability
+on-chain} sebelum akses diproses. \\
+\hline
+\texttt{ipfs\_cid} &
+CID IPFS konten klinis yang diakses atau diunggah, \texttt{null} apabila
+operasi hanya menyangkut data administratif. \\
+\hline
+\texttt{reencryption\_performed} &
+\texttt{true} | \texttt{false} --- menyatakan apakah proses
+\textit{re-encryption} PRE dilakukan pada operasi ini. \\
+\hline
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+\subsubsection{EV5 --- Personnel Activation Key}
+\label{subsec:ev5-personnel-activation-key}
+
+EV5 mencatat aktivitas penerbitan dan pembaruan \textit{activation key} yang
+dilakukan oleh Admin Fasyankes untuk \textit{personnel} di bawahnya.
+\textit{Activation key} ini memungkinkan \textit{personnel} mendaftarkan diri
+ke dalam sistem. Pencatatan \textit{event} ini diperlukan untuk membuktikan
+bahwa admin fasyankes benar-benar menerbitkan \textit{activation key} kepada
+\textit{personnel} tertentu (T8).
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Umum EV5 Personnel Activation Key}
+\label{tab:ev5-umum}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai} \\
+\hline
+\texttt{source\_component} &
+\texttt{HospitalTauriBackend} \\
+\hline
+\texttt{actor\_id} &
+IOTA \textit{address} Admin Fasyankes yang menerbitkan \textit{key}. \\
+\hline
+\texttt{target\_object} &
+\textit{Hash} ID personel penerima \textit{activation key}. \\
+\hline
+\texttt{action\_type} &
+\texttt{CREATE} | \texttt{UPDATE} \\
+\hline
+\texttt{outcome} &
+\texttt{Success} | \texttt{Failure} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Tambahan EV5 Personnel Activation Key}
+\label{tab:ev5-detail}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4cm}|p{7.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai dan Keterangan} \\
+\hline
+\texttt{admin\_iota\_address} &
+IOTA \textit{address} Admin Fasyankes yang menerbitkan \textit{key}. \\
+\hline
+\texttt{personnel\_id\_hash} &
+\textit{Hash} dari ID personel penerima \textit{activation key}. \\
+\hline
+\texttt{role\_assigned} &
+\texttt{MedicalPersonnel} | \texttt{AdministrativePersonnel} | \texttt{Admin}
+--- peran yang ditetapkan pada \textit{activation key}. \\
+\hline
+\texttt{hospital\_id\_hash} &
+\textit{Hash} dari ID fasyankes tempat \textit{personnel} bernaung. \\
+\hline
+\texttt{transaction\_digest} &
+\textit{Digest} transaksi IOTA yang merekam penerbitan atau pembaruan
+\textit{activation key on-chain}. \\
+\hline
+\texttt{activation\_key\_hash} &
+\textit{Hash} dari nilai \textit{activation key} yang diterbitkan. \\
+\hline
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+\subsubsection{EV6 --- Facility Registration}
+\label{subsec:ev6-facility-registration}
+
+EV6 mencatat aktivitas registrasi fasyankes baru beserta Admin Fasyankes-nya
+yang dilakukan oleh Ministry Administrator. Pencatatan \textit{event} ini
+diperlukan untuk membuktikan bahwa Kementerian benar-benar telah meregistrasi
+fasyankes tertentu beserta administratornya (T9).
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Umum EV6 Facility Registration}
+\label{tab:ev6-umum}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai} \\
+\hline
+\texttt{source\_component} &
+\texttt{MinistryTauriBackend} \\
+\hline
+\texttt{actor\_id} &
+IOTA \textit{address} Ministry Administrator. \\
+\hline
+\texttt{target\_object} &
+\textit{Hash} ID fasyankes yang diregistrasi. \\
+\hline
+\texttt{action\_type} &
+\texttt{CREATE} | \texttt{UPDATE} \\
+\hline
+\texttt{outcome} &
+\texttt{Success} | \texttt{Failure} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Tambahan EV6 Facility Registration}
+\label{tab:ev6-detail}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4cm}|p{7.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai dan Keterangan} \\
+\hline
+\texttt{facility\_id} &
+Identitas fasyankes yang diregistrasi. \\
+\hline
+\texttt{facility\_name} &
+Nama fasyankes yang diregistrasi. \\
+\hline
+\texttt{administrator\_id} &
+Identitas Admin Fasyankes yang ditetapkan saat registrasi. \\
+\hline
+\texttt{transaction\_digest} &
+\textit{Digest} transaksi IOTA yang merekam registrasi fasyankes. \\
+\hline
+\texttt{activation\_key\_hash} &
+\textit{Hash} dari \textit{facility activation key} yang diterbitkan
+saat registrasi. \\
+\hline
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+\subsubsection{EV7 --- PRE Service Operation}
+\label{subsec:ev7-pre-service-operation}
+
+EV7 mencatat setiap permintaan layanan yang diterima oleh PRE Server dari
+komponen \textit{client} maupun dari PRE Server itu sendiri. Aktivitas yang
+tercakup meliputi seluruh \textit{endpoint} REST PRE Server: \texttt{/nonce},
+\texttt{/keys}, \texttt{/medical-record}, dan \texttt{/administrative}.
+Pencatatan \textit{event} ini diperlukan untuk mendeteksi penyamaran sebagai
+PRE Server (\textit{man-in-the-middle}), penyadapan komunikasi, dan pembanjiran
+\textit{endpoint} (T10, T11, T12).
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Umum EV7 PRE Service Operation}
+\label{tab:ev7-umum}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai} \\
+\hline
+\texttt{source\_component} &
+\texttt{ProxyReencryption} \\
+\hline
+\texttt{actor\_id} &
+IOTA \textit{address} pemohon | \texttt{proxy\_iota\_address} apabila
+PRE Server bertindak sebagai aktor. \\
+\hline
+\texttt{target\_object} &
+\textit{Endpoint} PRE Server yang dipanggil, misalnya
+\texttt{/api/v1/nonce}, \texttt{/api/v1/keys},
+\texttt{/api/v1/medical-record}. \\
+\hline
+\texttt{action\_type} &
+\texttt{CREATE} | \texttt{READ} | \texttt{VALIDATE} \\
+\hline
+\texttt{outcome} &
+\texttt{Success} | \texttt{Failure} | \texttt{Denied} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Tambahan EV7 PRE Service Operation}
+\label{tab:ev7-detail}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4cm}|p{7.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai dan Keterangan} \\
+\hline
+\texttt{endpoint\_called} &
+\textit{Path} lengkap \textit{endpoint} yang dipanggil, misalnya
+\texttt{/api/v1/medical-record}. \\
+\hline
+\texttt{request\_id} &
+Pengenal unik permintaan yang dapat digunakan untuk menghubungkan
+\textit{event} ini dengan \textit{event} lain pada siklus yang sama. \\
+\hline
+\texttt{caller\_component} &
+\texttt{PatientTauriBackend} | \texttt{HospitalTauriBackend} |
+\texttt{ProxyReencryption} --- komponen yang mengajukan permintaan. \\
+\hline
+\texttt{channel\_encryption} &
+\texttt{TLS} | \texttt{none} --- mekanisme pengamanan kanal komunikasi
+yang digunakan. \\
+\hline
+\texttt{jwt\_purpose} &
+\texttt{read} | \texttt{update} | \texttt{null} --- tujuan yang tercantum
+pada JWT yang disertakan dalam permintaan, apabila ada. \\
+\hline
+\texttt{http\_status\_code} &
+Kode status HTTP yang dikembalikan PRE Server sebagai respons, misalnya
+\texttt{200}, \texttt{401}, \texttt{403}, \texttt{500}. \\
+\hline
+\texttt{latency\_ms} &
+Durasi pemrosesan permintaan oleh PRE Server dalam milidetik. \\
+\hline
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+\subsubsection{EV8 --- IOTA Transaction Submission}
+\label{subsec:ev8-iota-transaction}
+
+EV8 mencatat setiap pengiriman transaksi Move ke jaringan IOTA, baik yang
+dilakukan oleh komponen \textit{client} (Patient, Hospital, Ministry) maupun
+oleh PRE Server secara langsung menggunakan \texttt{proxy\_iota\_address}-nya
+sendiri. Pencatatan \textit{event} ini diperlukan untuk mendeteksi modifikasi
+transaksi selama pengiriman (T14).
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Umum EV8 IOTA Transaction Submission}
+\label{tab:ev8-umum}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai} \\
+\hline
+\texttt{source\_component} &
+\texttt{HospitalTauriBackend} | \texttt{PatientTauriBackend} |
+\texttt{MinistryTauriBackend} | \texttt{ProxyReencryption} \\
+\hline
+\texttt{actor\_id} &
+IOTA \textit{address} penandatangan transaksi | \texttt{proxy\_iota\_address}
+apabila PRE Server yang mengirim. \\
+\hline
+\texttt{target\_object} &
+Nama fungsi Move yang dipanggil, misalnya \texttt{create\_access},
+\texttt{signup}, \texttt{create\_medical\_record}. \\
+\hline
+\texttt{action\_type} &
+\texttt{CREATE} \\
+\hline
+\texttt{outcome} &
+\texttt{Success} | \texttt{Failure} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Tambahan EV8 IOTA Transaction Submission}
+\label{tab:ev8-detail}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4cm}|p{7.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai dan Keterangan} \\
+\hline
+\texttt{transaction\_digest} &
+\textit{Digest} transaksi IOTA yang dihasilkan setelah transaksi berhasil
+dikirim dan dikonfirmasi. \\
+\hline
+\texttt{payload\_hash} &
+Nilai \textit{hash} dari \textit{payload} transaksi sebelum dikirim ---
+digunakan untuk mendeteksi modifikasi selama pengiriman. \\
+\hline
+\texttt{move\_function} &
+Nama fungsi Move yang dipanggil, misalnya \texttt{create\_access},
+\texttt{revoke\_access}, \texttt{create\_medical\_record}. \\
+\hline
+\texttt{move\_module} &
+Nama modul Move tempat fungsi berada, misalnya \texttt{patient},
+\texttt{proxy}, \texttt{admin}. \\
+\hline
+\texttt{network\_confirmation\_status} &
+\texttt{confirmed} | \texttt{pending} | \texttt{failed} --- status
+konfirmasi transaksi pada jaringan IOTA. \\
+\hline
+\texttt{gas\_used} &
+Jumlah \textit{gas} yang dikonsumsi oleh transaksi. \\
+\hline
+\texttt{sponsor\_address} &
+IOTA \textit{address} Gas Station yang mensponsori transaksi, apabila
+transaksi menggunakan mekanisme sponsorship. \\
+\hline
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+\subsubsection{EV9 --- Gas Sponsorship Request}
+\label{subsec:ev9-gas-sponsorship}
+
+EV9 mencatat setiap permintaan \textit{sponsorship} transaksi kepada Gas
+Station, baik dari komponen \textit{client} maupun dari PRE Server. Permintaan
+ini mencakup dua tahap: reservasi \textit{gas object} (\texttt{/reserve\_gas})
+dan eksekusi transaksi yang telah disponsori (\texttt{/execute\_tx}).
+Pencatatan \textit{event} ini diperlukan untuk mendeteksi penyamaran sebagai
+pemohon sah, penyangkalan atas permintaan \textit{sponsorship}, dan
+pembanjiran \textit{gas object} (T15, T16, T17).
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Umum EV9 Gas Sponsorship Request}
+\label{tab:ev9-umum}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai} \\
+\hline
+\texttt{source\_component} &
+\texttt{HospitalTauriBackend} | \texttt{PatientTauriBackend} |
+\texttt{MinistryTauriBackend} | \texttt{ProxyReencryption} \\
+\hline
+\texttt{actor\_id} &
+IOTA \textit{address} pemohon \textit{sponsorship} |
+\texttt{proxy\_iota\_address} apabila PRE Server yang memohon. \\
+\hline
+\texttt{target\_object} &
+\textit{Endpoint} Gas Station yang dituju: \texttt{/reserve\_gas} |
+\texttt{/execute\_tx}. \\
+\hline
+\texttt{action\_type} &
+\texttt{CREATE} | \texttt{EXECUTE} \\
+\hline
+\texttt{outcome} &
+\texttt{Success} | \texttt{Failure} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Tambahan EV9 Gas Sponsorship Request}
+\label{tab:ev9-detail}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4cm}|p{7.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai dan Keterangan} \\
+\hline
+\texttt{gas\_budget\_requested} &
+Jumlah \textit{gas budget} yang diminta dalam permintaan \textit{sponsorship}. \\
+\hline
+\texttt{reserve\_duration\_secs} &
+Durasi reservasi \textit{gas object} dalam detik sebelum kadaluarsa. \\
+\hline
+\texttt{reservation\_id} &
+Pengenal unik reservasi \textit{gas} yang diterbitkan oleh Gas Station. \\
+\hline
+\texttt{sponsor\_address} &
+IOTA \textit{address} Gas Station yang bertindak sebagai \textit{sponsor}. \\
+\hline
+\texttt{transaction\_digest} &
+\textit{Digest} transaksi yang disponsori, tersedia setelah tahap eksekusi. \\
+\hline
+\texttt{gas\_coin\_object\_ids} &
+Daftar ID objek \textit{gas coin} yang direservasi atau digunakan dalam
+transaksi. \\
+\hline
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+\subsubsection{EV10 --- Redis Operation}
+\label{subsec:ev10-redis-operation}
+
+EV10 mencatat setiap operasi penyimpanan, pembacaan, atau penghapusan objek
+sensitif pada Redis yang dilakukan oleh PRE Server. Objek yang dikelola
+mencakup \textit{nonce} autentikasi (kunci Redis: \texttt{nonce:<iota\_address>})
+dan material PRE berupa \textit{kfrag} serta \textit{access keys} (kunci Redis:
+\texttt{keys:<hp\_addr>@<patient\_addr>}). Pencatatan \textit{event} ini
+diperlukan untuk mendeteksi akses tidak sah atau modifikasi objek Redis (T18,
+T19, T20).
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Umum EV10 Redis Operation}
+\label{tab:ev10-umum}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai} \\
+\hline
+\texttt{source\_component} &
+\texttt{ProxyReencryption} \\
+\hline
+\texttt{actor\_id} &
+\texttt{proxy\_iota\_address} PRE Server yang mengeksekusi operasi Redis. \\
+\hline
+\texttt{target\_object} &
+Kunci Redis yang dioperasikan, misalnya
+\texttt{nonce:<iota\_address>} atau
+\texttt{keys:<hp\_addr>@<patient\_addr>}. \\
+\hline
+\texttt{action\_type} &
+\texttt{CREATE} | \texttt{READ} | \texttt{DELETE} \\
+\hline
+\texttt{outcome} &
+\texttt{Success} | \texttt{Failure} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Tambahan EV10 Redis Operation}
+\label{tab:ev10-detail}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4cm}|p{7.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai dan Keterangan} \\
+\hline
+\texttt{redis\_key\_type} &
+\texttt{nonce} | \texttt{access\_keys} --- kategori objek Redis yang
+dioperasikan. \\
+\hline
+\texttt{operation\_type} &
+\texttt{SET} | \texttt{GET} | \texttt{DEL} | \texttt{EXPIRE} ---
+operasi Redis spesifik yang dieksekusi. \\
+\hline
+\texttt{ttl\_remaining} &
+Sisa TTL entri Redis dalam detik pada saat operasi dilakukan;
+\texttt{-1} apabila tidak ada TTL, \texttt{-2} apabila kunci tidak ditemukan. \\
+\hline
+\texttt{key\_pattern} &
+Pola kunci Redis yang digunakan, misalnya \texttt{nonce:*} atau
+\texttt{keys:*@*}, untuk membantu korelasi tanpa mengekspos nilai kunci
+penuh. \\
+\hline
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+\subsubsection{EV11 --- IPFS Operation}
+\label{subsec:ev11-ipfs-operation}
+
+EV11 mencatat setiap operasi pengunggahan maupun pengunduhan objek pada IPFS
+Cluster yang dilakukan oleh PRE Server. Objek yang dikelola adalah konten
+klinis terenkripsi (AES-GCM) milik pasien. Pencatatan \textit{event} ini
+diperlukan untuk mendeteksi pengunduhan data klinis oleh pihak tidak berwenang
+maupun pembanjiran permintaan ke IPFS (T21, T22).
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Umum EV11 IPFS Operation}
+\label{tab:ev11-umum}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai} \\
+\hline
+\texttt{source\_component} &
+\texttt{ProxyReencryption} \\
+\hline
+\texttt{actor\_id} &
+\texttt{proxy\_iota\_address} PRE Server yang mengeksekusi operasi IPFS. \\
+\hline
+\texttt{target\_object} &
+CID IPFS dari konten yang diunggah atau diunduh. \\
+\hline
+\texttt{action\_type} &
+\texttt{CREATE} | \texttt{READ} \\
+\hline
+\texttt{outcome} &
+\texttt{Success} | \texttt{Failure} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Tambahan EV11 IPFS Operation}
+\label{tab:ev11-detail}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4cm}|p{7.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai dan Keterangan} \\
+\hline
+\texttt{cid} &
+\textit{Content Identifier} IPFS dari objek yang dioperasikan. \\
+\hline
+\texttt{operation\_type} &
+\texttt{upload} | \texttt{download} --- arah operasi terhadap IPFS. \\
+\hline
+\texttt{data\_size} &
+Ukuran data dalam \textit{byte} yang diunggah atau diunduh. \\
+\hline
+\texttt{patient\_iota\_address} &
+IOTA \textit{address} pasien pemilik data klinis yang dioperasikan. \\
+\hline
+\texttt{ipfs\_node\_url} &
+URL \textit{node} IPFS Cluster yang digunakan dalam operasi. \\
+\hline
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+\subsubsection{EV12 --- IOTA Metadata Operation}
+\label{subsec:ev12-iota-metadata}
+
+EV12 mencatat setiap aktivitas pembacaan atau pembaruan objek \textit{on-chain}
+pada jaringan IOTA, yang dapat dilakukan oleh seluruh komponen sistem. Objek
+yang dicakup meliputi \texttt{AddressId}, \texttt{PatientIdAccount},
+\texttt{HospitalPersonnelIdAccount}, \texttt{HospitalIdMetadata}, dan
+objek-objek \textit{shared} lainnya. Pencatatan \textit{event} ini diperlukan
+untuk mendeteksi potensi analisis pola transaksi dari metadata publik (T23).
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Umum EV12 IOTA Metadata Operation}
+\label{tab:ev12-umum}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai} \\
+\hline
+\texttt{source\_component} &
+\texttt{HospitalTauriBackend} | \texttt{PatientTauriBackend} |
+\texttt{MinistryTauriBackend} | \texttt{ProxyReencryption} \\
+\hline
+\texttt{actor\_id} &
+IOTA \textit{address} pengguna | \texttt{proxy\_iota\_address} apabila
+PRE Server. \\
+\hline
+\texttt{target\_object} &
+IOTA Object ID dari objek \textit{on-chain} yang diakses. \\
+\hline
+\texttt{action\_type} &
+\texttt{READ} | \texttt{UPDATE} \\
+\hline
+\texttt{outcome} &
+\texttt{Success} | \texttt{Failure} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Tambahan EV12 IOTA Metadata Operation}
+\label{tab:ev12-detail}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4cm}|p{7.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai dan Keterangan} \\
+\hline
+\texttt{object\_id} &
+IOTA Object ID dari objek yang diakses atau diperbarui. \\
+\hline
+\texttt{object\_type} &
+\texttt{AddressId} | \texttt{PatientIdAccount} |
+\texttt{HospitalPersonnelIdAccount} | \texttt{HospitalIdMetadata} |
+tipe objek lainnya. \\
+\hline
+\texttt{move\_function} &
+Nama fungsi Move yang digunakan untuk mengakses objek, apabila akses
+dilakukan melalui \texttt{dev\_inspect} atau transaksi. \\
+\hline
+\texttt{is\_mutable} &
+\texttt{true} | \texttt{false} --- menyatakan apakah operasi bersifat
+mutasi terhadap \textit{state on-chain} atau hanya pembacaan. \\
+\hline
+\texttt{transaction\_digest} &
+\textit{Digest} transaksi IOTA apabila operasi bersifat mutasi;
+\texttt{null} apabila hanya \texttt{dev\_inspect}. \\
+\hline
+\texttt{dev\_inspect\_used} &
+\texttt{true} | \texttt{false} --- menyatakan apakah pembacaan dilakukan
+menggunakan mekanisme \texttt{dev\_inspect} tanpa menerbitkan transaksi. \\
+\hline
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+\subsubsection{EV13 --- Capability Validation}
+\label{subsec:ev13-capability-validation}
+
+EV13 mencatat setiap proses validasi \textit{capability} yang dilakukan oleh
+PRE Server sebelum permintaan sensitif diproses lebih lanjut. Objek yang
+divalidasi meliputi \texttt{ProxyCapEnum} dan \texttt{GlobalAdminCap}
+(\textit{on-chain}), serta JWT \textit{token} yang diterbitkan PRE Server untuk
+\textit{hospital personnel}. Pencatatan \textit{event} ini diperlukan untuk
+mendeteksi upaya eskalasi privilese melalui kelemahan validasi \textit{capability}
+(T24, T25).
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Umum EV13 Capability Validation}
+\label{tab:ev13-umum}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3.5cm}|p{8.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai} \\
+\hline
+\texttt{source\_component} &
+\texttt{ProxyReencryption} \\
+\hline
+\texttt{actor\_id} &
+IOTA \textit{address} \textit{hospital personnel} yang divalidasi |
+\texttt{proxy\_iota\_address} untuk validasi \texttt{ProxyCap}. \\
+\hline
+\texttt{target\_object} &
+IOTA Object ID \textit{capability on-chain} | JWT \textit{token identifier}. \\
+\hline
+\texttt{action\_type} &
+\texttt{VALIDATE} \\
+\hline
+\texttt{outcome} &
+\texttt{Success} | \texttt{Denied} | \texttt{Failure} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Atribut Tambahan EV13 Capability Validation}
+\label{tab:ev13-detail}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4cm}|p{7.5cm}|}
+\hline
+\textbf{Atribut} & \textbf{Kemungkinan Nilai dan Keterangan} \\
+\hline
+\texttt{capability\_id} &
+IOTA Object ID \textit{capability on-chain} atau pengenal JWT yang
+divalidasi. \\
+\hline
+\texttt{required\_scope} &
+Cakupan akses yang dipersyaratkan oleh operasi yang diminta, misalnya
+\texttt{read} atau \texttt{update}. \\
+\hline
+\texttt{actual\_scope} &
+Cakupan akses aktual yang dimiliki oleh \textit{capability} yang
+diperiksa. \\
+\hline
+\texttt{rejection\_reason} &
+\texttt{expired} | \texttt{scope\_mismatch} | \texttt{not\_found} |
+\texttt{invalid\_signature} | \texttt{null} apabila validasi berhasil. \\
+\hline
+\texttt{middleware\_layer} &
+\texttt{jwt\_middleware} | \texttt{onchain\_check} --- lapisan validasi
+yang melakukan pemeriksaan \textit{capability}. \\
+\hline
+\end{tabular}
+\end{table}
