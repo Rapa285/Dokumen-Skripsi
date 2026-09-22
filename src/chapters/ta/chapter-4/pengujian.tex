@@ -64,7 +64,7 @@ Pengujian kebutuhan nonfungsional dijalankan untuk mengevaluasi pemenuhan aspek 
 
 \subsubsection{Pengujian KNF-TA-01: Integritas \textit{Audit Record} yang \textit{Tamper-Proof}}
 
-Pengujian KNF-TA-01 memastikan bahwa \textit{audit record} yang telah tersimpan bersifat \textit{tamper-proof} dan perusakan dapat terdeteksi melalui mekanisme \textit{hash-chaining}. Pengujian ini menguji mitigasi terhadap ancaman T7 dan T8 (kategori \textit{Repudiation}) yang berkaitan dengan kemampuan tenaga medis dan admin fasyankes menyangkal tindakan yang telah dilakukan.
+Pengujian KNF-TA-01 memastikan bahwa \textit{audit record} yang telah tersimpan bersifat \textit{tamper-evident} dan perusakan dapat terdeteksi melalui mekanisme \textit{hash-chaining}. Pengujian ini menguji mitigasi terhadap ancaman T7 dan T8 (kategori \textit{Repudiation}) yang berkaitan dengan kemampuan tenaga medis dan admin fasyankes menyangkal tindakan yang telah dilakukan.
 
 Pengujian pertama, yaitu P-KNF-01, dijalankan melalui unit testing pada fungsi \texttt{Utils::verify\_record}. Skenario pengujian menciptakan sebuah \texttt{AuditRecord} yang valid menggunakan \texttt{create\_audit\_record}, kemudian memverifikasi \textit{record} tersebut dengan \texttt{verify\_record}. Hasil verifikasi harus mengembalikan \texttt{true}. Selanjutnya, satu karakter pada bidang \texttt{source\_component} dalam \textit{record} dimodifikasi secara langsung, dan \texttt{verify\_record} dipanggil kembali. Hasil verifikasi harus mengembalikan \texttt{false} karena nilai \texttt{record\_hash} yang tersimpan tidak lagi sesuai dengan \textit{hash} yang dihitung ulang dari konten \textit{record} yang telah dimodifikasi.
 

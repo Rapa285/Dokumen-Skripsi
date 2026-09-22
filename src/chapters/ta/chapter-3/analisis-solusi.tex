@@ -118,7 +118,7 @@ Melalui analisis pemisahan skema umum dan skema detail ini, seluruh log yang dih
 \label{subsubsec:analisis-repositori-audit-log}
 Penyimpanan data log pada DecMed saat ini belum sepenuhnya menjamin sifat \textit{immutability} (M-TA-03). Pada implementasi eksisting, komponen \texttt{PatientAccessLog} disimpan pada \textit{smart contract} Move, namun struktur kode yang ada masih menyediakan fungsi untuk memperbarui (\textit{update}) data log sehingga bersifat \textit{mutable}. Sementara itu, komponen \texttt{TX Block} disimpan secara langsung pada jaringan IOTA.
 
-Untuk membangun repositori bukti audit yang \textit{tamper-proof} tanpa membebani ukuran penyimpanan \textit{on-chain}, dianalisis pemanfaatan infrastruktur IPFS yang sudah tersedia pada DecMed dikombinasikan dengan \textit{smart contract} Move di jaringan IOTA. Perbandingan pendekatan penyimpanan dirangkum pada Tabel~\ref{tab:analisis-penyimpanan}.
+Untuk membangun repositori bukti audit yang \textit{tamper-evident} tanpa membebani ukuran penyimpanan \textit{on-chain}, dianalisis pemanfaatan infrastruktur IPFS yang sudah tersedia pada DecMed dikombinasikan dengan \textit{smart contract} Move di jaringan IOTA. Perbandingan pendekatan penyimpanan dirangkum pada Tabel~\ref{tab:analisis-penyimpanan}.
 
 \begin{table}[htbp]
 \centering
