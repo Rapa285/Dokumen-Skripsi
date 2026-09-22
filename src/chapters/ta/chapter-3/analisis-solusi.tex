@@ -1,11 +1,24 @@
+% =============================================================
+% File: chapters/ta/chapter-3/analisis-solusi.tex
+%
+% PERUBAHAN:
+%   - Pembuka: "sistem audit trail terintegrasi" → "mekanisme audit log yang terintegrasi"
+%   - "rekam jejak (audit trail) yang ideal" → "audit log yang ideal"
+%   - Caption tabel penyimpanan: "Audit Trail" → "Audit Log"
+%   - "Layanan audit trail tersentralisasi" → "Layanan audit log tersentralisasi"
+%   - S-TA-03: "immutability log" → "tamper-evident dan immutability log"
+%   - Paragraf satu baris
+% =============================================================
+
 \subsection{Analisis Solusi}
 \label{sec:analisis-solusi}
-Guna mengatasi permasalahan pencatatan dan pengelolaan bukti digital pada DecMed yang telah dipetakan pada Subbab III.1.1, diperlukan perancangan sistem \textit{audit trail} terintegrasi dan terdesentralisasi. Berdasarkan kebutuhan sistem pada Subbab III.1.3, analisis solusi disusun dalam urutan berikut. Pertama, analisis pendekatan arsitektur agregasi log untuk menyatukan pencatatan terpisah. Kedua, analisis skema pembentukan struktur data audit terstandar. Ketiga, analisis mekanisme penyimpanan \textit{immutable} berbasis \textit{smart contract} Move di jaringan IOTA untuk mencegah modifikasi data log. Keempat, analisis strategi persistensi data (\textit{long-term retention}) untuk mengantisipasi risiko \textit{data pruning} pada jaringan DLT. Analisis ini menjadi dasar pemilihan pendekatan sebelum rancangan teknis dijelaskan pada Subbab III.3.
+
+Guna mengatasi permasalahan pencatatan dan pengelolaan bukti digital pada DecMed yang telah dipetakan pada Subbab III.1.1, diperlukan pengembangan mekanisme audit log yang terintegrasi. Berdasarkan kebutuhan sistem pada Subbab III.1.3, analisis solusi disusun dalam urutan berikut. Pertama, analisis pendekatan arsitektur agregasi log untuk menyatukan pencatatan terpisah. Kedua, analisis skema pembentukan struktur data audit terstandar. Ketiga, analisis mekanisme penyimpanan \textit{append-only} dan \textit{tamper-evident} pada berkas log lokal. Keempat, analisis strategi persistensi data (\textit{long-term retention}) untuk mengantisipasi risiko \textit{data pruning} pada jaringan DLT. Analisis ini menjadi dasar pemilihan pendekatan sebelum rancangan teknis dijelaskan pada Subbab III.3.
 
 \subsubsection{Analisis \textit{Event Source}}
 \label{sec:analisis-event-source}
-Sebelum menganalisis sistem audit,perlu ditentukan sumber-sumber dari audit tersebut. Sumber event akan ditentukan berdasarkan kebutuhan event yang sudah diidentifikasi pada Tabel \ref{tab:threat-event-mapping}. Pemetaan \textit{event} ke \textit{event source} dapat dilihat pada Tabel \ref{tab:event-source-mapping}.
 
+Sebelum menganalisis mekanisme audit log, perlu ditentukan sumber-sumber dari audit tersebut. Sumber event akan ditentukan berdasarkan kebutuhan event yang sudah diidentifikasi pada Tabel \ref{tab:threat-event-mapping}. Pemetaan \textit{event} ke \textit{event source} dapat dilihat pada Tabel \ref{tab:event-source-mapping}.
 
 Berdasarkan hasil pemetaan tersebut, terdapat empat komponen utama yang bertindak sebagai \textit{event source}, yaitu \textit{Patient Client}, \textit{Hospital Client}, \textit{Ministry Client}, dan PRE Server. Setiap komponen ini memiliki tanggung jawab untuk menghasilkan log aktivitas sesuai perannya masing-masing. Distribusi \textit{event} berdasarkan \textit{event source} dapat dilihat pada Tabel \ref{tab:event-source-distribution}.
 
@@ -19,26 +32,15 @@ Berdasarkan hasil pemetaan tersebut, terdapat empat komponen utama yang bertinda
 \label{tab:event-source-distribution}\\
 
 \hline
-
-\textbf{\textit{Source}} &
-\textbf{Jumlah \textit{Event}} &
-\textbf{\textit{Event} yang Berasal dari \textit{Source}} \\
-
+\textbf{\textit{Source}} & \textbf{Jumlah \textit{Event}} & \textbf{\textit{Event} yang Berasal dari \textit{Source}} \\
 \hline
 \endfirsthead
-
 \hline
-
-\textbf{\textit{Source}} &
-\textbf{Jumlah \textit{Event}} &
-\textbf{\textit{Event} yang Berasal dari \textit{Source}} \\
-
+\textbf{\textit{Source}} & \textbf{Jumlah \textit{Event}} & \textbf{\textit{Event} yang Berasal dari \textit{Source}} \\
 \hline
 \endhead
-
 \hline
 \endfoot
-
 \hline
 \endlastfoot
 
@@ -54,6 +56,7 @@ Ministry Client & 3 & EV6, EV8, EV9 \\
 
 \subsubsection{Analisis Arsitektur Agregasi dan Pengumpulan Log}
 \label{analisis-arsitektur}
+
 Hasil analisis masalah menunjukkan bahwa log aktivitas pada DecMed masih dikelola secara parsial oleh masing-masing komponen internal (seperti \textit{PatientAccessLog} pada basis data lokal dan \textit{Transaction Block} pada DLT). Kondisi ini menyebabkan absennya wadah pengelola terpusat (M-TA-01) serta sempitnya cakupan \textit{event} bernilai audit tinggi yang dapat terekam (M-TA-02).
 
 Terdapat dua pendekatan yang dipertimbangkan untuk mengagregasi data log dari berbagai komponen sistem. Perbandingan kedua pendekatan tersebut dirangkum pada Tabel~\ref{tab:analisis-agregasi}.
@@ -75,17 +78,13 @@ Berdasarkan Tabel~\ref{tab:analisis-agregasi}, pendekatan \textit{Centralized Au
 
 \subsubsection{Analisis Mekanisme Pengiriman Log}
 \label{subsubsec:analisis-mekanisme-pengiriman-log}
+
 Setelah menentukan sumber kejadian (\textit{event source}) dan memilih pendekatan \textit{Centralized Audit Collector}, langkah selanjutnya adalah menganalisis mekanisme pengiriman log dari setiap \textit{event source} ke komponen pengumpul. Mekanisme ini harus mampu menjamin keandalan pengiriman log tanpa mengganggu performa layanan utama DecMed.
 
 Dalam menentukan mekanisme pengiriman, dianalisis dua dimensi teknis pengiriman data. Pertama, dari segi pola komunikasi, dipertimbangkan antara pendekatan \textit{Pull-based} (\textit{polling}) dan \textit{Push-based}. Pendekatan \textit{Pull-based} memberikan kendali beban bagi pengumpul, tetapi menimbulkan latensi pencatatan dan memaksa \textit{event source} menyediakan penyimpanan sementara lokal. Sebaliknya, pendekatan \textit{Push-based} memungkinkan log dikirimkan secara langsung sesaat setelah kejadian berlangsung. Kedua, dari segi sifat eksekusi, dipertimbangkan antara \textit{Synchronous} dan \textit{Asynchronous}. Pengiriman \textit{Synchronous} memastikan log diterima sebelum transaksi utama selesai, tetapi menambah latensi dan berisiko menggagalkan transaksi utama jika pengumpul bermasalah. Sementara itu, pengiriman \textit{Asynchronous} bersifat \textit{non-blocking} sehingga tidak mengganggu \textit{response time} transaksi klinis maupun kriptografis utama.
 
-Berdasarkan perbandingan tersebut, dipilih kombinasi pendekatan \textbf{\textit{Asynchronous Push-Based}}. Pendekatan ini memungkinkan seluruh \textit{event source} (\textit{Patient Client}, \textit{Hospital Client}, \textit{Ministry Client}, dan PRE Server) mengalirkan log secara langsung tanpa menambah latensi atau mengganggu fungsionalitas bisnis utama DecMed.
-
-Namun, pengiriman asinkron semata belum cukup untuk menjamin bahwa setiap \textit{event} yang terjadi benar-benar akan sampai ke ATS. Apabila ATS sedang tidak tersedia saat \textit{event} dibangkitkan, pengiriman langsung akan gagal dan \textit{event} tersebut berpotensi hilang secara permanen. Untuk mengatasi kerentanan ini, setiap \textit{event source} dilengkapi dengan mekanisme \textit{persistent queue} berbasis berkas lokal. Setiap \textit{event} yang akan dikirim terlebih dahulu ditulis ke antrian persisten di disk sebelum pengiriman ke ATS dicoba. Apabila pengiriman langsung berhasil, entri tersebut dihapus dari antrian. Apabila gagal, entri tetap berada di antrian dan sebuah \textit{background worker} yang berjalan secara berkala akan mencoba mengirim ulang seluruh entri yang tersisa menggunakan strategi \textit{exponential backoff} hingga berhasil atau mencapai batas percobaan maksimum. Kombinasi pengiriman asinkron dengan antrian persisten ini menjamin bahwa setiap \textit{audit event} yang telah dibangkitkan akan terkirim ke ATS, bahkan dalam kondisi ATS mengalami gangguan sementara.
-
-\subsubsection{Analisis Jaminan Keaslian dan \textit{Non-Repudiation} Log}
-\label{subsubsec:analisis-jaminan-keasilan-log}
-Mengingat bahwa beberapa \textit{event} dapat bersumber dari beberapa \textit{event source}, maka diperlukan sebuah mekanisme untuk secara jelas menyatakan sumber dari \textit{audit event} dan menjamin bahwa sumber tidak dapat menyangkal pengiriman \textit{event} tersebut.
+\subsubsection{Analisis Keaslian dan \textit{Non-Repudiation} Log}
+\label{subsubsec:analisis-non-repudiation}
 
 Penggunaan protokol komunikasi terenkripsi seperti TLS/HTTPS hanya mengamankan jalur pengiriman (\textit{transport layer}), tetapi belum memberikan jaminan integritas dan pembuktian asal pesan secara independen di tingkat aplikasi. Untuk mengatasi keterbatasan tersebut, setiap \textit{event source} diwajibkan menandatangani \textit{payload} \textit{event} sebelum dikirim ke ATS.
 
@@ -95,6 +94,7 @@ Dengan menerapkan mekanisme \textit{signed payload} berbasis kunci IOTA aktor, k
 
 \subsubsection{Analisis Kerahasiaan Log dalam Transit}
 \label{subsubsec:analisis-kerahasiaan-log-transit}
+
 Selain integritas dan \textit{non-repudiation}, \textit{audit event} yang dikirimkan dari \textit{event source} ke ATS berpotensi mengandung informasi sensitif, seperti identitas aktor, identitas objek yang diakses, maupun detail operasi yang dilakukan. Apabila \textit{event} dikirimkan dalam bentuk \textit{plaintext} atau hanya mengandalkan enkripsi pada lapisan transport (TLS), maka ATS sebagai pihak penerima akan memiliki akses penuh terhadap isi \textit{event} pada saat penerimaan. Pemisahan antara kemampuan menerima \textit{event} dan kemampuan membaca isi \textit{event} menjadi kebutuhan yang perlu dipertimbangkan, terutama untuk memastikan bahwa log yang tersimpan tidak dapat dibaca oleh pihak yang seharusnya hanya berperan sebagai pengumpul dan penyimpan, bukan pembaca.
 
 Untuk memenuhi kebutuhan ini, diterapkan mekanisme enkripsi \textit{end-to-end} pada level aplikasi menggunakan skema \textit{hybrid encryption}. Setiap \textit{payload} \textit{audit event} dienkripsi menggunakan AES-256-GCM dengan kunci simetris yang dibangkitkan secara acak untuk setiap pengiriman. Kunci AES tersebut kemudian dienkripsi menggunakan kunci publik P-256 milik ATS melalui mekanisme ECIES (\textit{Elliptic Curve Integrated Encryption Scheme}) yang menggabungkan pertukaran kunci Diffie-Hellman efemermal dan fungsi derivasi kunci berbasis SHA-256. Hanya ATS yang memiliki kunci privat P-256 yang dapat mendekripsi kunci AES dan selanjutnya mendekripsi isi \textit{event}. Urutan operasi yang diterapkan adalah \textit{Encrypt-then-Sign}: \textit{payload} dienkripsi terlebih dahulu, kemudian \textit{ciphertext} yang dihasilkan ditandatangani menggunakan kunci privat IOTA aktor. Urutan ini dipilih karena tanda tangan atas \textit{ciphertext} membuktikan bahwa pengirim adalah pihak yang membuat \textit{ciphertext} tersebut, bukan sekadar meneruskan ciphertext milik pihak lain.
@@ -103,6 +103,7 @@ Konsekuensi dari penerapan enkripsi \textit{end-to-end} ini adalah bahwa berkas 
 
 \subsubsection{Analisis Standardisasi Skema \textit{Audit Record}}
 \label{subsubsec:analisis-skema-audit-record}
+
 Data log aktivitas pada DecMed eksisting memiliki format yang heterogen dan tidak terstandarisasi, sehingga menyulitkan proses pencarian, validasi, dan analisis keterlacakan bukti digital (M-TA-04). Untuk mengatasi masalah tersebut, diperlukan analisis terhadap pendekatan skema data yang mampu menyelaraskan format rekaman log dari berbagai sumber.
 
 Berdasarkan tabel \ref{tab:threat-event-mapping} dapat dilihat bahwa ada bukti yang dibutuhkan oleh semua event dan ada yang unik untuk masing-masing event. Maka dari itu standardisasi skema dirancang menggunakan pendekatan bertingkat yang memisahkan antara atribut umum dan rincian kejadian. Pendekatan ini diwujudkan melalui dua tingkatan skema utama:
@@ -116,53 +117,58 @@ Melalui analisis pemisahan skema umum dan skema detail ini, seluruh log yang dih
 
 \subsubsection{Analisis Repositori Audit Log}
 \label{subsubsec:analisis-repositori-audit-log}
-Penyimpanan data log pada DecMed saat ini belum sepenuhnya menjamin sifat \textit{immutability} (M-TA-03). Pada implementasi eksisting, komponen \texttt{PatientAccessLog} disimpan pada \textit{smart contract} Move, namun struktur kode yang ada masih menyediakan fungsi untuk memperbarui (\textit{update}) data log sehingga bersifat \textit{mutable}. Sementara itu, komponen \texttt{TX Block} disimpan secara langsung pada jaringan IOTA.
+
+Penyimpanan data log pada DecMed saat ini belum sepenuhnya menjamin sifat \textit{append-only} dan \textit{tamper-evident} (M-TA-03). Pada implementasi eksisting, komponen \texttt{PatientAccessLog} disimpan pada \textit{smart contract} Move, namun struktur kode yang ada masih menyediakan fungsi untuk memperbarui (\textit{update}) data log sehingga bersifat \textit{mutable}. Sementara itu, komponen \texttt{TX Block} disimpan secara langsung pada jaringan IOTA.
 
 Untuk membangun repositori bukti audit yang \textit{tamper-evident} tanpa membebani ukuran penyimpanan \textit{on-chain}, dianalisis pemanfaatan infrastruktur IPFS yang sudah tersedia pada DecMed dikombinasikan dengan \textit{smart contract} Move di jaringan IOTA. Perbandingan pendekatan penyimpanan dirangkum pada Tabel~\ref{tab:analisis-penyimpanan}.
 
 \begin{table}[htbp]
 \centering
-\caption{Analisis Pendekatan Penyimpanan \textit{Audit Trail}}
+\caption{Analisis Pendekatan Penyimpanan Audit Log}
 \label{tab:analisis-penyimpanan}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabular}{|p{2.5cm}|p{3.5cm}|p{3.2cm}|p{3.2cm}|}
 \hline
 \textbf{Pendekatan} & \textbf{Penjelasan} & \textbf{Keunggulan} & \textbf{Keterbatasan} \\ \hline
-Penyimpanan \textit{On-Chain} Penuh & Seluruh \textit{payload} dan data log disimpan langsung ke dalam \textit{smart contract} Move pada jaringan IOTA. & Data log tersimpan langsung di DLT tanpa ketergantungan pada media penyimpanan luar. & \textit{PatientAccessLog} eksisting masih memiliki fungsi modifikasi yang melanggar \textit{immutability}, serta biaya \textit{gas} dan konsumsi \textit{storage} sangat tinggi. \\ \hline
-IPFS + Move & \textit{File} log utuh disimpan di IPFS, sedangkan \textit{hash} IPFS (CID) dan metadata verifikasi dikunci di \textit{On-Chain}. & IPFS lebih cocok untuk berkas besar,  dan mengunci metadata secara \textit{immutable} tanpa fungsi pembaruan. & Membutuhkan mekanisme integrasi antara \textit{node} IPFS dan repositori Move untuk sinkronisasi metadata. \\ \hline
+Penyimpanan \textit{On-Chain} Penuh & Seluruh \textit{payload} dan data log disimpan langsung ke dalam \textit{smart contract} Move pada jaringan IOTA. & Data log tersimpan langsung di DLT tanpa ketergantungan pada media penyimpanan luar. & \textit{PatientAccessLog} eksisting masih memiliki fungsi modifikasi yang melanggar \textit{append-only}, serta biaya \textit{gas} dan konsumsi \textit{storage} sangat tinggi. \\ \hline
+IPFS + Move & \textit{File} log utuh disimpan di IPFS, sedangkan \textit{hash} IPFS (CID) dan metadata verifikasi dikunci di \textit{On-Chain}. & IPFS lebih cocok untuk berkas besar dan mengunci metadata secara \textit{immutable} tanpa fungsi pembaruan. & Membutuhkan mekanisme integrasi antara \textit{node} IPFS dan repositori Move untuk sinkronisasi metadata. \\ \hline
 \end{tabular}
 \end{table}
 
-Berdasarkan analisis pada Tabel \ref{tab:analisis-penyimpanan} , pendekatan IPFS + Move Smart Contract dipilih sebagai solusi. Mekanismenya dirancang sebagai berikut:
+Berdasarkan analisis pada Tabel \ref{tab:analisis-penyimpanan}, pendekatan IPFS + Move Smart Contract dipilih sebagai solusi. Mekanismenya dirancang sebagai berikut:
+
 \begin{enumerate}
-    \item File Audit Log Utama (Off-chain IPFS): Seluruh \textit{payload} dan berkas \textit{audit record} terstruktur akan disimpan ke dalam IPFS. Pendekatan ini memanfaatkan infrastruktur IPFS yang sudah ada pada DecMed untuk menangani penyimpanan berkas log berukuran besar secara efisien.
-    \item Metadata Verifikasi (On-chain Move): \textit{Content Identifier} (CID) dari IPFS beserta metadata penting (seperti \textit{timestamp}, ID transaksi, dan \textit{digest} integritas) disimpan ke dalam \textit{smart contract} Move pada jaringan IOTA.
+    \item Berkas Audit Log Utama (\textit{Off-chain} IPFS): Seluruh \textit{payload} dan berkas \textit{audit record} terstruktur akan disimpan ke dalam IPFS. Pendekatan ini memanfaatkan infrastruktur IPFS yang sudah ada pada DecMed untuk menangani penyimpanan berkas log berukuran besar secara efisien.
+    \item Metadata Verifikasi (\textit{On-chain} Move): \textit{Content Identifier} (CID) dari IPFS beserta metadata penting (seperti \textit{timestamp}, ID transaksi, dan \textit{digest} integritas) disimpan ke dalam \textit{smart contract} Move pada jaringan IOTA.
 \end{enumerate}
 
-Pada \textit{smart contract} Move yang baru, tidak akan ada fungsi modifikasi/pembaruan log dan struktur objek dirancang sebagai \textit{immutable object}. Dengan demikian, jika ada upaya mengubah isi \textit{file} log di IPFS, \textit{hash} \textit{file} tersebut tidak akan cocok lagi dengan metadata yang terkunci di \textit{smart contract} Move, sehingga jaminan \textit{immutability} dan integritas bukti digital (M-TA-03) dapat ditegakkan secara mutlak.
+Pada \textit{smart contract} Move yang baru, tidak akan ada fungsi modifikasi/pembaruan log dan struktur objek dirancang sebagai \textit{immutable object}. Dengan demikian, jika ada upaya mengubah isi berkas log di IPFS, \textit{hash} berkas tersebut tidak akan cocok lagi dengan metadata yang terkunci di \textit{smart contract} Move, sehingga jaminan integritas dan \textit{tamper-evident} bukti digital (M-TA-03) dapat ditegakkan.
 
 \subsubsection{Analisis Mekanisme Penyimpanan Berkas Log}
 \label{subsubsec:analisis-penyimpanan-berkas}
+
 Setelah menentukan pendekatan arsitektur pengumpulan, langkah selanjutnya adalah menganalisis mekanisme penyimpanan berkas log di IPFS dan pencatatan metadatanya di dalam \textit{smart contract} Move. Mekanisme ini harus mampu menjamin integritas, keterlacakan, dan ketersediaan data log dalam jangka panjang secara efisien.
 
-Secara konseptual, rekam jejak (\textit{audit trail}) yang ideal harus mengadopsi prinsip \textit{append-only}, di mana rekaman kejadian baru hanya dapat ditambahkan pada bagian akhir berkas tanpa mengubah maupun menghapus riwayat sebelumnya. Namun, pemanfaatan IPFS sebagai media penyimpanan utama menghadirkan tantangan teknis tersendiri terkait sifat kekekalan (\textit{immutability}) datanya. IPFS menggunakan sistem pengalamatan berbasis konten (\textit{content-addressed storage}), yang berarti setiap berkas akan direpresentasikan oleh \textit{Content Identifier} (CID) yang dihasilkan dari fungsi \textit{hash} terhadap isi berkas tersebut. Dengan arsitektur ini, IPFS secara bawaan tidak mendukung operasi modifikasi atau penambahan data (\textit{append}) pada berkas yang telah dipublikasikan; modifikasi apa pun akan menghasilkan entitas berkas baru dengan nilai CID yang sepenuhnya berbeda.
+Secara konseptual, audit log yang ideal harus mengadopsi prinsip \textit{append-only}, di mana rekaman kejadian baru hanya dapat ditambahkan pada bagian akhir berkas tanpa mengubah maupun menghapus riwayat sebelumnya. Namun, pemanfaatan IPFS sebagai media penyimpanan utama menghadirkan tantangan teknis tersendiri terkait sifat kekekalan (\textit{immutability}) datanya. IPFS menggunakan sistem pengalamatan berbasis konten (\textit{content-addressed storage}), yang berarti setiap berkas akan direpresentasikan oleh \textit{Content Identifier} (CID) yang dihasilkan dari fungsi \textit{hash} terhadap isi berkas tersebut. Dengan arsitektur ini, IPFS secara bawaan tidak mendukung operasi modifikasi atau penambahan data (\textit{append}) pada berkas yang telah dipublikasikan; modifikasi apa pun akan menghasilkan entitas berkas baru dengan nilai CID yang sepenuhnya berbeda.
 
-Untuk mengatasi batasan arsitektur IPFS tersebut, sistem tidak dimungkinkan untuk mengunggah \textit{audit record} satu per satu secara langsung sesaat setelah \textit{event} diterima. Sebagai solusinya, diperlukan mekanisme pengelompokan (\textit{batching}) dan perputaran log (\textit{log rotation}) pada sisi komponen pengumpul. Layanan audit trail tersentralisasi akan menampung dan menulis aliran \textit{audit record} yang masuk secara \textit{append-only} pada sebuah berkas arsip lokal sementara (\textit{buffer}). 
+Untuk mengatasi batasan arsitektur IPFS tersebut, sistem tidak dimungkinkan untuk mengunggah \textit{audit record} satu per satu secara langsung sesaat setelah \textit{event} diterima. Sebagai solusinya, diperlukan mekanisme pengelompokan (\textit{batching}) dan perputaran log (\textit{log rotation}) pada sisi komponen pengumpul. Layanan audit log tersentralisasi akan menampung dan menulis aliran \textit{audit record} yang masuk secara \textit{append-only} pada sebuah berkas arsip lokal sementara (\textit{buffer}).
 
 Proses pengumpulan ini akan berlangsung hingga berkas log lokal mencapai ambang batas (\textit{threshold}) tertentu yang ditentukan berdasarkan durasi interval waktu pengumpulan. Setelah batas waktu tersebut tercapai, berkas log yang sedang berjalan akan ditutup (\textit{sealed}) dan proses rotasi akan memulai berkas log baru untuk menampung \textit{event} berikutnya. Berkas log periodik yang telah final inilah yang kemudian diunggah secara utuh ke jaringan IPFS sebagai satu kesatuan arsip persisten. Setelah pengunggahan selesai, CID dari berkas arsip tersebut baru akan dikirimkan untuk dicatat secara kekal (\textit{on-chain}) pada \textit{smart contract} Move di jaringan IOTA. Melalui mekanisme \textit{batching} berbasis interval waktu ini, DecMed dapat menyimulasikan kelangsungan pencatatan log secara teratur tanpa menyalahi batasan teknis IPFS, sekaligus mengefisienkan frekuensi dan jumlah transaksi yang harus dikirim ke jaringan DLT.
 
 \subsubsection{Analisis Jaminan Integritas Berkas Log Lokal (\textit{Hash Chaining})}
 \label{subsubsec:analisis-hash-chaining}
-Meskipun sifat kekekalan (\textit{immutability}) dan keterlacakan bukti digital dapat dijamin secara mutlak setelah berkas log diunggah ke IPFS dan CID-nya terkunci pada \textit{smart contract} Move, berkas \textit{audit record} yang masih berada dalam proses pengumpulan sementara di tingkat lokal (\textit{buffer/local log file}) belum memiliki perlindungan tersebut. Pada fase ini, data log lokal yang tersimpan secara sementara sebelum interval rotasi tercapai masih rentan terhadap ancaman modifikasi, penyisipan, maupun penghapusan entri oleh pihak yang memiliki akses ke lingkungan sistem pengumpul.
+
+Meskipun sifat kekekalan (\textit{immutability}) dan keterlacakan bukti digital dapat dijamin setelah berkas log diunggah ke IPFS dan CID-nya terkunci pada \textit{smart contract} Move, berkas \textit{audit record} yang masih berada dalam proses pengumpulan sementara di tingkat lokal (\textit{buffer/local log file}) belum memiliki perlindungan tersebut. Pada fase ini, data log lokal yang tersimpan secara sementara sebelum interval rotasi tercapai masih rentan terhadap ancaman modifikasi, penyisipan, maupun penghapusan entri oleh pihak yang memiliki akses ke lingkungan sistem pengumpul.
 
 Untuk mengatasi kerentanan pada media penyimpanan sementara tersebut, diperlukan mekanisme perlindungan integritas di tingkat data log lokal yang mampu memberikan sifat \textit{tamper-evident}. Mekanisme \textit{hash chaining} dipilih sebagai solusi untuk menyambungkan setiap entri \textit{audit record} yang masuk secara berurutan.
 
-Dalam skema \textit{hash chaining}, setiap kali sebuah entri \textit{audit record} baru dibentuk, struktur data wajib menyertakan nilai \textit{hash} dari entri \textit{audit record} sebelumnya pada bidang \texttt{prev\_record\_hash}. Dengan pola keterikatan ini, setiap entri log secara kriptografis mengunci entri sebelumnya sehingga membentuk rantai data yang tidak dapat diubah sebagian (\textit{append-only}). Apabila penyerang mencoba mengubah, menyisipkan, atau menghapus satu entri log pada berkas lokal, nilai \textit{hash} dari entri terkait akan berubah dan merusak konsistensi rantai \textit{hash} pada seluruh entri berikutnya.
+Dalam skema \textit{hash chaining}, setiap kali sebuah entri \textit{audit record} baru dibentuk, struktur data wajib menyertakan nilai \textit{hash} dari entri \textit{audit record} sebelumnya pada bidang \texttt{prev\_record\_hash}. Dengan pola keterikatan ini, setiap entri log secara kriptografis mengunci entri sebelumnya sehingga membentuk rantai data yang tidak dapat diubah sebagian. Apabila penyerang mencoba mengubah, menyisipkan, atau menghapus satu entri log pada berkas lokal, nilai \textit{hash} dari entri terkait akan berubah dan merusak konsistensi rantai \textit{hash} pada seluruh entri berikutnya.
 
 Melalui penerapan \textit{hash chaining} ini, berkas log sementara pada lingkungan lokal menjadi bersifat \textit{tamper-evident}. Setiap upaya manipulasi data log selama masa pengumpulan lokal dapat langsung terdeteksi oleh komponen pengumpul sebelum berkas tersebut ditutup, di-rotasi, dan diunggah secara permanen ke jaringan IPFS.
 
 \subsubsection{Analisis Strategi Persistensi Data terhadap Risiko \textit{Pruning}}
 \label{subsubsec:analisis-persistensi-data}
+
 Penyimpanan bukti audit pada infrastruktur terdesentralisasi menghadapi tantangan ketersediaan data (\textit{availability}) dalam jangka panjang (M-TA-05). Risiko ini bersumber dari dua lini: proses \textit{Garbage Collection} (GC) pada \textit{node} IPFS yang berpotensi menghapus berkas \textit{unpinned}, serta kebijakan \textit{data pruning} pada \textit{node} IOTA yang menghapus data riwayat transaksi lama demi efisiensi \textit{storage}.
 
 Untuk mengatasi risiko hilangnya bukti digital tersebut, strategi persistensi data dirancang melalui pendekatan ganda yang mengombinasikan mekanisme \textit{IPFS Pinning} di tingkat \textit{off-chain} dengan penyimpanan \textit{state object} pada \textit{smart contract} Move di tingkat \textit{on-chain}. Strategi ini dijalankan melalui dua lapisan mekanisme:
@@ -188,7 +194,7 @@ Setiap pendekatan solusi yang diusulkan diberi ID S-TA untuk menjaga ketertelusu
 \textbf{ID} & \textbf{Nama Solusi} & \textbf{Masalah Terkait} \\ \hline
 S-TA-01 & Penerapan \textit{Centralized Audit Collector} dengan pengiriman \textit{asynchronous push-based} untuk mengintegrasikan pengumpulan log dari seluruh \textit{event source}. & M-TA-01 \\ \hline
 S-TA-02 & Perluasan pemetaan cakupan \textit{audit event} dari berbagai komponen sistem berdasarkan analisis ancaman STRIDE. & M-TA-02 \\ \hline
-S-TA-03 & Penjaminan integritas dan \textit{immutability} log bertingkat melalui \textit{hash chaining} pada berkas lokal dan penguncian metadata di \textit{smart contract} Move. & M-TA-03 \\ \hline
+S-TA-03 & Penjaminan sifat \textit{tamper-evident} dan \textit{immutability} log bertingkat melalui \textit{hash chaining} pada berkas lokal dan penguncian metadata di \textit{smart contract} Move. & M-TA-03 \\ \hline
 S-TA-04 & Standardisasi skema \textit{audit record} bertingkat (Skema Umum dan Skema Detail) berbasis kontrol AU-3 NIST SP 800-53. & M-TA-04 \\ \hline
 S-TA-05 & Penerapan strategi persistensi data ganda melalui \textit{IPFS Pinning} dan penyimpanan \textit{state object} Move untuk mencegah dampak \textit{data pruning}. & M-TA-05 \\ \hline
 \end{tabular}

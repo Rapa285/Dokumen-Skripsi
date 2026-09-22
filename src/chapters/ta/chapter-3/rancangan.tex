@@ -1,72 +1,48 @@
+% =============================================================
+% File: chapters/ta/chapter-3/rancangan.tex
+%
+% PERUBAHAN:
+%   - "Audit Trail Service (ATS)" → "Audit Log Service (ALS)"
+%   - Semua "ATS" → "ALS"
+%   - Caption figure: "Audit Trail" → "Audit Log"
+%   - "rekam jejak aktivitas" → "aktivitas"
+%   - "immutable" pada klaim lokal → "tamper-evident"
+%     (tetap "immutable trust anchor" untuk IOTA — itu akurat)
+%   - Paragraf satu baris
+% =============================================================
+
 \section{Rancangan}
 
-Berdasarkan hasil analisis solusi pada Subbab~\ref{sec:analisis-solusi},
-rancangan solusi menjelaskan bentuk sistem yang dibangun. Fondasi DecMed,
-yaitu IOTA sebagai penyimpanan \textit{on-chain}, IPFS sebagai penyimpanan
-\textit{off-chain}, dan PRE sebagai mekanisme kriptografis pendukung distribusi
-akses, tetap dipertahankan.
+Berdasarkan hasil analisis solusi pada Subbab~\ref{sec:analisis-solusi}, rancangan solusi menjelaskan bentuk sistem yang dibangun. Fondasi DecMed, yaitu IOTA sebagai penyimpanan \textit{on-chain}, IPFS sebagai penyimpanan \textit{off-chain}, dan PRE sebagai mekanisme kriptografis pendukung distribusi akses, tetap dipertahankan.
 
 \subsection{Rancangan Arsitektur Solusi}
 \label{subsec:rancangan-arsitektur}
 
-Keseluruhan arsitektur kerangka kerja DecMed dipertahankan pada arsitektur
-solusi. Tiga \textit{client} utama DecMed, yaitu \textit{Patient Client},
-\textit{Hospital Client}, dan \textit{Ministry Client}, tetap ada namun
-dilengkapi dengan instrumentasi pengiriman \textit{audit event}. PRE Server
-tetap berperan sebagai \textit{middleware} keamanan, dengan tambahan
-instrumentasi serupa.
+Keseluruhan arsitektur kerangka kerja DecMed dipertahankan pada arsitektur solusi. Tiga \textit{client} utama DecMed, yaitu \textit{Patient Client}, \textit{Hospital Client}, dan \textit{Ministry Client}, tetap ada namun dilengkapi dengan instrumentasi pengiriman \textit{audit event}. PRE Server tetap berperan sebagai \textit{middleware} keamanan, dengan tambahan instrumentasi serupa.
 
-Perubahan utama berupa penambahan satu komponen baru, yaitu \textbf{Audit
-Trail Service (ATS)}, sebagai layanan \textit{backend} independen yang
-mengumpulkan, memvalidasi, dan menyimpan bukti digital dari seluruh komponen
-DecMed. Penambahan ATS tidak mengubah alur bisnis maupun fungsionalitas utama
-DecMed yang telah berjalan pada komponen eksisting. ATS bertindak sebagai
-pengumpul log terpusat yang memanfaatkan kembali (\textit{reuse})
-infrastruktur \textit{off-chain} (IPFS Cluster) dan \textit{on-chain} (jaringan
-IOTA melalui Gas Station Server) yang sudah tersedia pada DecMed.
+Perubahan utama berupa penambahan satu komponen baru, yaitu \textbf{Audit Log Service (ALS)}, sebagai layanan \textit{backend} independen yang mengumpulkan, memvalidasi, dan menyimpan bukti digital dari seluruh komponen DecMed. Penambahan ALS tidak mengubah alur bisnis maupun fungsionalitas utama DecMed yang telah berjalan pada komponen eksisting. ALS bertindak sebagai pengumpul log terpusat yang memanfaatkan kembali (\textit{reuse}) infrastruktur \textit{off-chain} (IPFS Cluster) dan \textit{on-chain} (jaringan IOTA melalui Gas Station Server) yang sudah tersedia pada DecMed.
 
-Gambaran arsitektur sistem secara keseluruhan dapat dilihat pada
-Gambar~\ref{fig:arsitektur-solusi}. Warna merah merepresentasikan komponen baru
-dan penyesuaian alur interaksi yang ditambahkan pada arsitektur DecMed.
+Gambaran arsitektur sistem secara keseluruhan dapat dilihat pada Gambar~\ref{fig:arsitektur-solusi}. Warna merah merepresentasikan komponen baru dan penyesuaian alur interaksi yang ditambahkan pada arsitektur DecMed.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=1\textwidth]{chapter-3/decmed_ats_architecture.png}
-\caption{Rancangan Arsitektur Solusi Audit Trail DecMed}
+\caption{Rancangan Arsitektur Solusi Audit Log DecMed}
 \label{fig:arsitektur-solusi}
 \end{figure}
 
-Gambar~\ref{fig:arsitektur-solusi} menegaskan bahwa kerangka DecMed
-dipertahankan, sementara penambahan (ditandai merah) mencakup: (1) modul
-pengiriman \textit{signed event} pada setiap \textit{event source}, (2) ATS
-sebagai layanan pengumpul terpusat, (3) mekanisme pengarsipan berkas log ke IPFS,
-dan (4) publikasi metadata rotasi log ke jaringan IOTA melalui Gas Station Server
-yang telah ada. Dengan demikian, ATS tidak memerlukan infrastruktur penyimpanan
-baru, melainkan memanfaatkan ulang infrastruktur yang sudah ada pada DecMed.
+Gambar~\ref{fig:arsitektur-solusi} menegaskan bahwa kerangka DecMed dipertahankan, sementara penambahan (ditandai merah) mencakup: (1) modul pengiriman \textit{signed event} pada setiap \textit{event source}, (2) ALS sebagai layanan pengumpul terpusat, (3) mekanisme pengarsipan berkas log ke IPFS, dan (4) publikasi metadata rotasi log ke jaringan IOTA melalui Gas Station Server yang telah ada. Dengan demikian, ALS tidak memerlukan infrastruktur penyimpanan baru, melainkan memanfaatkan ulang infrastruktur yang sudah ada pada DecMed.
 
-Berdasarkan Gambar~\ref{fig:arsitektur-solusi}, alur interaksi ATS dalam
-arsitektur DecMed dirancang sebagai berikut.
+Berdasarkan Gambar~\ref{fig:arsitektur-solusi}, alur interaksi ALS dalam arsitektur DecMed dirancang sebagai berikut.
 
 \begin{enumerate}
-    \item \textbf{Pengiriman \textit{event} dari komponen DecMed.} Setiap kali
-    terjadi aktivitas bernilai audit pada \textit{event source} (yaitu
-    \textit{Patient Client}, \textit{Hospital Client}, \textit{Ministry Client},
-    dan PRE Server), komponen tersebut membungkus rekaman \textit{audit event}
-    dalam format \textit{signed payload} Ed25519 dan mengirimkannya secara
-    asinkron ke ATS.
-    \item \textbf{Pemrosesan dan pembentukan rantai integritas.} ATS menerima
-    \textit{event}, memverifikasi tanda tangan digital pengirim, membentuk
-    \textit{audit record} sesuai skema terstruktur, dan menerapkan mekanisme
-    \textit{hash-chaining} antar \textit{record} yang masuk.
-    \item \textbf{Penyimpanan berkas \textit{off-chain} di IPFS.} Secara periodik,
-    ATS merotasi berkas log aktif, mengunggah berkas arsip ke IPFS Cluster, dan
-    menerapkan \textit{pinning} agar berkas tidak terhapus oleh proses
-    \textit{Garbage Collection}.
-    \item \textbf{Pencatatan metadata \textit{on-chain} di IOTA.} ATS menerbitkan
-    transaksi ke jaringan IOTA melalui Gas Station Server untuk mencatatkan
-    metadata rotasi log ke dalam \textit{smart contract} Move sebagai
-    \textit{immutable trust anchor}.
+    \item \textbf{Pengiriman \textit{event} dari komponen DecMed.} Setiap kali terjadi aktivitas bernilai audit pada \textit{event source} (yaitu \textit{Patient Client}, \textit{Hospital Client}, \textit{Ministry Client}, dan PRE Server), komponen tersebut membungkus rekaman \textit{audit event} dalam format \textit{signed payload} Ed25519 dan mengirimkannya secara asinkron ke ALS.
+    \item \textbf{Pemrosesan dan pembentukan rantai integritas.} ALS menerima \textit{event}, memverifikasi tanda tangan digital pengirim, membentuk \textit{audit record} sesuai skema terstruktur, dan menerapkan mekanisme \textit{hash-chaining} antar \textit{record} yang masuk.
+    \item \textbf{Penyimpanan berkas \textit{off-chain} di IPFS.} Secara periodik, ALS merotasi berkas log aktif, mengunggah berkas arsip ke IPFS Cluster, dan menerapkan \textit{pinning} agar berkas tidak terhapus oleh proses \textit{Garbage Collection}.
+    \item \textbf{Pencatatan metadata \textit{on-chain} di IOTA.} ALS menerbitkan transaksi ke jaringan IOTA melalui Gas Station Server untuk mencatatkan metadata rotasi log ke dalam \textit{smart contract} Move sebagai \textit{immutable trust anchor}.
 \end{enumerate}
+
+Dengan rancangan arsitektur ini, ALS berhasil memisahkan beban pemrosesan dan penyimpanan log dari transaksi data klinis utama, sekaligus menjamin bahwa seluruh aktivitas pada DecMed terekam secara utuh, bersifat \textit{tamper-evident} pada level lokal, dan \textit{immutable} setelah tersimpan pada IOTA dan IPFS.
 
 \subsection{Rancangan Skema Audit Record}
 \label{subsec:rancangan-audit-record}
@@ -80,187 +56,45 @@ arsitektur DecMed dirancang sebagai berikut.
 
 \input{chapters/ta/chapter-3/rancangan/rancangan-mekanisme-send-recieve-event.tex}
 
-
 \subsection{Rancangan Mekanisme Pembentukan dan Penyimpanan Audit Record}
 \label{subsec:rancangan-pembentukan-record}
 
-Setelah \textit{event} yang telah terverifikasi diteruskan dari antrian internal,
-komponen Audit Logger membentuk sebuah \texttt{AuditRecord} yang terdiri atas
-komponen-komponen berikut.
+Setelah \textit{event} yang telah terverifikasi diteruskan dari antrian internal, komponen Audit Logger membentuk sebuah \texttt{AuditRecord} yang terdiri atas komponen-komponen berikut.
 
 \begin{itemize}
-    \item \texttt{record\_id}, berupa pengenal unik berbasis UUID v7 yang
-    mengandung informasi waktu sehingga bersifat monoton dan dapat diurutkan
-    secara kronologis.
-    \item \texttt{timestamp}, berupa waktu pembentukan \textit{record} dalam
-    format UTC yang diambil pada saat Audit Logger memproses \textit{event}.
-    \item \texttt{prev\_record\_hash}, berupa nilai \textit{hash} SHA-256 dari
-    \textit{record} sebelumnya, atau \texttt{null} apabila merupakan
-    \textit{record} pertama dalam rantai.
-    \item \texttt{record\_hash}, berupa nilai \textit{hash} SHA-256 yang
-    dihitung dari kombinasi \texttt{record\_id}, \texttt{timestamp},
-    \texttt{prev\_record\_hash}, dan isi \textit{event}.
+    \item \texttt{record\_id}, berupa pengenal unik berbasis UUID v7 yang mengandung informasi waktu sehingga bersifat monoton dan dapat diurutkan secara kronologis.
+    \item \texttt{timestamp}, berupa waktu pembentukan \textit{record} dalam format UTC yang diambil pada saat Audit Logger memproses \textit{event}.
+    \item \texttt{prev\_record\_hash}, berupa nilai \textit{hash} SHA-256 dari \textit{record} sebelumnya, atau \texttt{null} apabila merupakan \textit{record} pertama dalam rantai.
+    \item \texttt{record\_hash}, berupa nilai \textit{hash} SHA-256 yang dihitung dari kombinasi \texttt{record\_id}, \texttt{timestamp}, \texttt{prev\_record\_hash}, dan isi \textit{event}.
     \item Seluruh atribut \texttt{AuditEvent} yang telah terverifikasi.
 \end{itemize}
 
-Mekanisme \textit{hash-chaining} pada \textit{audit record} menjamin sifat
-\textit{tamper-evident} pada berkas log lokal sebelum berkas tersebut diarsipkan
-ke IPFS. Nilai \texttt{record\_hash} yang menyertakan \texttt{prev\_record\_hash}
-menjadikan setiap \textit{record} terikat secara kriptografis pada seluruh
-\textit{record} sebelumnya dalam rantai, sebagaimana dianalisis pada Subbab~\ref{subsubsec:analisis-hash-chaining}. Penambahan, modifikasi, atau penghapusan
-\textit{record} pada posisi mana pun akan menyebabkan nilai
-\texttt{record\_hash} seluruh \textit{record} sesudahnya menjadi tidak konsisten,
-sehingga perusakan dapat terdeteksi melalui pemeriksaan konsistensi rantai.
+Mekanisme \textit{hash-chaining} pada \textit{audit record} menjamin sifat \textit{tamper-evident} pada berkas log lokal sebelum berkas tersebut diarsipkan ke IPFS. Nilai \texttt{record\_hash} yang menyertakan \texttt{prev\_record\_hash} menjadikan setiap \textit{record} terikat secara kriptografis pada seluruh \textit{record} sebelumnya dalam rantai, sebagaimana dianalisis pada Subbab~\ref{subsubsec:analisis-hash-chaining}. Penambahan, modifikasi, atau penghapusan \textit{record} pada posisi mana pun akan menyebabkan nilai \texttt{record\_hash} seluruh \textit{record} sesudahnya menjadi tidak konsisten, sehingga perusakan dapat terdeteksi melalui pemeriksaan konsistensi rantai.
 
-Setiap \texttt{AuditRecord} yang terbentuk kemudian ditulis secara \textit{append}
-ke berkas log lokal dalam format JSON-Lines (satu objek JSON per baris), menjamin
-bahwa berkas log tidak pernah menimpa entri yang sudah ada. Hal ini merealisasikan
-sifat \textit{append-only} yang disyaratkan oleh kebutuhan nonfungsional
-KNF-TA-01 pada Tabel~\ref{tab:kebutuhan-nonfungsional}.
+Setiap \texttt{AuditRecord} yang terbentuk kemudian ditulis secara \textit{append} ke berkas log lokal dalam format JSON-Lines (satu objek JSON per baris), menjamin bahwa berkas log tidak pernah menimpa entri yang sudah ada. Hal ini merealisasikan sifat \textit{append-only} yang disyaratkan oleh kebutuhan nonfungsional KNF-TA-01 pada Tabel~\ref{tab:kebutuhan-nonfungsional}.
 
 \subsection{Rancangan Mekanisme Rotasi Berkas Log}
 \label{subsec:rancangan-rotasi-log}
 
-Berdasarkan analisis mekanisme penyimpanan berkas log pada
-Subbab~\ref{subsubsec:analisis-penyimpanan-berkas}, IPFS menggunakan pengalamatan
-berbasis konten (\textit{content-addressed storage}) sehingga setiap berkas
-diidentifikasi oleh \textit{hash} dari isinya. Konsekuensinya, \textit{audit
-record} tidak dapat diunggah satu per satu ke IPFS secara langsung, karena setiap
-unggahan terpisah menghasilkan CID yang berbeda-beda dan tidak membentuk satu
-arsip yang dapat diverifikasi secara utuh. Oleh karena itu, diperlukan mekanisme
-pengelompokan dan perputaran berkas log (\textit{log rotation}) yang mengelola
-berkas log lokal sebagai \textit{buffer} sementara sebelum pengarsipan ke IPFS.
+Berdasarkan analisis mekanisme penyimpanan berkas log pada Subbab~\ref{subsubsec:analisis-penyimpanan-berkas}, IPFS menggunakan pengalamatan berbasis konten (\textit{content-addressed storage}) sehingga setiap berkas diidentifikasi oleh \textit{hash} dari isinya. Konsekuensinya, \textit{audit record} tidak dapat diunggah satu per satu ke IPFS secara langsung, karena setiap unggahan terpisah menghasilkan CID yang berbeda-beda dan tidak membentuk satu arsip yang dapat diverifikasi secara utuh. Oleh karena itu, diperlukan mekanisme pengelompokan dan perputaran berkas log (\textit{log rotation}) yang mengelola berkas log lokal sebagai \textit{buffer} sementara sebelum pengarsipan ke IPFS.
 
-Komponen Log Rotation \& Archival Worker dirancang untuk berjalan sebagai
-\textit{background task} yang berulang secara periodik pada interval yang dapat
-dikonfigurasi melalui konstanta \texttt{LOG\_ROTATION\_INTERVAL\_SECS}. Pada
-setiap siklus rotasi, worker terlebih dahulu memeriksa apakah berkas log aktif
-ada dan tidak kosong. Apabila berkas kosong, siklus dilewati untuk menghindari
-pencatatan metadata rotasi yang tidak bermakna pada jaringan IOTA.
+Komponen Log Rotation \& Archival Worker dirancang untuk berjalan sebagai \textit{background task} yang berulang secara periodik pada interval yang dapat dikonfigurasi melalui konstanta \texttt{LOG\_ROTATION\_INTERVAL\_SECS}. Pada setiap siklus rotasi, worker terlebih dahulu memeriksa apakah berkas log aktif ada dan tidak kosong. Apabila berkas kosong, siklus dilewati untuk menghindari pencatatan metadata rotasi yang tidak bermakna pada jaringan IOTA.
 
-Apabila berkas log aktif berisi data, worker membentuk nama berkas arsip baru
-dengan format \texttt{logs/uploading\_\{unix\_timestamp\}.log} menggunakan
-\textit{Unix timestamp} pada saat rotasi dilakukan, kemudian memindahkan berkas
-log aktif ke nama arsip baru. Penggunaan \textit{Unix timestamp} pada nama
-berkas arsip memungkinkan penentuan urutan kronologis berkas-berkas arsip secara
-lokal tanpa perlu menyimpan metadata tambahan. Operasi pemindahan berkas ini
-menggunakan \texttt{rename} pada sistem berkas yang bersifat atomik pada Linux,
-sehingga tidak terjadi kehilangan \textit{audit record} yang sedang ditulis secara
-konkuren oleh komponen Audit Logger. Setelah operasi ini selesai, Audit Logger
-akan membuat berkas log aktif baru secara otomatis pada siklus penulisan
-berikutnya.
+Apabila berkas log aktif berisi data, worker membentuk nama berkas arsip baru dengan format \texttt{logs/uploading\_\{unix\_timestamp\}.log} menggunakan \textit{Unix timestamp} pada saat rotasi dilakukan, kemudian memindahkan berkas log aktif ke nama arsip baru. Pemindahan berkas dilakukan menggunakan operasi \texttt{rename} yang bersifat atomik pada tingkat sistem operasi, sehingga tidak ada jeda di mana berkas log aktif tidak tersedia untuk penulisan. Setelah pemindahan selesai, ALS langsung membuka berkas log aktif baru untuk menampung \textit{audit record} yang masuk selama proses pengarsipan berkas lama berlangsung.
 
-Awalan \texttt{uploading\_} pada nama berkas arsip berfungsi sebagai penanda
-bahwa berkas tersebut sedang dalam proses pengarsipan dan belum selesai
-diproses. Apabila terjadi kegagalan pada tahap pengarsipan ke IPFS atau
-publikasi metadata ke IOTA, berkas dengan awalan ini dapat diidentifikasi
-dan diproses ulang pada siklus rotasi berikutnya, sehingga tidak ada berkas
-arsip yang hilang akibat kegagalan sementara.
+Berkas dikirimkan menggunakan mekanisme \textit{streaming} berbasis \texttt{BytesCodec} sehingga isi berkas tidak perlu dimuat seluruhnya ke memori sebelum dikirim; hal ini penting untuk mengakomodasi berkas log yang berukuran besar tanpa membebani konsumsi memori ALS. IPFS Cluster mengembalikan respons yang memuat CID dari berkas yang berhasil diunggah. CID ini bersifat unik terhadap isi berkas dan menjadi penanda permanen yang digunakan pada tahap publikasi metadata ke IOTA. Apabila unggah gagal, siklus rotasi dihentikan pada tahap ini dan kesalahan dicatat ke \textit{stderr}; berkas arsip tetap berada di penyimpanan lokal dengan awalan \texttt{uploading\_} sehingga dapat diidentifikasi dan diproses ulang pada siklus rotasi berikutnya.
 
-\subsection{Rancangan Mekanisme Pengarsipan Berkas Log ke IPFS}
-\label{subsec:rancangan-pengarsipan-ipfs}
-
-Setelah berkas log aktif dirotasi menjadi berkas arsip pada
-Subbab~\ref{subsec:rancangan-rotasi-log}, tahap selanjutnya adalah mengarsipkan
-berkas tersebut secara permanen ke IPFS Cluster. Sebelum berkas diunggah, worker
-terlebih dahulu menghitung nilai \textit{hash} SHA-256 dari seluruh isi berkas
-sebagai \textit{fingerprint} integritas. Nilai \textit{hash} ini disimpan sebagai
-bidang \texttt{file\_hash} pada metadata rotasi yang akan diterbitkan ke IOTA.
-Pemisahan antara nilai \textit{hash} yang dihitung secara lokal dan CID yang
-dihasilkan oleh IPFS memberikan mekanisme verifikasi ganda: CID memverifikasi
-kesesuaian berkas yang diambil dari IPFS, sedangkan \texttt{file\_hash}
-memberikan referensi independen yang tidak bergantung pada infrastruktur IPFS.
-
-Pengiriman berkas ke IPFS Cluster dilakukan melalui \textit{endpoint} HTTP
-\texttt{/add} yang disediakan oleh IPFS Cluster yang sudah digunakan DecMed untuk
-penyimpanan data klinis. Berkas dikirimkan menggunakan mekanisme \textit{streaming}
-berbasis \texttt{BytesCodec} sehingga isi berkas tidak perlu dimuat seluruhnya ke
-memori sebelum dikirim, hal ini penting untuk mengakomodasi berkas log yang
-berukuran besar tanpa membebani konsumsi memori ATS. IPFS Cluster mengembalikan
-respons yang memuat CID dari berkas yang berhasil diunggah. CID ini bersifat unik
-terhadap isi berkas dan menjadi penanda permanen yang digunakan pada tahap
-publikasi metadata ke IOTA. Apabila unggah gagal, siklus rotasi dihentikan pada
-tahap ini dan kesalahan dicatat ke \textit{stderr}; berkas arsip tetap berada di
-penyimpanan lokal dengan awalan \texttt{uploading\_} sehingga dapat diidentifikasi
-dan diproses ulang pada siklus rotasi berikutnya.
-
-Berdasarkan analisis strategi persistensi data pada
-Subbab~\ref{subsubsec:analisis-persistensi-data}, berkas yang diunggah ke IPFS
-rentan terhapus oleh mekanisme \textit{Garbage Collection} apabila tidak ada
-penanda eksplisit yang menyatakan bahwa berkas tersebut perlu dipertahankan. Oleh
-karena itu, setiap berkas arsip log yang berhasil diunggah diterapkan
-\textit{pinning} pada IPFS Cluster melalui \textit{endpoint} \texttt{/pins} yang
-tersedia. \textit{Pinning} memberi penanda eksplisit kepada \textit{node} IPFS
-agar berkas log tersebut tidak diidentifikasi sebagai data tidak terpakai dan tidak
-terhapus saat proses \textit{Garbage Collection} berjalan. Retensi jangka panjang
-berkas arsip log bergantung pada kebijakan \textit{pinning} IPFS Cluster yang sama
-yang telah digunakan DecMed untuk data klinis pasien, sehingga rancangan ini tidak
-memperkenalkan infrastruktur persistensi baru.
+Berdasarkan analisis strategi persistensi data pada Subbab~\ref{subsubsec:analisis-persistensi-data}, berkas yang diunggah ke IPFS rentan terhapus oleh mekanisme \textit{Garbage Collection} apabila tidak ada penanda eksplisit yang menyatakan bahwa berkas tersebut perlu dipertahankan. Oleh karena itu, setiap berkas arsip log yang berhasil diunggah diterapkan \textit{pinning} pada IPFS Cluster melalui \textit{endpoint} \texttt{/pins} yang tersedia. \textit{Pinning} memberi penanda eksplisit kepada \textit{node} IPFS agar berkas log tersebut tidak diidentifikasi sebagai data tidak terpakai dan tidak terhapus saat proses \textit{Garbage Collection} berjalan. Retensi jangka panjang berkas arsip log bergantung pada kebijakan \textit{pinning} IPFS Cluster yang sama yang telah digunakan DecMed untuk data klinis pasien, sehingga rancangan ini tidak memperkenalkan infrastruktur persistensi baru.
 
 \subsection{Rancangan Mekanisme Publikasi Metadata \textit{On-Chain} ke IOTA}
 \label{subsec:rancangan-publikasi-iota}
 
-Setelah berkas arsip log berhasil diunggah ke IPFS dan CID diperoleh, tahap
-terakhir adalah menerbitkan metadata rotasi log ke jaringan IOTA sebagai
-\textit{immutable trust anchor}. Worker menyusun objek metadata rotasi yang
-memuat lima bidang informasi. Bidang \texttt{cid} menyimpan CID IPFS dari
-berkas arsip yang baru diunggah dan digunakan untuk mengambil kembali berkas
-arsip saat verifikasi. Bidang \texttt{file\_hash} menyimpan nilai \textit{hash}
-SHA-256 yang dihitung secara lokal sebelum unggah sebagai referensi integritas
-independen. Bidang \texttt{log\_sequence\_number} menyimpan nomor urut rotasi
-yang bersifat monoton dan bertambah satu setiap siklus, digunakan untuk
-menentukan urutan kronologis arsip log tanpa bergantung pada \textit{timestamp}
-semata. Bidang \texttt{rotation\_time} menyimpan waktu pelaksanaan rotasi dalam
-format UTC. Bidang \texttt{prev\_tx\_digest} menyimpan \textit{transaction digest}
-publikasi metadata rotasi sebelumnya dan bernilai \texttt{null} pada rotasi pertama.
-
-Metadata tersebut diterbitkan melalui \textit{smart contract} Move pada modul
-\texttt{ats::audit \_log} yang menyediakan fungsi \texttt{create\_log}. Fungsi ini
-menerima representasi JSON dari metadata rotasi, membuat objek \texttt{LogRecord}
-pada \textit{ledger} IOTA, kemudian langsung membekukannya melalui
-\texttt{transfer::freeze\_object}. Pembekuan objek menjadikan \texttt{LogRecord}
-bersifat \textit{immutable} secara penuh setelah transaksi final: tidak ada
-entitas mana pun, termasuk ATS itu sendiri, yang dapat mengubah isi
-\texttt{LogRecord} setelah diterbitkan. Rancangan ini secara langsung mengatasi
-masalah M-TA-03 yang mengidentifikasi bahwa mekanisme pencatatan eksisting pada
-DecMed masih menyediakan fungsi pembaruan pada \textit{smart contract} Move yang
-ada. Penerbitan dilakukan melalui Gas Station Server yang sudah tersedia pada
-DecMed, sehingga ATS tidak perlu mengelola aset IOTA secara mandiri. Apabila
-transaksi berhasil dieksekusi, worker memperoleh \textit{transaction digest} dan
-\textit{object ID} dari \texttt{LogRecord} yang baru dibuat.
-
-Bidang \texttt{prev\_tx\_digest} pada skema metadata dirancang untuk membentuk
-rantai antar entri metadata \textit{on-chain} yang analog dengan mekanisme
-\textit{hash-chaining} pada level \textit{audit record}
-(Subbab~\ref{subsec:rancangan-pembentukan-record}). Setiap \texttt{LogRecord}
-yang diterbitkan ke IOTA membawa referensi eksplisit terhadap
-\texttt{LogRecord} sebelumnya, sehingga membentuk urutan yang dapat ditelusuri
-dari entri terbaru ke entri paling awal. Melalui penelusuran rantai ini, pihak
-yang berwenang dapat memverifikasi kelengkapan arsip log secara kronologis dengan
-mencocokkan \texttt{log\_sequence\_number} untuk memastikan tidak ada rotasi yang
-terlewat. Setelah publikasi metadata ke IOTA berhasil, worker memperbarui nilai
-\texttt{prev\_tx\_digest} yang tersimpan dalam memori untuk digunakan pada siklus
-rotasi berikutnya, kemudian menghapus berkas arsip dari penyimpanan lokal. Penghapusan
-berkas lokal ini dilakukan karena bukti integritas jangka panjang sudah tersedia
-melalui dua lapis mekanisme: berkas arsip tersimpan secara permanen di IPFS melalui
-\textit{pinning}, dan metadata dengan CID serta \texttt{file\_hash} tersimpan
-secara \textit{immutable} di IOTA.
-
-\label{subsec:rancangan-publikasi-iota}
-
-Setelah berkas arsip log berhasil diunggah ke IPFS dan CID diperoleh, tahap
-terakhir adalah menerbitkan metadata rotasi log ke jaringan IOTA sebagai
-\textit{immutable trust anchor}. Rancangan mekanisme ini mencakup tiga aspek:
-skema metadata, mekanisme penerbitan melalui \textit{smart contract} Move,
-dan pembentukan rantai metadata \textit{on-chain}.
+Setelah berkas arsip log berhasil diunggah ke IPFS dan CID diperoleh, tahap terakhir adalah menerbitkan metadata rotasi log ke jaringan IOTA sebagai \textit{immutable trust anchor}. Rancangan mekanisme ini mencakup tiga aspek: skema metadata, mekanisme penerbitan melalui \textit{smart contract} Move, dan pembentukan rantai metadata \textit{on-chain}.
 
 \subsubsection{Skema Metadata Rotasi Log}
 \label{subsubsec:rancangan-skema-metadata}
 
-Objek metadata rotasi log dirancang untuk memuat seluruh informasi yang
-diperlukan agar verifikasi keutuhan berkas arsip log dapat dilakukan secara
-independen di masa mendatang. Rancangan skema metadata ditunjukkan pada
-Tabel~\ref{tab:skema-metadata-iota}.
+Objek metadata rotasi log dirancang untuk memuat seluruh informasi yang diperlukan agar verifikasi keutuhan berkas arsip log dapat dilakukan secara independen di masa mendatang. Rancangan skema metadata ditunjukkan pada Tabel~\ref{tab:skema-metadata-iota}.
 
 \begin{table}[htbp]
 \centering
@@ -271,79 +105,31 @@ Tabel~\ref{tab:skema-metadata-iota}.
 \hline
 \textbf{Bidang} & \textbf{Tipe Data} & \textbf{Deskripsi dan Fungsi} \\
 \hline
-\texttt{cid} &
-\texttt{String} &
-\textit{Content Identifier} IPFS dari berkas arsip log yang diunggah.
-Digunakan untuk mengambil kembali berkas arsip dari IPFS saat verifikasi.\\
+\texttt{cid} & \texttt{String} & \textit{Content Identifier} IPFS dari berkas arsip log yang diunggah. Digunakan untuk mengambil kembali berkas arsip dari IPFS saat verifikasi. \\
 \hline
-\texttt{file\_hash} &
-\texttt{String} (hex) &
-Nilai \textit{hash} SHA-256 dari berkas arsip, dihitung secara lokal
-sebelum unggah. Digunakan sebagai referensi integritas independen dari
-IPFS untuk mendeteksi apabila isi berkas yang diambil tidak sesuai. \\
+\texttt{file\_hash} & \texttt{String} (hex) & Nilai \textit{hash} SHA-256 dari berkas arsip, dihitung secara lokal sebelum unggah. Digunakan sebagai referensi integritas independen dari IPFS untuk mendeteksi apabila isi berkas yang diambil tidak sesuai. \\
 \hline
-\texttt{log\_sequence\_number} &
-\texttt{u64} &
-Nomor urut rotasi yang bersifat monoton dan bertambah satu setiap siklus
-rotasi. Digunakan untuk menentukan urutan kronologis arsip log tanpa
-bergantung pada \textit{timestamp} semata. \\
+\texttt{log\_sequence\_number} & \texttt{u64} & Nomor urut rotasi yang bersifat monoton dan bertambah satu setiap siklus rotasi. Digunakan untuk menentukan urutan kronologis arsip log tanpa bergantung pada \textit{timestamp} semata. \\
 \hline
-\texttt{rotation\_time} &
-\texttt{String} &
-Waktu pelaksanaan rotasi dalam format UTC. Digunakan untuk merekonstruksi
-garis waktu pengarsipan log. \\
+\texttt{rotation\_time} & \texttt{String} & Waktu pelaksanaan rotasi dalam format UTC. Digunakan untuk merekonstruksi garis waktu pengarsipan log. \\
 \hline
-\texttt{prev\_tx\_digest} &
-\texttt{String} (opsional) &
-\textit{Transaction digest} publikasi metadata rotasi sebelumnya. Membentuk
-rantai antar entri metadata \textit{on-chain} yang analog dengan mekanisme
-\textit{hash-chaining} pada level \textit{audit record}. Bernilai
-\texttt{null} pada rotasi pertama. \\
+\texttt{prev\_tx\_digest} & \texttt{String} (opsional) & \textit{Transaction digest} publikasi metadata rotasi sebelumnya. Membentuk rantai antar entri metadata \textit{on-chain} yang analog dengan mekanisme \textit{hash-chaining} pada level \textit{audit record}. Bernilai \texttt{null} pada rotasi pertama. \\
 \hline
 \end{tabular}
 \end{table}
 
-Kombinasi \texttt{cid} dan \texttt{file\_hash} pada skema metadata memberikan dua lapis jaminan verifikasi yang saling melengkapi. Apabila \texttt{cid} digunakan untuk mengambil berkas dari IPFS, \texttt{file\_hash} digunakan untuk
-memverifikasi bahwa berkas yang diperoleh identik dengan berkas yang tercatat pada metadata. Apabila keduanya cocok, keutuhan berkas arsip log tersebut dapat dinyatakan terjaga sejak saat rotasi dilakukan.
+Kombinasi \texttt{cid} dan \texttt{file\_hash} pada skema metadata memberikan dua lapis jaminan verifikasi yang saling melengkapi. Apabila \texttt{cid} digunakan untuk mengambil berkas dari IPFS, \texttt{file\_hash} digunakan untuk memverifikasi bahwa berkas yang diperoleh identik dengan berkas yang tercatat pada metadata. Apabila keduanya cocok, keutuhan berkas arsip log tersebut dapat dinyatakan terjaga sejak saat rotasi dilakukan.
 
 \subsubsection{Penerbitan Metadata melalui \textit{Smart Contract} Move}
 \label{subsubsec:rancangan-sc-move}
 
-Metadata rotasi log diterbitkan ke jaringan IOTA melalui \textit{smart contract}
-Move yang didefinisikan pada modul \texttt{ats::audit\_log}. Rancangan
-\textit{smart contract} memuat satu fungsi utama, yaitu \texttt{create\_log},
-yang menerima representasi JSON dari metadata rotasi dan menghasilkan objek
-\texttt{LogRecord} baru pada \textit{ledger} IOTA.
+Metadata rotasi log diterbitkan ke jaringan IOTA melalui \textit{smart contract} Move yang didefinisikan pada modul \texttt{ats::audit\_log}. Modul ini menyediakan fungsi \texttt{create\_log} yang menerima representasi JSON dari metadata rotasi, membuat objek \texttt{LogRecord} pada \textit{ledger} IOTA, kemudian langsung membekukannya melalui \texttt{transfer::freeze\_object}. Pembekuan objek menjadikan \texttt{LogRecord} bersifat \textit{immutable} secara penuh setelah transaksi final: tidak ada entitas mana pun, termasuk ALS itu sendiri, yang dapat mengubah isi \texttt{LogRecord} setelah diterbitkan. Rancangan ini secara langsung mengatasi masalah M-TA-03 yang mengidentifikasi bahwa mekanisme pencatatan eksisting pada DecMed masih menyediakan fungsi pembaruan pada \textit{smart contract} Move yang ada. Penerbitan dilakukan melalui Gas Station Server yang sudah tersedia pada DecMed, sehingga ALS tidak perlu mengelola aset IOTA secara mandiri. Apabila transaksi berhasil dieksekusi, worker memperoleh \textit{transaction digest} dan \textit{object ID} dari \texttt{LogRecord} yang baru dibuat.
 
-Aspek terpenting dari rancangan \textit{smart contract} ini adalah bahwa modul
-\texttt{ats::audit \_log} tidak menyediakan fungsi apa pun untuk mengubah atau
-menghapus objek \texttt{LogRecord} yang telah dibuat. Satu-satunya operasi yang
-tersedia adalah \texttt{create\_log}, sehingga setiap entri metadata yang telah
-tercatat pada \textit{ledger} hanya dapat ditambah, bukan diubah atau dihapus.
-Sifat \textit{append-only} ini ditegakkan pada level \textit{smart contract}:
-selama tidak ada fungsi modifikasi yang didefinisikan pada modul, tidak ada jalur
-kode yang dapat digunakan untuk mengubah isi \texttt{LogRecord} setelah
-transaksi pembuatannya final. Rancangan ini secara langsung mengatasi masalah
-M-TA-03 yang mengidentifikasi bahwa mekanisme pencatatan eksisting pada DecMed
-masih menyediakan fungsi pembaruan pada \textit{smart contract} Move yang ada.
+Bidang \texttt{prev\_tx\_digest} pada skema metadata dirancang untuk membentuk rantai antar entri metadata \textit{on-chain} yang analog dengan mekanisme \textit{hash-chaining} pada level \textit{audit record} (Subbab~\ref{subsec:rancangan-pembentukan-record}). Setiap \texttt{LogRecord} yang diterbitkan ke IOTA membawa referensi eksplisit terhadap \texttt{LogRecord} sebelumnya, sehingga membentuk urutan yang dapat ditelusuri dari entri terbaru ke entri paling awal. Melalui penelusuran rantai ini, pihak yang berwenang dapat memverifikasi kelengkapan arsip log secara kronologis dengan mencocokkan \texttt{log\_sequence\_number} untuk memastikan tidak ada rotasi yang terlewat. Setelah publikasi metadata ke IOTA berhasil, worker memperbarui nilai \texttt{prev\_tx\_digest} yang tersimpan dalam memori untuk digunakan pada siklus rotasi berikutnya, kemudian menghapus berkas arsip dari penyimpanan lokal. Penghapusan berkas lokal ini dilakukan karena bukti integritas jangka panjang sudah tersedia melalui dua lapis mekanisme: berkas arsip tersimpan secara permanen di IPFS melalui \textit{pinning}, dan metadata dengan CID serta \texttt{file\_hash} tersimpan secara \textit{immutable} di IOTA.
 
+\subsubsection{Rantai Metadata \textit{On-Chain}}
 
-\subsubsection{Pembentukan Rantai Metadata \textit{On-Chain}}
-\label{subsubsec:rancangan-rantai-metadata}
-
-Bidang \texttt{prev\_tx\_digest} pada skema metadata dirancang untuk membentuk rantai antar entri metadata \textit{on-chain} yang analog dengan mekanisme \textit{hash-chaining} pada level \textit{audit record}
-(Subbab~\ref{subsec:rancangan-pembentukan-record}). Melalui mekanisme ini,
-setiap \texttt{LogRecord} yang diterbitkan ke IOTA membawa referensi eksplisit
-terhadap \texttt{LogRecord} sebelumnya, membentuk urutan yang dapat ditelusuri
-dari entri terbaru ke entri paling awal.
-
-Properti utama yang dihasilkan oleh rantai metadata \textit{on-chain} adalah
-kemampuan untuk memverifikasi kelengkapan arsip log secara kronologis. Pihak
-yang berwenang dapat menelusuri seluruh rantai \texttt{LogRecord} dari yang
-terbaru mundur ke rotasi pertama menggunakan \texttt{prev\_tx\_digest},
-kemudian mencocokkan \texttt{log\_sequence\_number} untuk memastikan tidak
-ada rotasi yang terlewat dalam rangkaian arsip. Skema rantai metadata
-\textit{on-chain} ditunjukkan pada Gambar~\ref{fig:rantai-metadata-onchain}.
+Properti utama yang dihasilkan oleh rantai metadata \textit{on-chain} adalah kemampuan untuk memverifikasi kelengkapan arsip log secara kronologis. Pihak yang berwenang dapat menelusuri seluruh rantai \texttt{LogRecord} dari yang terbaru mundur ke rotasi pertama menggunakan \texttt{prev\_tx\_digest}, kemudian mencocokkan \texttt{log\_sequence\_number} untuk memastikan tidak ada rotasi yang terlewat dalam rangkaian arsip. Skema rantai metadata \textit{on-chain} ditunjukkan pada Gambar~\ref{fig:rantai-metadata-onchain}.
 
 \begin{figure}[htbp]
 \centering
@@ -352,25 +138,12 @@ ada rotasi yang terlewat dalam rangkaian arsip. Skema rantai metadata
 \label{fig:rantai-metadata-onchain}
 \end{figure}
 
-Setelah publikasi metadata ke IOTA berhasil, worker memperbarui nilai
-\texttt{prev\_tx\_digest} yang tersimpan dalam memori untuk digunakan pada
-siklus rotasi berikutnya, kemudian menghapus berkas arsip dari penyimpanan
-lokal menggunakan \texttt{fs::remove\_file}. Penghapusan berkas lokal ini
-dilakukan karena bukti integritas jangka panjang sudah tersedia melalui dua
-lapis mekanisme: berkas arsip tersimpan secara permanen di IPFS melalui
-\textit{pinning}, dan metadata dengan CID serta \textit{file\_hash} tersimpan
-secara \textit{immutable} di IOTA. Penyimpanan berkas arsip secara lokal
-dalam jangka panjang tidak diperlukan dan justru akan menghabiskan kapasitas
-penyimpanan lokal ATS.
+Setelah publikasi metadata ke IOTA berhasil, worker memperbarui nilai \texttt{prev\_tx\_digest} yang tersimpan dalam memori untuk digunakan pada siklus rotasi berikutnya, kemudian menghapus berkas arsip dari penyimpanan lokal menggunakan \texttt{fs::remove\_file}. Penghapusan berkas lokal ini dilakukan karena bukti integritas jangka panjang sudah tersedia melalui dua lapis mekanisme: berkas arsip tersimpan secara permanen di IPFS melalui \textit{pinning}, dan metadata dengan CID serta \textit{file\_hash} tersimpan secara \textit{immutable} di IOTA. Penyimpanan berkas arsip secara lokal dalam jangka panjang tidak diperlukan dan justru akan menghabiskan kapasitas penyimpanan lokal ALS.
 
 \subsection{Pemetaan Rancangan terhadap Solusi}
 \label{subsec:pemetaan-rancangan-solusi}
 
-Setelah rancangan solusi diuraikan, setiap rancangan dipetakan kembali terhadap
-solusi yang telah dianalisis pada Subbab~\ref{sec:analisis-solusi}. Melalui
-pemetaan ini, keterkaitan langsung setiap rancangan R-TA dengan solusi S-TA yang
-diusulkan ditunjukkan. Hasil pemetaan rancangan terhadap solusi ditunjukkan pada
-Tabel~\ref{tab:pemetaan-rancangan-solusi}.
+Setelah rancangan solusi diuraikan, setiap rancangan dipetakan kembali terhadap solusi yang telah dianalisis pada Subbab~\ref{sec:analisis-solusi}. Melalui pemetaan ini, keterkaitan langsung setiap rancangan R-TA dengan solusi S-TA yang diusulkan ditunjukkan. Hasil pemetaan rancangan terhadap solusi ditunjukkan pada Tabel~\ref{tab:pemetaan-rancangan-solusi}.
 
 \begin{table}[htbp]
 \centering
@@ -381,45 +154,23 @@ Tabel~\ref{tab:pemetaan-rancangan-solusi}.
 \hline
 \textbf{ID} & \textbf{Nama Rancangan} & \textbf{Mereali- sasikan Solusi} \\
 \hline
-R-TA-01 &
-Rancangan arsitektur solusi dengan penambahan ATS sebagai \textit{centralized
-audit collector} yang terintegrasi dengan infrastruktur IPFS dan IOTA yang
-sudah ada pada DecMed. &
-S-TA-01 \\
+R-TA-01 & Rancangan arsitektur solusi dengan penambahan ALS sebagai \textit{centralized audit collector} yang terintegrasi dengan infrastruktur IPFS dan IOTA yang sudah ada pada DecMed. & S-TA-01 \\
 \hline
-R-TA-02 &
-Rancangan skema \textit{audit record} bertingkat yang memisahkan atribut
-umum dan atribut tambahan spesifik per jenis \textit{event}. &
-S-TA-04 \\
+R-TA-02 & Rancangan skema \textit{audit record} bertingkat yang memisahkan atribut umum dan atribut tambahan spesifik per jenis \textit{event}. & S-TA-04 \\
 \hline
-R-TA-03 &
-Rancangan mekanisme pembangkitan dan penerimaan \textit{audit event}
-berbasis \textit{signed payload} Ed25519 dengan pengiriman
-\textit{asynchronous push-based}. &
-S-TA-01 \\
+R-TA-03 & Rancangan mekanisme pembangkitan dan penerimaan \textit{audit event} berbasis \textit{signed payload} Ed25519 dengan pengiriman \textit{asynchronous push-based}. & S-TA-01 \\
 \hline
-R-TA-04 &
-Rancangan mekanisme pembentukan \textit{audit record} dengan
-\textit{hash-chaining} antar \textit{record} untuk menjamin sifat
-\textit{tamper-evident} pada berkas log lokal. &
-S-TA-03 \\
+R-TA-04 & Rancangan mekanisme pembentukan \textit{audit record} dengan \textit{hash-chaining} antar \textit{record} untuk menjamin sifat \textit{tamper-evident} pada berkas log lokal. & S-TA-03 \\
 \hline
-R-TA-05 &
-Rancangan mekanisme rotasi log, pengarsipan berkas ke IPFS dengan
-\textit{pinning}, dan publikasi metadata \textit{immutable} ke IOTA melalui \textit{smart contract} Move. &
-S-TA-03, S-TA-05 \\
+R-TA-05 & Rancangan mekanisme rotasi log, pengarsipan berkas ke IPFS dengan \textit{pinning}, dan publikasi metadata \textit{immutable} ke IOTA melalui \textit{smart contract} Move. & S-TA-03, S-TA-05 \\
 \hline
 \end{tabular}
 \end{table}
 
-Tabel~\ref{tab:pemetaan-rancangan-solusi} memastikan setiap solusi S-TA memiliki
-rancangan R-TA yang merealisasikannya, sehingga ketertelusuran dari analisis
-solusi ke spesifikasi rancangan tetap terjaga. Selanjutnya, pemenuhan kebutuhan
-sistem terhadap rancangan yang telah ditetapkan ditunjukkan pada
-Tabel~\ref{tab:pemenuhan-kebutuhan}.
+Tabel~\ref{tab:pemetaan-rancangan-solusi} memastikan setiap solusi S-TA memiliki rancangan R-TA yang merealisasikannya, sehingga ketertelusuran dari analisis solusi ke spesifikasi rancangan tetap terjaga. Selanjutnya, pemenuhan kebutuhan sistem terhadap rancangan yang telah ditetapkan ditunjukkan pada Tabel~\ref{tab:pemenuhan-kebutuhan}.
 
 \begin{xltabular}{\textwidth}{|p{1.8cm}|X|X|}
-\caption{Pemetaan Kebutuhan ke Mekanisme Rancangan ATS}
+\caption{Pemetaan Kebutuhan ke Mekanisme Rancangan ALS}
 \label{tab:pemenuhan-kebutuhan}\\
 \hline
 \textbf{ID} & \textbf{Kebutuhan} & \textbf{Mekanisme pada Rancangan} \\
@@ -432,51 +183,25 @@ Tabel~\ref{tab:pemenuhan-kebutuhan}.
 \hline
 \endfoot
 
-KF-TA-01 & Mengagregasi data log dari berbagai komponen ke satu repositori terpusat. &
-Endpoint \texttt{POST /api/events} pada ATS sebagai titik masuk tunggal yang menerima
-\textit{event} dari seluruh \textit{event source} (R-TA-01, R-TA-03). \\
+KF-TA-01 & Mengagregasi data log dari berbagai komponen ke satu repositori terpusat. & \textit{Endpoint} \texttt{POST /api/events} pada ALS sebagai titik masuk tunggal yang menerima \textit{event} dari seluruh \textit{event source} (R-TA-01, R-TA-03). \\
 \hline
-
-KF-TA-02 & Menangkap dan merekam keseluruhan jenis \textit{event} EV1 hingga EV18. &
-Format \texttt{SignedEvent} yang seragam memungkinkan ATS menerima seluruh jenis
-\textit{event} melalui \textit{tagged enum} \texttt{AuditEventDetails} (R-TA-03). \\
+KF-TA-02 & Menangkap dan merekam keseluruhan jenis \textit{event} EV1 hingga EV13. & Format \texttt{SignedEvent} yang seragam memungkinkan ALS menerima seluruh jenis \textit{event} melalui \textit{tagged enum} \texttt{AuditEventDetails} (R-TA-03). \\
 \hline
-
-KF-TA-03 & Memformat dan menstandardisasi \textit{audit record} ke dalam skema terstruktur. &
-Skema \texttt{AuditRecord} bertingkat dengan atribut umum wajib dan atribut tambahan
-spesifik per jenis \textit{event} (R-TA-02). \\
+KF-TA-03 & Memformat dan menstandardisasi \textit{audit record} ke dalam skema terstruktur. & Skema \texttt{AuditRecord} bertingkat dengan atribut umum wajib dan atribut tambahan spesifik per jenis \textit{event} (R-TA-02). \\
 \hline
-
-KF-TA-04 & Menyimpan \textit{audit record} pada media penyimpanan yang bersifat
-\textit{append-only}. &
-Penulisan ke berkas log lokal menggunakan mode \textit{append} dikombinasikan dengan
-\textit{hash-chaining} (R-TA-04); arsip jangka panjang pada IPFS (R-TA-05). \\
+KF-TA-04 & Menyimpan \textit{audit record} pada media penyimpanan yang bersifat \textit{append-only}. & Penulisan ke berkas log lokal menggunakan mode \textit{append} dikombinasikan dengan \textit{hash-chaining} (R-TA-04); arsip jangka panjang pada IPFS (R-TA-05). \\
 \hline
-
-KF-TA-05 & Menyediakan mekanisme retensi jangka panjang untuk mengantisipasi
-\textit{pruning} pada jaringan DLT. &
-\textit{Pinning} berkas arsip pada IPFS Cluster dan pencatatan CID beserta
-\textit{file\_hash} pada \textit{smart contract}
-Move di IOTA (R-TA-05). \\
+KF-TA-05 & Menyediakan mekanisme retensi jangka panjang untuk mengantisipasi \textit{pruning} pada jaringan DLT. & \textit{Pinning} berkas arsip pada IPFS Cluster dan pencatatan CID beserta \textit{file\_hash} pada \textit{smart contract} Move di IOTA (R-TA-05). \\
 \hline
-
-KNF-TA-01 & Integritas \textit{audit record} yang \textit{tamper-proof}. &
-\textit{Hash-chaining} antar \textit{record} pada level berkas lokal (R-TA-04) dan penyimpanan object \textit{on-chain} memastikan metadata tidak dapat diubah setelah diterbitkan (R-TA-05). \\
+KNF-TA-01 & Integritas \textit{audit record} yang \textit{tamper-evident}. & \textit{Hash-chaining} antar \textit{record} (R-TA-04) dan penguncian metadata berkas arsip di IOTA (R-TA-05). \\
 \hline
-
-KNF-TA-02 & Format data log yang konsisten dan mudah diproses. &
-Skema \texttt{AuditRecord} seragam dalam format JSON-Lines dengan atribut
-yang terdefinisi (R-TA-02). \\
+KNF-TA-02 & Format data log yang konsisten dan mudah diproses. & Skema \texttt{AuditRecord} terstruktur dalam format JSON-Lines dengan anotasi \texttt{\#[serde(flatten)]} (R-TA-02). \\
 \hline
-
-KNF-TA-03 & Ketersediaan data \textit{audit trail} dalam jangka panjang. &
-Arsip log disimpan secara permanen di IPFS melalui \textit{pinning} dengan
-referensi CID yang tercatat \textit{immutable} di IOTA (R-TA-05). \\
+KNF-TA-03 & Ketersediaan data audit log dalam jangka panjang. & \textit{IPFS pinning} dan penyimpanan metadata sebagai \textit{frozen object} di IOTA (R-TA-05). \\
 \hline
-
-KNF-TA-04 & Konsistensi pencatatan tanpa ada \textit{event} bernilai audit
-tinggi yang terlewat. &
-Pengiriman \textit{asynchronous push-based} dengan antrian internal berkapasitas besar menjamin \textit{event} tidak terblokir dan verifikasi tanda tangan mencegah \textit{event} palsu masuk ke rantai (R-TA-03). \\
+KNF-TA-04 & Konsistensi pencatatan tanpa \textit{event} bernilai audit tinggi yang terlewat. & Verifikasi tanda tangan Ed25519 pada ALS dan antrian asinkron berkapasitas 10.000 (R-TA-03). \\
 \hline
 
 \end{xltabular}
+
+Tabel~\ref{tab:pemenuhan-kebutuhan} menunjukkan bahwa seluruh kebutuhan fungsional (KF-TA-01 hingga KF-TA-05) dan kebutuhan nonfungsional (KNF-TA-01 hingga KNF-TA-04) terpenuhi oleh mekanisme rancangan yang telah diuraikan. Ketertelusuran dari kebutuhan ke rancangan ini menjadi dasar verifikasi pada tahap pengujian yang akan dipaparkan pada Bab IV.
