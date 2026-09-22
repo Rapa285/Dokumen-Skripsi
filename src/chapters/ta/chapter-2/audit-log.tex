@@ -1,0 +1,388 @@
+\section{Audit Log}
+\label{sec:audit-log}
+
+\subsection{Definisi dan Konsep Audit Log}
+\label{subsec:definisi-audit-log}
+
+Audit log didefinisikan sebagai kumpulan \textit{audit record} yang
+tersusun secara kronologis (\cite{iso27789_2021}). Definisi ini
+menegaskan dua hal sekaligus: pertama, audit log merupakan kumpulan
+catatan, bukan catatan tunggal; dan kedua, urutan kronologis adalah
+sifat yang melekat, sehingga setiap \textit{record} di dalamnya
+terkait dengan waktu kejadiannya dan dapat ditelusuri berdasarkan
+rentang waktu tertentu.
+
+ISO 27789:2021 membedakan empat istilah yang berkaitan dalam hierarki
+yang berjenjang, sebagaimana ditunjukkan pada
+Gambar~\ref{fig:hierarki-audit}. \textit{Audit event} adalah satu
+peristiwa pada sistem yang memicu pembangkitan catatan audit
+(\cite{iso27789_2021}), misalnya seorang pengguna membaca data rekam
+medis. \textit{Audit record} adalah catatan dari satu peristiwa
+spesifik tunggal dalam siklus hidup rekam medis elektronik
+(\cite{iso27789_2021}). \textit{Audit log} adalah kumpulan
+\textit{audit record} yang tersusun secara kronologis
+(\cite{iso27789_2021}). Pada level tertinggi, \textit{audit trail}
+adalah kumpulan satu atau lebih \textit{audit log} yang secara
+keseluruhan membentuk riwayat lengkap atas suatu entitas atau proses
+(\cite{iso27789_2021}). Dengan kata lain, satu \textit{audit event}
+menghasilkan satu \textit{audit record}; sejumlah \textit{audit record}
+yang tersusun membentuk sebuah \textit{audit log}; dan satu atau lebih
+\textit{audit log} secara kolektif membentuk sebuah \textit{audit
+trail}.
+
+\begin{figure}[htbp]
+\centering
+% Ganti dengan diagram hierarki jika tersedia
+% \includegraphics[width=0.75\textwidth]{chapter-2/hierarki-audit.png}
+\caption{Hierarki Konsep Audit Menurut ISO 27789:2021}
+\label{fig:hierarki-audit}
+\end{figure}
+
+Tugas Akhir ini berfokus pada level \textit{audit log}: pengembangan
+mekanisme pembangkitan \textit{audit record} dari berbagai komponen
+sistem, pengumpulannya ke dalam sebuah \textit{audit log} yang
+terstruktur, serta penyimpanannya secara \textit{tamper-evident}.
+Mekanisme ini merupakan prasyarat sebelum \textit{audit trail} yang
+utuh dapat terbentuk dari satu atau lebih \textit{audit log} yang
+dihasilkan.
+
+Konsep audit log perlu dibedakan secara tegas dari konsep pencatatan
+izin akses (\textit{access grant log}). Audit log bersifat komplementer
+terhadap kontrol akses, bukan pengganti maupun bagian darinya: kontrol
+akses menentukan kebijakan mengenai siapa \textit{berhak} mengakses
+data, sedangkan audit log mencatat apa yang \textit{benar-benar
+terjadi} pada sistem, termasuk apabila terjadi penyimpangan dari
+kebijakan tersebut (\cite{iso27789_2021}). Perbedaan ini penting untuk
+digarisbawahi karena suatu sistem dapat saja memiliki kontrol akses
+yang ketat dan mencatat metadata pemberian izin secara lengkap, namun
+tetap tidak memiliki audit log yang memadai apabila tidak ada catatan
+terpisah mengenai peristiwa akses aktual (\textit{access event}) yang
+terjadi setelah izin tersebut diberikan. Dengan kata lain, audit log
+idealnya mencatat peristiwa (\textit{event}) sebagai representasi dari
+tindakan nyata yang terjadi pada sistem, bukan semata representasi dari
+kebijakan atau otorisasi yang berlaku.
+
+% -------------------------------------------------------------------
+\subsection{Karakteristik Audit Log yang Baik}
+\label{subsec:karakteristik-audit-log}
+
+Agar dapat berfungsi sebagai bukti yang dapat diandalkan, audit log
+perlu memenuhi sejumlah karakteristik tertentu. Karakteristik pertama
+adalah kemampuan mengidentifikasi pengguna secara tidak ambigu
+(\textit{unambiguous identification}), yaitu audit log harus
+menyediakan data yang cukup untuk mengidentifikasi secara pasti setiap
+pengguna maupun sistem eksternal yang telah mengakses atau menerima
+data rekam medis (\cite{iso27789_2021}). Karakteristik kedua adalah
+integritas (\textit{integrity}) dan kerahasiaan (\textit{confidentiality})
+dari audit log itu sendiri, yaitu jaminan bahwa catatan yang telah
+dibuat terlindungi dari upaya perusakan (\textit{tampering}), termasuk
+perlunya audit log mencatat setiap tindakan yang dilakukan terhadap
+sistem audit itu sendiri, seperti kapan sistem audit tidak berfungsi
+atau dinonaktifkan (\cite{iso27789_2021}).
+
+Karakteristik lain yang tidak kalah penting adalah kelengkapan
+(\textit{completeness}) dan ketersediaan (\textit{availability}).
+Kelengkapan berarti audit log harus mencatat seluruh tindakan yang
+relevan terhadap data -- termasuk pembuatan, pembacaan, pembaruan,
+maupun pengarsipan -- setiap kali tindakan tersebut dilakukan terhadap
+data kesehatan pribadi (\cite{iso27789_2021}), sedangkan ketersediaan
+berarti sistem audit harus memastikan entri tercatat setiap kali
+sistem informasi kesehatan sedang beroperasi (\cite{iso27789_2021}).
+Selain keempat karakteristik tersebut, audit log yang baik juga perlu
+mendukung kemampuan deteksi terhadap potensi penyalahgunaan oleh pihak
+internal (\textit{insider threat}), mengingat pelaku \textit{insider}
+pada umumnya memiliki akses sah terhadap sistem sehingga satu-satunya
+cara untuk mendeteksi maupun membuktikan penyalahgunaan tersebut adalah
+melalui pencatatan aktivitas yang menyeluruh dan tidak dapat
+dimanipulasi oleh pelaku itu sendiri (\cite{cert2022insiderthreat}).
+Karakteristik-karakteristik tersebut menjadi acuan utama dalam menilai
+apakah suatu mekanisme pencatatan pada sistem informasi, termasuk pada
+DecMed, telah dapat disebut sebagai audit log yang memadai.
+
+% -------------------------------------------------------------------
+\subsection{Komponen Audit Log}
+\label{subsec:komponen-audit-log}
+
+Untuk dapat berfungsi secara menyeluruh, suatu sistem audit log perlu
+dibangun melalui beberapa komponen fungsional yang saling berurutan.
+Kerangka kerja audit untuk rekam medis elektronik membagi persoalan
+menjadi penentuan peristiwa apa saja yang perlu dipicu untuk dicatat
+(\textit{trigger events}), format dan isi dari setiap catatan yang
+dihasilkan, hingga bagaimana catatan tersebut dikelola secara aman
+sepanjang siklus hidupnya (\cite{iso27789_2021}). Pembagian yang
+serupa juga ditemukan pada kerangka manajemen log komputer secara
+umum, yang memandang manajemen log sebagai suatu infrastruktur yang
+digunakan untuk menghasilkan (\textit{generate}), mengirimkan
+(\textit{transmit}), menyimpan (\textit{store}), serta menganalisis
+(\textit{analyze}) data log (\cite{nist80092}). Berdasarkan kedua
+kerangka tersebut, komponen audit log pada Tugas Akhir ini
+dikelompokkan menjadi empat bagian: penentuan event, pengumpulan
+event, penyimpanan event, dan pembacaan event.
+
+\subsubsection{Penentuan Event}
+\label{subsubsec:penentuan-event}
+
+Komponen pertama adalah penentuan peristiwa (\textit{event}) apa saja
+yang perlu memicu pencatatan pada audit log. Peristiwa pemicu
+(\textit{trigger events}) pada sistem rekam medis elektronik pada
+umumnya ditentukan berdasarkan skala, tujuan, serta kebijakan privasi
+dan keamanan dari masing-masing sistem informasi kesehatan, dengan
+cakupan minimal berupa peristiwa akses (\textit{access events}) dan
+peristiwa kueri (\textit{query events}) terhadap data kesehatan pribadi
+(\cite{iso27789_2021}). Standar tersebut turut memberikan contoh
+peristiwa yang secara eksplisit berada di luar cakupan pencatatan
+audit rekam medis, seperti peristiwa mulai/berhenti aplikasi,
+peristiwa autentikasi pengguna, maupun peristiwa yang dihasilkan oleh
+sistem operasi (\cite{iso27789_2021}).
+
+Di luar peristiwa akses dan kueri, penentuan \textit{trigger events}
+pada suatu sistem juga dapat diturunkan melalui pendekatan pemodelan
+ancaman (\textit{threat modeling}), seperti metode STRIDE, yang
+mengidentifikasi ancaman keamanan pada suatu sistem secara sistematis
+dan dapat digunakan sebagai dasar penentuan kebutuhan pencatatan
+(\cite{laksono2021stride}).
+
+\subsubsection{Konten Wajib dan Konten Tambahan pada Audit Record}
+\label{subsubsec:konten-event}
+
+Setiap \textit{audit record}, terlepas dari jenis peristiwa apa yang
+dicatatnya, memuat sekumpulan bidang data minimal yang bersifat wajib
+(\textit{mandatory}). Format umum suatu \textit{audit record} pada
+rekam medis elektronik sekurang-kurangnya memuat identitas unik dari
+peristiwa yang terjadi (\textit{EventID}), jenis tindakan yang
+dilakukan (\textit{EventActionCode}), waktu terjadinya peristiwa
+(\textit{EventDateTime}), identitas pengguna atau proses yang melakukan
+tindakan (\textit{UserID}), serta identitas objek data yang menjadi
+sasaran tindakan tersebut (\textit{ParticipantObjectID})
+(\cite{iso27789_2021}).
+
+Di samping bidang wajib tersebut, \textit{audit record} dapat pula
+memuat konten tambahan (\textit{optional}) yang bersifat kontekstual
+bergantung pada jenis \textit{event}. Bidang tambahan ini dapat
+mencakup informasi mengenai hasil dari tindakan yang dilakukan
+(\textit{outcome}), parameter permintaan yang dikirimkan, maupun
+atribut bukti digital yang spesifik diperlukan untuk keperluan
+investigasi ancaman tertentu (\cite{iso27789_2021}).
+
+\subsubsection{Pengumpulan Event}
+\label{subsubsec:pengumpulan-event}
+
+Komponen kedua adalah pengumpulan event, yaitu bagaimana setiap
+peristiwa yang terjadi pada sistem direkam menjadi suatu
+\textit{audit record} dengan format dan isi yang konsisten.
+Pengumpulan event pada praktiknya menghadapi tantangan tersendiri,
+terutama pada sistem dengan banyak sumber log (\textit{log sources})
+yang berbeda. Setiap sumber log cenderung mencatat informasi dengan
+format dan kelengkapan yang berbeda-beda, sehingga menyulitkan proses
+menghubungkan (\textit{correlate}) peristiwa yang tercatat oleh satu
+sumber dengan peristiwa yang tercatat oleh sumber lainnya
+(\cite{nist80092}).
+
+\subsubsection{Penyimpanan Event}
+\label{subsubsec:penyimpanan-event}
+
+Komponen ketiga adalah penyimpanan event, yaitu bagaimana catatan
+peristiwa yang telah dikumpulkan disimpan dan dikelola secara aman
+sepanjang siklus hidupnya. Audit log perlu menyediakan langkah
+pengamanan yang cukup untuk melindungi isinya dari perusakan
+(\textit{tampering}), termasuk mengamankan akses terhadap
+\textit{audit record}, mengamankan akses terhadap perangkat audit itu
+sendiri, serta mencatat seluruh tindakan yang dilakukan terhadap audit
+log dengan menyertakan waktu, jenis tindakan, dan pelakunya
+(\cite{iso27789_2021}). Selain itu, \textit{audit record} juga perlu
+tunduk pada kebijakan retensi (\textit{retention policy}) yang
+idealnya disesuaikan dengan masa berlaku data rekam medis yang
+bersangkutan, mengingat \textit{audit record} dapat dibutuhkan sebagai
+bukti dalam jangka waktu yang panjang (\cite{iso27789_2021}).
+
+Pada level infrastruktur, pertimbangan penyimpanan log turut mencakup
+keseimbangan antara volume data log yang dihasilkan dengan kapasitas
+penyimpanan yang tersedia, baik untuk penyimpanan daring
+(\textit{online}) maupun luring (\textit{offline}), serta kebutuhan
+keamanan atas data tersebut (\cite{nist80092}).
+
+\subsubsection{Pembacaan Event}
+\label{subsubsec:pembacaan-event}
+
+Komponen keempat adalah pembacaan event, yaitu bagaimana catatan
+peristiwa yang telah tersimpan dapat diakses kembali dan dianalisis
+oleh pihak yang berwenang. Akses terhadap audit log harus dikendalikan
+secara ketat dan akses itu sendiri menjadi objek audit
+(\textit{itself subject to audit}), dengan akses yang idealnya
+dilakukan melalui sistem informasi yang dapat menegakkan kontrol
+tersebut, bukan akses langsung terhadap berkas log (\cite{iso27789_2021}).
+
+% -------------------------------------------------------------------
+\subsection{Kebutuhan Audit Log}
+\label{subsec:kebutuhan-audit-log}
+
+Berdasarkan definisi, karakteristik, dan komponen yang telah diuraikan
+pada subbab sebelumnya, dapat diidentifikasi kebutuhan-kebutuhan yang
+harus dipenuhi oleh suatu sistem audit log agar dapat berfungsi secara
+efektif sebagai bukti digital dalam proses audit maupun investigasi
+insiden keamanan. Kebutuhan tersebut dapat dikelompokkan menjadi
+kebutuhan fungsional dan kebutuhan keamanan.
+
+\subsubsection{Kebutuhan Fungsional}
+
+Kebutuhan fungsional berkaitan dengan kemampuan yang harus dimiliki
+sistem audit log untuk menjalankan fungsinya:
+
+\begin{itemize}
+    \item \textbf{Pencatatan event yang komprehensif.} Sistem harus
+    mampu mencatat seluruh aktivitas yang relevan dari berbagai
+    komponen sistem. Cakupan minimal mencakup peristiwa akses dan
+    peristiwa kueri terhadap data sensitif (\cite{iso27789_2021}).
+
+    \item \textbf{Format record yang konsisten.} Setiap
+    \textit{audit record} harus memiliki struktur dan atribut yang
+    seragam, memuat setidaknya informasi mengenai jenis event, waktu
+    kejadian, sumber event, hasil event, serta identitas aktor dan
+    objek yang terlibat (\cite{iso27789_2021}).
+
+    \item \textbf{Penyimpanan terpusat dan terdedikasi.} Seluruh
+    \textit{audit record} harus tersimpan pada repositori khusus yang
+    terpisah dari data operasional sistem, sehingga dapat diakses
+    secara independen untuk keperluan audit (\cite{iso27789_2021}).
+
+    \item \textbf{Kemampuan pencarian dan analisis.} Sistem harus
+    menyediakan fasilitas untuk mengambil dan menganalisis
+    \textit{audit record} berdasarkan berbagai kombinasi atribut
+    seperti rentang waktu, jenis event, aktor, maupun objek yang
+    terlibat (\cite{iso27789_2021}).
+
+    \item \textbf{Retensi jangka panjang.} \textit{Audit record} harus
+    dipertahankan selama periode yang sesuai dengan kebutuhan
+    organisasi dan regulasi yang berlaku, mempertimbangkan bahwa
+    investigasi dapat dilakukan jauh setelah kejadian
+    (\cite{iso27789_2021}).
+\end{itemize}
+
+\subsubsection{Kebutuhan Keamanan}
+
+Kebutuhan keamanan berkaitan dengan sifat-sifat yang harus dimiliki
+\textit{audit record} agar dapat dipercaya sebagai bukti digital:
+
+\begin{itemize}
+    \item \textbf{Integritas.} \textit{Audit record} yang telah
+    tersimpan harus terlindungi dari modifikasi yang tidak sah.
+    Setiap perubahan pada \textit{audit record} harus dapat terdeteksi
+    (\cite{iso27789_2021}).
+
+    \item \textbf{Keaslian (\textit{authenticity}).} Harus tersedia
+    mekanisme untuk memverifikasi bahwa \textit{audit record}
+    benar-benar dibangkitkan oleh komponen sistem yang diklaim sebagai
+    sumbernya, bukan oleh pihak lain yang berpura-pura menjadi sumber
+    tersebut (\cite{iso27789_2021}).
+
+    \item \textbf{Non-repudiation.} \textit{Audit record} harus dapat
+    digunakan untuk membuktikan bahwa suatu aktivitas benar-benar
+    terjadi dan dilakukan oleh entitas tertentu, sehingga entitas
+    tersebut tidak dapat menyangkal keterlibatannya
+    (\cite{shostack2014}, \cite{iso27789_2021}).
+
+    \item \textbf{Sifat \textit{append-only}.} Mekanisme penyimpanan
+    \textit{audit record} harus bersifat tambah-saja, artinya entri
+    yang telah tercatat tidak dapat diubah maupun dihapus. Perubahan
+    kondisi akibat aktivitas berikutnya dicatat sebagai entri baru
+    yang terpisah, bukan sebagai pembaruan entri lama
+    (\cite{iso27789_2021}).
+
+    \item \textbf{Akses terkendali.} Akses terhadap \textit{audit
+    record} harus dikendalikan secara ketat dan akses itu sendiri
+    harus menjadi objek audit, sehingga tidak ada pihak yang dapat
+    mengakses maupun memanipulasi \textit{audit record} tanpa
+    meninggalkan jejak (\cite{iso27789_2021}).
+\end{itemize}
+
+Kebutuhan-kebutuhan tersebut bersifat saling melengkapi: sistem yang
+hanya memenuhi kebutuhan fungsional tanpa memenuhi kebutuhan keamanan
+tidak dapat diandalkan sebagai bukti digital, sedangkan sistem yang
+memenuhi kebutuhan keamanan namun tidak memenuhi kebutuhan fungsional
+tidak dapat digunakan untuk investigasi yang komprehensif. Kebutuhan
+inilah yang akan digunakan sebagai tolok ukur dalam mengevaluasi
+kondisi audit log pada sistem DecMed di Bab III.
+
+% -------------------------------------------------------------------
+\subsection{Mekanisme \textit{Tamper-Evident} pada Audit Log}
+\label{subsec:mekanisme-tamper-evident}
+
+Untuk memenuhi kebutuhan keamanan yang telah diidentifikasi pada
+Subbab~\ref{subsec:kebutuhan-audit-log}, khususnya integritas,
+keaslian, dan non-repudiation, terdapat beberapa mekanisme kriptografis
+yang lazim digunakan dalam perancangan sistem audit log.
+
+\subsubsection{\textit{Hash-Chaining} untuk Integritas Berurutan}
+
+\textit{Hash-chaining} adalah mekanisme yang menjamin integritas
+berurutan (\textit{sequential integrity}) dari sebuah audit log dengan
+cara menyertakan nilai \textit{hash} kriptografis dari
+\textit{record} sebelumnya ke dalam setiap \textit{record} baru yang
+dibuat. Dengan demikian, setiap \textit{audit record} secara kriptografis
+bergantung pada seluruh \textit{record} yang mendahuluinya
+(\cite{nist80092}).
+
+Implikasi dari mekanisme ini adalah bahwa modifikasi atas satu
+\textit{record} dalam rantai -- baik dengan mengubah isi
+\textit{record}, menghapusnya, maupun menyisipkan \textit{record}
+baru di tengah rantai -- akan menyebabkan nilai \textit{hash} dari
+seluruh \textit{record} berikutnya menjadi tidak valid. Ketidaksesuaian
+ini dapat dideteksi dengan memverifikasi ulang rantai \textit{hash}
+dari awal hingga akhir, sehingga audit log bersifat
+\textit{tamper-evident}: perusakan yang terjadi dapat dideteksi meski
+tidak dapat dicegah secara langsung pada tingkat berkas lokal.
+
+\subsubsection{Tanda Tangan Digital untuk Keaslian dan Non-Repudiation}
+
+Tanda tangan digital merupakan mekanisme kriptografis yang memungkinkan
+suatu entitas membuktikan kepemilikan atas sebuah pesan atau dokumen.
+Prinsip kerjanya adalah: pengirim menandatangani data menggunakan
+\textit{private key} miliknya, menghasilkan tanda tangan yang dapat
+diverifikasi oleh siapa pun yang memiliki \textit{public key}
+bersesuaian (\cite{shostack2014}).
+
+Dalam konteks audit log, tanda tangan digital memenuhi dua kebutuhan
+sekaligus. \textit{Pertama}, keaslian (\textit{authenticity}): karena
+hanya pemegang \textit{private key} yang dapat menghasilkan tanda
+tangan yang valid untuk kunci publik tertentu, verifikasi tanda tangan
+membuktikan bahwa audit event benar-benar dibangkitkan oleh komponen
+yang mengklaim sebagai sumbernya. \textit{Kedua}, non-repudiation:
+apabila suatu entitas telah menandatangani sebuah event, entitas
+tersebut tidak dapat menyangkal pernah membangkitkan event tersebut
+selama \textit{private key}-nya tidak dikompromikan
+(\cite{shostack2014}).
+
+Salah satu skema tanda tangan digital yang banyak digunakan untuk
+keperluan ini adalah Ed25519, yang berbasis kurva eliptik
+Edwards25519. Skema ini bersifat deterministik (tanda tangan yang
+dihasilkan selalu sama untuk input yang sama), memiliki ukuran kunci
+dan tanda tangan yang kecil (32 byte untuk kunci publik, 64 byte
+untuk tanda tangan), dan efisien secara komputasi, menjadikannya
+pilihan yang sesuai untuk lingkungan yang membutuhkan verifikasi
+tanda tangan dalam volume tinggi.
+
+\subsubsection{Rotasi dan Pengarsipan Log}
+
+Rotasi log adalah praktik manajemen log di mana berkas log aktif
+secara berkala diganti dengan berkas baru, sementara berkas lama
+diarsipkan untuk keperluan retensi (\cite{nist80092}). Praktik ini
+memiliki tiga manfaat utama dalam konteks audit log.
+
+\textit{Pertama}, manajemen ukuran: berkas log yang terus tumbuh
+tanpa batas akan menyulitkan pengelolaan dan dapat menghabiskan
+kapasitas penyimpanan. Dengan rotasi berkala, setiap berkas arsip
+memiliki ukuran yang dapat diprediksi. \textit{Kedua}, efisiensi
+analisis: investigasi seringkali berfokus pada rentang waktu
+tertentu; berkas arsip yang terorganisasi berdasarkan periode waktu
+memudahkan pencarian data yang relevan tanpa harus memindai seluruh
+riwayat log. \textit{Ketiga}, keamanan penyimpanan: berkas arsip yang
+telah dirotasi dapat segera dipindahkan ke media penyimpanan yang
+lebih aman dan tahan lama, terpisah dari lingkungan operasional yang
+lebih rentan terhadap gangguan (\cite{nist80092}).
+
+Kombinasi antara \textit{hash-chaining} pada level \textit{record},
+tanda tangan digital untuk keaslian \textit{event}, dan rotasi log
+untuk pengarsipan berkala membentuk tiga lapisan mekanisme yang saling
+melengkapi dalam menjamin integritas, keaslian, dan ketersediaan
+jangka panjang dari sebuah sistem audit log yang bersifat
+\textit{tamper-evident}.
