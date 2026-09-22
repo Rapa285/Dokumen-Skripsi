@@ -57,6 +57,224 @@ Keberhasilan pengujian diverifikasi melalui tiga indikator: (1) berkas arsip \te
 
 Hasil pengujian menunjukkan seluruh tiga indikator terpenuhi. CID yang dihasilkan oleh IPFS dapat digunakan untuk mengambil kembali berkas arsip melalui \textit{gateway} IPFS, dan \textit{object ID} \texttt{LogRecord} pada IOTA dapat diverifikasi melalui IOTA Explorer pada jaringan Localnet.
 
+\subsection{Pengujian End-to-end Audit Log}
+\label{subsec:pengujian-siklus-lengkap}
+ 
+Pengujian end-to-end (P-INT-01) merupakan pengujian integrasi yang
+memverifikasi keseluruhan \textit{pipeline} audit log dari pembangkitan
+\textit{event} hingga verifikasi integritas rantai \textit{hash}, menggunakan
+satu skenario konkret yang dapat direproduksi. Pengujian ini tidak menggantikan
+P-KF atau P-KNF yang menguji komponen secara atomik, melainkan melengkapinya
+dengan membuktikan bahwa seluruh komponen bekerja benar secara terpadu dalam
+satu alur nyata.
+ 
+Skenario yang digunakan adalah akses rekam medis elektronik (RME) pasien oleh
+tenaga medis dari \textit{Hospital Client}, yang menghasilkan \textit{event}
+jenis EV4 (\textit{Medical Record Access}).
+ 
+\subsubsection{Langkah 1: Event yang Terbentuk}
+ 
+Ketika tenaga medis mengakses RME pasien, \textit{Hospital Client} membangkitkan
+objek \texttt{Event} berikut dan membungkusnya ke dalam \texttt{AuditEvent}
+sebelum dikirimkan ke ALS.
+ 
+\begin{minted}[linenos, breaklines]{json}
+{
+  "source_component": "HospitalClient",
+  "source_timestamp": "2025-06-10T08:14:32.104Z",
+  "event": {
+    "actor_id": "0xabc123...tenaga_medis_iota_address",
+    "actor_type": "MedicalPersonnel",
+    "target_object_type": "MedicalRecord",
+    "target_object": "ipfs://bafybeig...cid_rekam_medis",
+    "outcome": "Success",
+    "action_type": "READ",
+    "event_type": "EV4",
+    "access_type": "direct",
+    "medical_record_id": "RME-2025-00471",
+    "capability_id": "cap:0xdef456...capability_on_chain",
+    "authorization_token_id": "jwt:ey...token_id"
+  }
+}
+\end{minted}
+ 
+Atribut \texttt{actor\_id} berisi alamat IOTA aktor yang juga digunakan untuk
+menandatangani \textit{ciphertext} \texttt{EncryptedSignedEvent}. Atribut
+\texttt{source\_timestamp} dicatat di sisi \textit{Hospital Client} sebelum
+enkripsi, sehingga nilainya mencerminkan waktu kejadian menurut jam komponen
+pengirim dan tidak dapat diubah oleh ALS.
+ 
+Sebelum dikirimkan, \texttt{AuditEvent} di atas dienkripsi menggunakan
+AES-256-GCM dengan kunci sesi acak, kunci sesi dibungkus dengan kunci publik
+P-256 ALS melalui ECIES, dan \textit{ciphertext} ditandatangani menggunakan
+\texttt{IotaKeyPair} aktor. Hasilnya dikirimkan ke ALS dalam format
+\texttt{EncryptedSignedEvent}.
+ 
+\subsubsection{Langkah 2: Record yang Tersimpan}
+ 
+Setelah ALS memverifikasi tanda tangan, mendekripsi \textit{payload}, dan
+memproses \textit{event} melalui \texttt{AuditLogger}, satu baris JSON-Lines
+berikut ditulis secara \textit{append} ke berkas \texttt{./logs/audit\_logs.log}.
+Contoh \textit{record} kedua dalam rantai ditunjukkan di bawah (nilai
+\texttt{prev\_record\_hash} mengacu pada \textit{record} sebelumnya).
+ 
+\begin{minted}[linenos, breaklines]{json}
+{
+  "record_id": "01971b3e-...-uuid-v7",
+  "timestamp": "2025-06-10T08:14:32.381Z",
+  "prev_record_hash": "a3f8c2...hash-record-sebelumnya",
+  "record_hash": "7d4e91...hash-record-ini",
+  "source_component": "HospitalClient",
+  "source_timestamp": "2025-06-10T08:14:32.104Z",
+  "event": {
+    "actor_id": "0xabc123...tenaga_medis_iota_address",
+    "actor_type": "MedicalPersonnel",
+    "target_object_type": "MedicalRecord",
+    "target_object": "ipfs://bafybeig...cid_rekam_medis",
+    "outcome": "Success",
+    "action_type": "READ",
+    "event_type": "EV4",
+    "access_type": "direct",
+    "medical_record_id": "RME-2025-00471",
+    "capability_id": "cap:0xdef456...capability_on_chain",
+    "authorization_token_id": "jwt:ey...token_id"
+  }
+}
+\end{minted}
+ 
+Selisih antara \texttt{source\_timestamp} (\texttt{08:14:32.104Z}) dan
+\texttt{timestamp} (\texttt{08:14:32.381Z}) sebesar ±277 ms merupakan latensi
+dari enkripsi, pengiriman jaringan, dan pemrosesan antrian internal ALS.
+Kedua nilai diperlukan: \texttt{source\_timestamp} untuk merekonstruksi urutan
+kejadian yang sesungguhnya, \texttt{timestamp} untuk menentukan urutan
+pemrosesan di sisi ALS.
+ 
+Nilai \texttt{record\_hash} dihitung oleh \texttt{Utils::calculate\_record\_hash}
+sebagai SHA-256 dari gabungan \texttt{record\_id}, \texttt{timestamp},
+\texttt{prev\_record\_hash}, dan seluruh isi \textit{event} yang diserialisasi
+ke JSON. Proses ini dapat direproduksi: menjalankan fungsi yang sama terhadap
+data yang sama selalu menghasilkan nilai yang identik.
+ 
+\subsubsection{Langkah 3: Hubungan Antar-Record dan Rantai Hash}
+ 
+Properti rantai \textit{hash} dapat diverifikasi dengan membandingkan nilai
+\texttt{prev\_record\_hash} pada setiap \textit{record} dengan nilai
+\texttt{record\_hash} pada \textit{record} sebelumnya. Untuk tiga \textit{record}
+berurutan pada berkas log, hubungan yang harus terbentuk adalah:
+ 
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{N} & \textbf{\texttt{prev\_record\_hash}} & \textbf{\texttt{record\_hash}} \\
+\hline
+1 & \texttt{null} & \texttt{a3f8c2...} \\
+\hline
+2 & \texttt{a3f8c2...} & \texttt{7d4e91...} \\
+\hline
+3 & \texttt{7d4e91...} & \texttt{b91d4f...} \\
+\hline
+\end{tabular}
+\end{center}
+ 
+Nilai \texttt{prev\_record\_hash} pada \textit{record} ke-$N$ harus sama persis
+dengan \texttt{record\_hash} pada \textit{record} ke-$(N-1)$. Properti ini
+diverifikasi melalui fungsi \texttt{verify\_chain} yang membaca seluruh baris
+berkas log secara berurutan dan memeriksa konsistensi setiap pasangan
+\textit{record} yang bersebelahan.
+ 
+\subsubsection{Langkah 4: Verifikasi Integritas dan Deteksi Perusakan}
+ 
+Verifikasi integritas dijalankan menggunakan \textit{unit test} \texttt{verify\_chain\_valid}
+dan \texttt{verify\_chain\_tampered} dengan perintah:
+ 
+\begin{minted}[breaklines]{bash}
+cargo test verify_chain -- --nocapture
+\end{minted}
+ 
+\textbf{Skenario a --- Rantai valid.} Tiga \textit{record} dibuat secara
+berurutan melalui \texttt{create\_audit\_record}. Fungsi \texttt{verify\_chain}
+dipanggil terhadap ketiga \textit{record} tersebut. Hasil yang diharapkan adalah
+seluruh \textit{record} dinyatakan valid dan fungsi mengembalikan \texttt{true}.
+ 
+\textbf{Skenario b --- Perusakan pada posisi tengah.} Setelah rantai tiga
+\textit{record} dibuat, nilai bidang \texttt{actor\_id} pada \textit{record}
+kedua diubah secara langsung di memori. Fungsi \texttt{verify\_chain} dipanggil
+kembali. Hasil yang diharapkan adalah \textit{record} kedua gagal verifikasi
+karena nilai \texttt{record\_hash} yang tersimpan tidak lagi sesuai dengan
+\textit{hash} yang dihitung ulang dari konten yang telah dimodifikasi. Selain
+itu, \textit{record} ketiga juga gagal verifikasi karena nilai
+\texttt{prev\_record\_hash}-nya tidak lagi cocok dengan \texttt{record\_hash}
+\textit{record} kedua yang seharusnya.
+ 
+Hasil pengujian yang terekam adalah: skenario a mengembalikan
+\texttt{chain\_valid: true} untuk seluruh 3 \textit{record}, sedangkan skenario
+b mengembalikan \texttt{chain\_valid: false} dengan pesan \texttt{record 2:
+hash mismatch} dan \texttt{record 3: prev\_hash mismatch}. Hasil ini membuktikan
+bahwa perusakan pada posisi mana pun dalam rantai terdeteksi secara otomatis
+melalui efek domino pada seluruh \textit{record} sesudahnya.
+ 
+\subsubsection{Langkah 5: Kesimpulan dari Satu Record}
+ 
+Dari \textit{record} EV4 yang tersimpan, dapat disimpulkan secara langsung:
+ 
+\begin{itemize}
+    \item \textbf{Siapa} yang mengakses: \texttt{actor\_id}
+    \texttt{0xabc123...} dengan peran \texttt{MedicalPersonnel}.
+    \item \textbf{Apa} yang diakses: RME dengan ID \texttt{RME-2025-00471}
+    yang tersimpan di IPFS pada CID \texttt{bafybeig...}.
+    \item \textbf{Kapan} akses terjadi: \texttt{2025-06-10T08:14:32.104Z}
+    menurut jam komponen pengirim.
+    \item \textbf{Dengan otorisasi apa}: \textit{capability}
+    \texttt{cap:0xdef456...} yang dapat diverifikasi \textit{on-chain} di IOTA,
+    dan JWT dengan ID \texttt{jwt:ey...}.
+    \item \textbf{Hasilnya}: akses berhasil (\texttt{outcome: Success}).
+\end{itemize}
+ 
+Tanda tangan \texttt{IotaSignature} yang valid atas \textit{ciphertext} membuktikan
+bahwa \textit{event} ini benar-benar dibangkitkan oleh pemegang kunci privat
+IOTA yang bersesuaian dengan \texttt{actor\_id} tersebut. Karena kunci IOTA
+terikat pada identitas yang terdaftar di \textit{ledger}, aktor tidak dapat
+menyangkal bahwa akses ini dilakukan darinya selama kunci privat tidak
+dikompromikan.
+ 
+\subsubsection{Langkah 6: Batas Kesimpulan}
+ 
+Terdapat tiga batas yang perlu dinyatakan secara eksplisit agar kesimpulan
+di atas tidak melampaui apa yang sesungguhnya dibuktikan oleh sistem.
+ 
+\textbf{(a) Isi \textit{event} tersimpan dalam bentuk terenkripsi.} Berkas
+\texttt{audit\_logs.log} menyimpan \texttt{AuditRecord} dalam \textit{plaintext}
+JSON-Lines karena dekripsi dilakukan oleh ALS sebelum pembentukan \textit{record}.
+Namun, \textit{event} yang telah diarsipkan ke IPFS dan berkas arsip yang sudah
+dirotasi tersimpan setelah melalui proses ALS; inspeksi berkas arsip memerlukan
+akses langsung ke ALS atau rekonstruksi dari log. Untuk keperluan investigasi
+mendalam, dekripsi \textit{ciphertext} yang masih tersimpan di antrian memerlukan
+kunci privat P-256 ALS.
+ 
+\textbf{(b) Fasilitas pencarian dan filter lintas-record belum tersedia.}
+Implementasi saat ini hanya menyediakan \textit{endpoint} \texttt{GET /api/logs}
+untuk membaca metadata rotasi \textit{on-chain}. Analisis lintas-\textit{record}
+--- misalnya menemukan semua akses oleh aktor tertentu dalam rentang waktu
+tertentu --- harus dilakukan secara manual terhadap berkas JSON-Lines atau
+menggunakan alat bantu eksternal seperti \texttt{jq}. Fasilitas ini belum
+terintegrasi ke dalam ALS.
+ 
+\textbf{(c) Non-repudiation antar-sesi belum terjamin penuh.} Tanda tangan
+menggunakan \texttt{IotaKeyPair} yang diambil dari \texttt{AppState} aktif.
+Karena kunci IOTA terikat pada identitas aktor di \textit{ledger}, \textit{non-repudiation}
+berlaku selama kunci privat tidak dikompromikan dan aktor masih memiliki kendali
+atas kunci tersebut. Namun, apabila terjadi pergantian kunci IOTA aktor
+antara waktu kejadian dan waktu investigasi, verifikasi tanda tangan terhadap
+kunci publik saat ini dapat gagal meskipun \textit{event} tersebut sah.
+Mekanisme rotasi kunci dengan riwayat kunci publik yang terekam berada di luar
+cakupan implementasi saat ini.
+ 
+Dengan demikian, P-INT-01 membuktikan bahwa mekanisme inti sistem berfungsi
+benar: \textit{record} terbentuk sesuai skema, rantai \textit{hash} valid,
+perusakan terdeteksi, dan dari satu \textit{record} sudah dapat disimpulkan
+bukti minimal yang relevan untuk keperluan akuntabilitas. Klaim ini tidak
+melampaui batas ketiga yang telah disebutkan di atas.
+
 \subsection{Pengujian Kebutuhan Nonfungsional}
 \label{subsec:pengujian-nonfungsional}
 

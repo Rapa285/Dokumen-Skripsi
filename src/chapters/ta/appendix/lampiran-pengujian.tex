@@ -1,0 +1,538 @@
+% ============================================================
+% Lampiran: Kode Pengujian
+% Simpan sebagai, misalnya: src/chapters/ta/lampiran-pengujian.tex
+% Daftarkan di dokumen utama dengan \appendix lalu \input{...}
+% ============================================================
+
+\chapter{Kode Pengujian}
+\label{app:kode-pengujian}
+
+Lampiran ini memuat seluruh kode yang digunakan dalam pengujian nonfungsional
+(P-KNF-01 hingga P-KNF-08) dan pengujian integrasi (P-INT-01). Kode diorganisasi
+mulai dari fungsi pendukung, implementasi fungsi verifikasi yang diuji, kemudian
+setiap kasus pengujian secara berurutan. Seluruh kode berada pada berkas
+\texttt{audit-trail/src/tests.rs}, kecuali \texttt{verify\_record} dan
+\texttt{verify\_chain} yang berada pada \texttt{audit-trail/src/utils.rs}.
+
+% ─────────────────────────────────────────────────────────────
+\section{Fungsi Pendukung Pengujian}
+% ─────────────────────────────────────────────────────────────
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+fn make_ev4_event() -> AuditEvent {
+    AuditEvent {
+        source_component: AuditSourceComponent::HospitalClient,
+        source_timestamp: Utc::now(),
+        event: Event {
+            actor_id: "0xabc123_tenaga_medis".to_string(),
+            actor_type: AuditActorType::MedicalPersonnel,
+            target_object_type: AuditTargetObjectType::MedicalRecord,
+            target_object: "ipfs://bafybeig_cid_rme".to_string(),
+            outcome: AuditOutcome::Success,
+            action_type: AuditActionType::Read,
+            details: AuditEventDetails::MedicalRecordAccess {
+                patient_iota_address: "0xpatient_iota_addr".to_string(),
+                record_index: Some(0),
+                role_used: "MedicalPersonnel".to_string(),
+            },
+        },
+    }
+}
+
+fn make_ev1_event(actor: &str, outcome: AuditOutcome) -> AuditEvent {
+    AuditEvent {
+        source_component: AuditSourceComponent::HospitalClient,
+        source_timestamp: Utc::now(),
+        event: Event {
+            actor_id: actor.to_string(),
+            actor_type: AuditActorType::MedicalPersonnel,
+            target_object_type: AuditTargetObjectType::AccessKeys,
+            target_object: "session".to_string(),
+            outcome,
+            action_type: AuditActionType::SignIn,
+            details: AuditEventDetails::Authentication {
+                auth_method: "iota_signature".to_string(),
+                role: "MedicalPersonnel".to_string(),
+                failure_reason: None,
+            },
+        },
+    }
+}
+\end{minted}
+\caption{Fungsi pembantu pembangkit \texttt{AuditEvent} uji}
+\label{code:helper-make-event}
+\end{listing}
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+fn build_chain(n: usize) -> Vec<AuditRecord> {
+    let mut records = Vec::new();
+    let mut prev_hash: Option<String> = None;
+
+    for i in 0..n {
+        let event = make_ev1_event(
+            &format!("actor_{i}"),
+            AuditOutcome::Success,
+        );
+        let record = create_audit_record(event, prev_hash.clone());
+        prev_hash = Some(record.record_hash.clone());
+        records.push(record);
+    }
+
+    records
+}
+
+fn make_signed_event(event: &AuditEvent) -> (SignedEvent, SigningKey) {
+    let signing_key = SigningKey::generate(&mut OsRng);
+    let payload = serde_json::to_string(event).expect("serialize event");
+    let sig = signing_key.sign(payload.as_bytes());
+
+    let signed = SignedEvent {
+        payload,
+        signature: hex::encode(sig.to_bytes()),
+        public_key: hex::encode(signing_key.verifying_key().as_bytes()),
+    };
+
+    (signed, signing_key)
+}
+\end{minted}
+\caption{Fungsi pembantu pembangkit rantai \textit{record} dan \texttt{SignedEvent}}
+\label{code:helper-chain-signed}
+\end{listing}
+
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+// Ditambahkan ke dalam impl Utils di audit-trail/src/utils.rs
+
+pub fn verify_record(record: &AuditRecord) -> bool {
+    let expected = Self::calculate_record_hash(
+        record.record_id,
+        record.timestamp,
+        record.prev_record_hash.clone(),
+        &record.event,
+    );
+    record.record_hash == expected
+}
+
+pub fn verify_chain(records: &[AuditRecord]) -> Result<(), String> {
+    let mut prev_hash: Option<String> = None;
+
+    for (i, record) in records.iter().enumerate() {
+        if record.prev_record_hash != prev_hash {
+            return Err(format!(
+                "record {}: prev_hash mismatch (expected {:?}, got {:?})",
+                i + 1,
+                prev_hash,
+                record.prev_record_hash
+            ));
+        }
+
+        if !Self::verify_record(record) {
+            return Err(format!("record {}: hash mismatch", i + 1));
+        }
+
+        prev_hash = Some(record.record_hash.clone());
+    }
+
+    Ok(())
+}
+\end{minted}
+\caption{Implementasi \texttt{verify\_record} dan \texttt{verify\_chain} pada \texttt{Utils}}
+\label{code:impl-verify}
+\end{listing}
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+#[test]
+fn verify_record_valid() {
+    let event = make_ev4_event();
+    let record = create_audit_record(event, None);
+    assert!(
+        Utils::verify_record(&record),
+        "Record yang baru dibuat harus valid"
+    );
+}
+\end{minted}
+\caption{Pengujian P-KNF-01a: \textit{record} valid diterima}
+\label{code:p-knf-01a}
+\end{listing}
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+#[test]
+fn verify_record_tampered_actor_id() {
+    let event = make_ev4_event();
+    let mut record = create_audit_record(event, None);
+
+    // Modifikasi: ganti actor_id dengan nilai palsu
+    record.event.event.actor_id = "0xpenyerang_palsu".to_string();
+
+    assert!(
+        !Utils::verify_record(&record),
+        "Record yang dimodifikasi harus gagal verifikasi"
+    );
+}
+
+#[test]
+fn verify_record_tampered_outcome() {
+    let event = make_ev4_event();
+    let mut record = create_audit_record(event, None);
+
+    // Modifikasi: ubah outcome dari Success menjadi Failure
+    record.event.event.outcome = AuditOutcome::Failure;
+
+    assert!(
+        !Utils::verify_record(&record),
+        "Perubahan outcome harus terdeteksi"
+    );
+}
+\end{minted}
+\caption{Pengujian P-KNF-01b: modifikasi \textit{record} terdeteksi}
+\label{code:p-knf-01b}
+\end{listing}
+
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+#[test]
+fn verify_chain_three_records_valid() {
+    let records = build_chain(3);
+    assert!(
+        Utils::verify_chain(&records).is_ok(),
+        "Rantai tiga record yang tidak dimodifikasi harus valid"
+    );
+}
+
+#[test]
+fn verify_chain_single_record_valid() {
+    let records = build_chain(1);
+    assert!(Utils::verify_chain(&records).is_ok());
+}
+
+#[test]
+fn verify_chain_empty() {
+    let records: Vec<AuditRecord> = vec![];
+    assert!(Utils::verify_chain(&records).is_ok());
+}
+\end{minted}
+\caption{Pengujian P-KNF-02a: rantai \textit{hash} valid}
+\label{code:p-knf-02a}
+\end{listing}
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+#[test]
+fn verify_chain_tamper_middle_record() {
+    let mut records = build_chain(3);
+
+    // Modifikasi record ke-2: ubah actor_id
+    records[1].event.event.actor_id = "0xpenyerang".to_string();
+
+    let result = Utils::verify_chain(&records);
+    assert!(
+        result.is_err(),
+        "Perusakan pada record ke-2 harus terdeteksi"
+    );
+
+    let msg = result.unwrap_err();
+    assert!(
+        msg.contains("record 2"),
+        "Pesan error harus menyebut record 2, dapat: {msg}"
+    );
+}
+
+#[test]
+fn verify_chain_tamper_first_record() {
+    let mut records = build_chain(3);
+
+    // Modifikasi record pertama
+    records[0].event.event.actor_id = "0xpenyerang".to_string();
+
+    let result = Utils::verify_chain(&records);
+    assert!(result.is_err(), "Perusakan record ke-1 harus terdeteksi");
+
+    let msg = result.unwrap_err();
+    assert!(
+        msg.contains("record 1") || msg.contains("record 2"),
+        "Efek domino harus terdeteksi: {msg}"
+    );
+}
+\end{minted}
+\caption{Pengujian P-KNF-02b: perusakan rantai terdeteksi}
+\label{code:p-knf-02b}
+\end{listing}
+
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+#[test]
+fn format_roundtrip_single_record() {
+    let event = make_ev4_event();
+    let record = create_audit_record(event, None);
+
+    // Serialisasi ke JSON (simulasi satu baris JSON-Lines)
+    let json_line = serde_json::to_string(&record)
+        .expect("serialize record");
+
+    // Deserialisasi kembali ke AuditRecord
+    let decoded: AuditRecord = serde_json::from_str(&json_line)
+        .expect("deserialize record");
+
+    assert_eq!(record.record_id, decoded.record_id);
+    assert_eq!(record.record_hash, decoded.record_hash);
+    assert_eq!(
+        record.event.event.actor_id,
+        decoded.event.event.actor_id
+    );
+}
+\end{minted}
+\caption{Pengujian P-KNF-03a: \textit{round-trip} satu \textit{record} JSON-Lines}
+\label{code:p-knf-03a}
+\end{listing}
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+#[test]
+fn format_roundtrip_chain_five_records() {
+    let records = build_chain(5);
+
+    // Simulasi penulisan berkas log (JSON-Lines)
+    let jsonl: String = records
+        .iter()
+        .map(|r| serde_json::to_string(r).unwrap())
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    // Pembacaan kembali baris per baris
+    let decoded: Vec<AuditRecord> = jsonl
+        .lines()
+        .map(|line| serde_json::from_str(line)
+            .expect("tiap baris harus valid JSON"))
+        .collect();
+
+    assert_eq!(records.len(), decoded.len(),
+        "Jumlah record harus sama");
+
+    for (original, parsed) in records.iter().zip(decoded.iter()) {
+        assert_eq!(original.record_id, parsed.record_id);
+        assert_eq!(original.record_hash, parsed.record_hash);
+        assert_eq!(original.prev_record_hash, parsed.prev_record_hash);
+    }
+
+    // Rantai yang dibaca kembali harus tetap valid
+    assert!(Utils::verify_chain(&decoded).is_ok());
+}
+\end{minted}
+\caption{Pengujian P-KNF-03b: \textit{round-trip} lima \textit{record} dan verifikasi rantai}
+\label{code:p-knf-03b}
+\end{listing}
+
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+#[test]
+fn signed_event_valid_accepted() {
+    let event = make_ev1_event("0xactor_sah", AuditOutcome::Success);
+    let (signed, _key) = make_signed_event(&event);
+
+    let result = Utils::verify_and_extract_event(&signed);
+    assert!(
+        result.is_ok(),
+        "Event dengan tanda tangan valid harus diterima: {:?}",
+        result.err()
+    );
+
+    let extracted = result.unwrap();
+    assert_eq!(extracted.event.actor_id, "0xactor_sah");
+}
+\end{minted}
+\caption{Pengujian P-KNF-06: \texttt{SignedEvent} valid diterima}
+\label{code:p-knf-06}
+\end{listing}
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+#[test]
+fn signed_event_tampered_payload_rejected() {
+    let event = make_ev1_event("0xactor_sah", AuditOutcome::Success);
+    let (mut signed, _key) = make_signed_event(&event);
+
+    // Modifikasi payload setelah penandatanganan
+    signed.payload.push_str("x");
+
+    let result = Utils::verify_and_extract_event(&signed);
+    assert!(
+        result.is_err(),
+        "Payload yang dimodifikasi harus ditolak"
+    );
+
+    let err = result.unwrap_err().to_string();
+    assert!(
+        err.to_lowercase().contains("signature")
+            || err.to_lowercase().contains("tanda tangan")
+            || err.to_lowercase().contains("invalid"),
+        "Pesan error harus mengindikasikan kegagalan verifikasi: {err}"
+    );
+}
+\end{minted}
+\caption{Pengujian P-KNF-07: \textit{payload} yang dimodifikasi ditolak}
+\label{code:p-knf-07}
+\end{listing}
+
+
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+#[test]
+fn signed_event_wrong_key_rejected() {
+    let event = make_ev1_event("0xactor_sah", AuditOutcome::Success);
+    let (mut signed, _original_key) = make_signed_event(&event);
+
+    // Ganti signature dengan tanda tangan dari keypair yang berbeda
+    let different_key = SigningKey::generate(&mut OsRng);
+    let wrong_sig = different_key.sign(signed.payload.as_bytes());
+    signed.signature = hex::encode(wrong_sig.to_bytes());
+    // public_key masih milik original_key → mismatch
+
+    let result = Utils::verify_and_extract_event(&signed);
+    assert!(
+        result.is_err(),
+        "Tanda tangan dari kunci berbeda harus ditolak"
+    );
+}
+
+#[test]
+fn signed_event_wrong_public_key_rejected() {
+    let event = make_ev1_event("0xactor_sah", AuditOutcome::Success);
+    let (mut signed, _key) = make_signed_event(&event);
+
+    // Ganti public_key dengan kunci publik acak yang tidak bersesuaian
+    let impostor_key = SigningKey::generate(&mut OsRng);
+    signed.public_key =
+        hex::encode(impostor_key.verifying_key().as_bytes());
+
+    let result = Utils::verify_and_extract_event(&signed);
+    assert!(
+        result.is_err(),
+        "Public key yang tidak bersesuaian harus ditolak"
+    );
+}
+\end{minted}
+\caption{Pengujian P-KNF-08: tanda tangan dari kunci yang tidak bersesuaian ditolak}
+\label{code:p-knf-08}
+\end{listing}
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+#[test]
+fn full_cycle_ev4_chain_valid() {
+    // Langkah 1: Bangkitkan event EV4 (Medical Record Access)
+    let ev4 = make_ev4_event();
+
+    // Langkah 2: Bangun tiga record berurutan; record ke-2 adalah EV4
+    let rec1 = create_audit_record(
+        make_ev1_event("actor_1", AuditOutcome::Success),
+        None,
+    );
+    let rec2 = create_audit_record(
+        ev4,
+        Some(rec1.record_hash.clone()),
+    );
+    let rec3 = create_audit_record(
+        make_ev1_event("actor_3", AuditOutcome::Success),
+        Some(rec2.record_hash.clone()),
+    );
+
+    // Langkah 3: Verifikasi hubungan prev_record_hash antar-record
+    assert_eq!(
+        rec2.prev_record_hash,
+        Some(rec1.record_hash.clone()),
+        "prev_record_hash rec2 harus = record_hash rec1"
+    );
+    assert_eq!(
+        rec3.prev_record_hash,
+        Some(rec2.record_hash.clone()),
+        "prev_record_hash rec3 harus = record_hash rec2"
+    );
+\end{minted}
+\caption{Pengujian P-INT-01 (bagian 1): pembangkitan \textit{event} EV4 dan verifikasi hubungan rantai}
+\label{code:p-int-01a}
+\end{listing}
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+    // Langkah 4a: Rantai valid sebelum modifikasi
+    let chain = vec![rec1.clone(), rec2.clone(), rec3.clone()];
+    assert!(
+        Utils::verify_chain(&chain).is_ok(),
+        "Rantai tiga record harus valid sebelum modifikasi"
+    );
+
+    // Langkah 4b: Rusak record ke-2, periksa efek domino
+    let mut tampered = chain.clone();
+    tampered[1].event.event.actor_id = "0xpenyerang_palsu".to_string();
+
+    let result = Utils::verify_chain(&tampered);
+    assert!(result.is_err(),
+        "Perusakan pada record ke-2 harus terdeteksi");
+
+    // Langkah 5: Bukti minimal dari record EV4
+    let ev4_record = &chain[1];
+    assert_eq!(
+        ev4_record.event.event.actor_id,
+        "0xabc123_tenaga_medis"
+    );
+    assert!(matches!(
+        ev4_record.event.event.outcome,
+        AuditOutcome::Success
+    ));
+
+    // Langkah 6: Format JSON-Lines round-trip tetap valid
+    let jsonl = chain.iter()
+        .map(|r| serde_json::to_string(r).unwrap())
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    let decoded: Vec<AuditRecord> = jsonl.lines()
+        .map(|l| serde_json::from_str(l).unwrap())
+        .collect();
+
+    assert!(Utils::verify_chain(&decoded).is_ok());
+}
+\end{minted}
+\caption{Pengujian P-INT-01 (bagian 2): verifikasi integritas, deteksi perusakan, dan \textit{round-trip} JSON-Lines}
+\label{code:p-int-01b}
+\end{listing}
+
+
+\begin{listing}[ht]
+\begin{minted}[linenos, breaklines]{rust}
+#[test]
+fn first_record_has_null_prev_hash() {
+    let event = make_ev4_event();
+    let record = create_audit_record(event, None);
+    assert_eq!(record.prev_record_hash, None,
+        "Record pertama dalam rantai harus punya prev_hash null");
+}
+
+#[test]
+fn record_hash_is_64_char_hex() {
+    let event = make_ev4_event();
+    let record = create_audit_record(event, None);
+
+    assert_eq!(
+        record.record_hash.len(),
+        64,
+        "SHA-256 hex harus tepat 64 karakter"
+    );
+    assert!(
+        record.record_hash.chars().all(|c| c.is_ascii_hexdigit()),
+        "record_hash harus berupa karakter heksadesimal saja"
+    );
+}
+\end{minted}
+\caption{Pengujian \textit{sanity check}: format \texttt{prev\_record\_hash} dan \texttt{record\_hash}}
+\label{code:sanity}
+\end{listing}

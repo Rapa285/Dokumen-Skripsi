@@ -27,7 +27,28 @@ Distribusi kunci sesi AES ke ALS dilakukan menggunakan mekanisme ECIES (\textit{
 
 \paragraph{Lapisan Tanda Tangan: Ed25519 atas \textit{Ciphertext}}
 
-Setelah enkripsi selesai, \textit{event source} menandatangani \textit{ciphertext} menggunakan kunci privat IOTA (\texttt{IotaKeyPair}) milik aktor yang terlibat pada saat kejadian berlangsung. Penggunaan kunci IOTA sebagai kunci penandatanganan memiliki keunggulan krusial: kunci tersebut sudah terikat pada identitas aktor yang terdaftar pada \textit{ledger} IOTA, sehingga tanda tangan yang dihasilkan dapat diverifikasi secara kriptografis terhadap identitas yang terregistrasi pada sistem. Dengan demikian, aktor tidak dapat menyangkal bahwa \textit{event} tersebut berasal dari dirinya. Format \textit{payload} yang dikirimkan ke ALS memuat tiga bidang: \texttt{payload} (ciphertext hasil enkripsi yang diserialisasi ke JSON), \texttt{signature} (tanda tangan Ed25519 atas \texttt{payload} dalam representasi heksadesimal), dan \texttt{public\_key} (kunci publik IOTA pengirim dalam representasi heksadesimal).
+Setelah enkripsi selesai, \textit{event source} menandatangani \textit{ciphertext} menggunakan kunci privat IOTA (\texttt{IotaKeyPair}) milik aktor yang terlibat pada saat kejadian berlangsung. Penggunaan kunci IOTA sebagai kunci penandatanganan memiliki keunggulan krusial: kunci tersebut sudah terikat pada identitas aktor yang terdaftar pada \textit{ledger} IOTA, sehingga tanda tangan yang dihasilkan dapat diverifikasi secara kriptografis terhadap identitas yang terregistrasi pada sistem. Dengan demikian, semua event dapat dipastikan berasal dari sumber yang terpercaya dan bukan event palsu dari pihak luar. Format \textit{payload} yang dikirimkan ke ALS dibungkus dalam struktur
+\texttt{EncryptedSignedEvent} yang memuat lima bidang: \texttt{enc\_aes\_key}
+(kunci sesi AES yang telah dibungkus dengan ECIES P-256, dikodekan Base64),
+\texttt{ciphertext} (hasil enkripsi AES-256-GCM atas \textit{payload event},
+dikodekan Base64), \texttt{nonce} (\textit{nonce} AES-GCM sepanjang 12
+\textit{byte}, dikodekan Base64), \texttt{signature} (\textit{IotaSignature}
+atas \textit{byte-byte ciphertext}, dikodekan Base64), dan \texttt{iota\_address}
+(alamat IOTA pengirim yang digunakan ALS untuk memverifikasi tanda tangan).
+ 
+Pemisahan \texttt{enc\_aes\_key} dan \texttt{nonce} sebagai bidang tersendiri
+dipilih karena keduanya dibutuhkan secara independen pada proses dekripsi di sisi
+ALS: \texttt{nonce} dibutuhkan oleh AES-GCM untuk dekripsi \textit{ciphertext},
+sedangkan \texttt{enc\_aes\_key} dibutuhkan oleh ECIES untuk memperoleh kunci
+sesi. Menggabungkan keduanya ke dalam satu \textit{blob} Base64 akan mempersulit
+penanganan \textit{error} dan membuat setiap sisi harus melakukan \textit{parsing}
+tambahan.
+ 
+Penggunaan \texttt{iota\_address} alih-alih \texttt{public\_key} heksadesimal
+sebagai referensi identitas pengirim dipilih karena \texttt{iota\_address}
+merupakan representasi publik identitas IOTA yang lebih umum digunakan pada
+ekosistem IOTA, dan dapat digunakan langsung untuk pencarian \textit{on-chain}
+apabila diperlukan verifikasi independen.
 
 \subsubsection{Rancangan Mekanisme Pengiriman}
 \label{subsubsec:rancangan-mekanisme-pengiriman}
@@ -36,9 +57,82 @@ Berdasarkan analisis pada Subbab~\ref{subsubsec:analisis-mekanisme-pengiriman-lo
 
 Untuk mengakomodasi kemungkinan kegagalan jaringan sementara, \texttt{ALSClient} menerapkan mekanisme \textit{retry} dengan \textit{exponential backoff}. Apabila pengiriman pertama gagal, komponen akan mencoba ulang dengan jeda yang semakin panjang hingga batas percobaan maksimum tercapai. Kegagalan pengiriman yang melampaui batas percobaan dicatat ke \textit{stderr} komponen pengirim.
 
-\subsubsection{Rancangan Penerimaan dan Verifikasi pada ALS}
-\label{subsubsec:rancangan-penerimaan-verifikasi}
+Format \textit{payload} yang dikirimkan ke ALS dibungkus dalam struktur
+\texttt{Encrypted- SignedEvent} yang memuat lima bidang: \texttt{enc\_aes\_key}
+(kunci sesi AES yang telah dibungkus dengan ECIES P-256, dikodekan Base64),
+\texttt{ciphertext} (hasil enkripsi AES-256-GCM atas \textit{payload event},
+dikodekan Base64), \texttt{nonce} (\textit{nonce} AES-GCM sepanjang 12
+\textit{byte}, dikodekan Base64), \texttt{signature} (\textit{IotaSignature}
+atas \textit{byte-byte ciphertext}, dikodekan Base64), dan \texttt{iota\_address}
+(alamat IOTA pengirim yang digunakan ALS untuk memverifikasi tanda tangan).
+ 
+Pemisahan \texttt{enc\_aes\_key} dan \texttt{nonce} sebagai bidang tersendiri
+dipilih karena keduanya dibutuhkan secara independen pada proses dekripsi di sisi
+ALS: \texttt{nonce} dibutuhkan oleh AES-GCM untuk dekripsi \textit{ciphertext},
+sedangkan \texttt{enc\_aes\_key} dibutuhkan oleh ECIES untuk memperoleh kunci
+sesi. Menggabungkan keduanya ke dalam satu \textit{blob} Base64 akan mempersulit
+penanganan \textit{error} dan membuat setiap sisi harus melakukan \textit{parsing}
+tambahan.
+ 
+Penggunaan \texttt{iota\_address} alih-alih \texttt{public\_key} heksadesimal
+sebagai referensi identitas pengirim dipilih karena \texttt{iota\_address}
+merupakan representasi publik identitas IOTA yang lebih umum digunakan pada
+ekosistem IOTA, dan dapat digunakan langsung untuk pencarian \textit{on-chain}
+apabila diperlukan verifikasi independen.
 
-Pada sisi ALS, penerimaan \textit{audit event} ditangani oleh komponen Audit Receiver yang berjalan sebagai \textit{endpoint} HTTP \texttt{POST /api/events}. Komponen ini menjalankan tiga langkah verifikasi secara berurutan sebelum \textit{event} diteruskan ke komponen selanjutnya.
-
-Pertama, Audit Receiver mendekode \texttt{public\_key} dan \texttt{signature} dari representasi heksadesimal, kemudian memverifikasi tanda tangan Ed25519 terhadap \texttt{payload}. Apabila tanda tangan tidak valid, \textit{event} ditolak dan respons HTTP 401 dikembalikan kepada pengirim. Kedua, apabila tanda tangan valid, Audit Receiver mendekripsi \texttt{payload} menggunakan kunci privat P-256 ALS untuk memperoleh \textit{plaintext audit event}. Ketiga, \textit{event} yang telah terverifikasi dan terdekripsi diteruskan ke antrian asinkron internal dengan kapasitas 10.000 entri. Penggunaan antrian ini memisahkan tanggung jawab penerimaan HTTP dari pemrosesan log, sehingga ALS dapat menerima \textit{event} berikutnya tanpa menunggu penulisan ke berkas log selesai.
+\subsubsection{Rancangan Antrian Pengiriman Berbasis Berkas (AlsQueue)}
+\label{subsubsec:rancangan-als-queue}
+ 
+Mekanisme \textit{retry} dengan \textit{exponential backoff} yang telah
+dirancang pada subbab sebelumnya memberikan jaminan pengiriman ulang apabila
+terjadi kegagalan sementara. Namun, jaminan tersebut bersifat \textit{in-memory}:
+apabila aplikasi \textit{event source} dimatikan atau mengalami \textit{crash}
+sebelum pengiriman berhasil, \textit{event} yang belum terkirim akan hilang
+sepenuhnya.
+ 
+Untuk mengatasi celah ini, setiap \textit{event source} dirancang dengan
+sebuah antrian pengiriman berbasis berkas (\textit{file-based send queue}) yang
+disebut \texttt{AlsQueue}. \texttt{AlsQueue} menyimpan setiap
+\texttt{EncryptedSignedEvent} yang belum berhasil dikirimkan ke berkas lokal
+dalam format JSON-Lines, sehingga entri yang belum terkirim tetap bertahan
+meskipun aplikasi diulang.
+ 
+\paragraph{Pola Store-then-Send}
+ 
+Urutan operasi yang diterapkan adalah \textit{store-then-send}: sebelum mencoba
+pengiriman langsung, \textit{event source} terlebih dahulu menyimpan
+\texttt{EncryptedSignedEvent} ke \texttt{AlsQueue}. Apabila pengiriman langsung
+berhasil, entri dihapus dari antrian. Apabila gagal, entri tetap berada di
+antrian dan akan ditangani oleh \textit{retry worker} pada iterasi berikutnya.
+Pola ini memastikan bahwa tidak ada \textit{event} yang hilang akibat kegagalan
+jaringan sementara maupun \textit{restart} aplikasi yang tidak terduga, sehingga
+memperkuat jaminan ketercapaian (\textit{delivery guarantee}) yang disyaratkan
+oleh KNF-TA-04.
+ 
+\paragraph{Struktur Entri Antrian}
+ 
+Setiap entri antrian memuat informasi yang cukup untuk pengiriman ulang secara
+mandiri tanpa perlu melibatkan komponen lain: \texttt{id} (pengenal unik UUID
+v4), \texttt{signed\_payload} (JSON \texttt{EncryptedSignedEvent} yang siap
+dikirim), \texttt{label} (nama \textit{event} untuk pencatatan diagnostik),
+\texttt{created\_at} (waktu pembuatan entri), dan \texttt{attempt\_count}
+(jumlah percobaan pengiriman yang telah dilakukan).
+ 
+\paragraph{Retry Worker dan Exponential Backoff}
+ 
+\textit{Retry worker} berjalan sebagai \textit{background task} terpisah yang
+diinisialisasi satu kali saat aplikasi dimulai. Pada setiap iterasi, worker
+membaca seluruh entri dari berkas antrian, mencoba mengirimkan setiap entri
+yang belum melampaui batas percobaan maksimum, dan menerapkan jeda antar-iterasi
+menggunakan formula \textit{exponential backoff}:
+ 
+\[
+\text{jeda} = \min\big(\texttt{RETRY\_BASE\_SECS} \times 2^{\,c}, \texttt{RETRY\_MAX\_SECS}\big)
+\]
+ 
+\noindent di mana $c$ adalah jumlah kegagalan berturut-turut. Jeda yang semakin
+panjang mencegah pemborosan sumber daya jaringan apabila ALS sedang tidak
+tersedia, sementara batas atas \texttt{RETRY\_MAX\_SECS} mencegah jeda yang
+terlalu panjang sehingga \textit{event} tertunda secara berlebihan. Entri yang
+telah melampaui batas percobaan maksimum tidak dikirimkan ulang, tetapi tetap
+disimpan dalam berkas antrian untuk keperluan diagnostik oleh operator sistem.

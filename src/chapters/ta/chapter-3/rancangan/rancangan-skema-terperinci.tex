@@ -1,0 +1,199 @@
+% ============================================================
+% TAMBAHAN BAB III — Subbab baru di akhir rancangan-audit-record.tex
+% Tempatkan setelah \subsubsection{Atribut Khusus Audit Record}
+% dan sebelum penutup subsection tersebut.
+% ============================================================
+
+\subsubsection{Rancangan Skema Terperinci AuditEvent dan Enum Atribut}
+\label{subsubsec:rancangan-skema-audit-event-detail}
+
+Atribut umum yang telah diidentifikasi pada Subbab sebelumnya diturunkan
+menjadi skema data terperinci yang terdiri atas dua \textit{struct} bersarang:
+\texttt{AuditEvent} sebagai pembungkus tingkat atas dan \texttt{Event} sebagai
+wadah seluruh atribut detail \textit{event}. Pemisahan ini dilakukan agar
+atribut yang bersifat metadata pengiriman (\texttt{source\_component} dan
+\texttt{source\_timestamp}) dapat dipisahkan secara struktural dari atribut
+yang mendeskripsikan aktivitas (\texttt{actor\_id}, \texttt{action\_type},
+\texttt{target\_object}, \texttt{outcome}, dan \texttt{details}).
+
+\paragraph{Struct AuditEvent}
+
+\texttt{AuditEvent} memuat tiga bidang tingkat atas: \texttt{source\_component}
+bertipe \texttt{AuditSourceComponent} yang mengidentifikasi komponen pemangkit
+\textit{event}, \texttt{source\_timestamp} bertipe \texttt{DateTime<Utc>} yang
+mencatat waktu kejadian menurut jam komponen pengirim, dan \texttt{event} bertipe
+\texttt{Event} yang memuat seluruh atribut aktivitas.
+
+\paragraph{Dual Timestamp: source\_timestamp dan timestamp}
+
+Skema ini secara sengaja membedakan dua nilai waktu. \texttt{source\_timestamp}
+dicatat oleh \textit{event source} pada saat kejadian berlangsung dan disertakan
+di dalam \textit{event} sebelum enkripsi, sehingga nilainya tidak dapat diubah
+oleh ALS. \texttt{timestamp} pada \texttt{AuditRecord} dicatat oleh ALS pada
+saat \textit{record} dibentuk dari antrian internal. Kedua nilai dapat berbeda
+apabila terdapat latensi jaringan atau antrean yang signifikan. Penyertaan
+\texttt{source\_timestamp} diperlukan agar urutan kejadian yang sesungguhnya
+dapat direkonstruksi selama investigasi, terlepas dari urutan kedatangan
+\textit{event} di sisi ALS.
+
+\paragraph{Struct Event dan Atribut Berketik}
+
+\texttt{Event} memuat tujuh bidang: \texttt{actor\_id} (identitas string aktor),
+\texttt{actor\_type} bertipe \texttt{AuditActorType} (kategori aktor),
+\texttt{target\_object} (identitas string objek target), \texttt{target\_object\_type}
+bertipe \texttt{AuditTargetObjectType} (kategori objek target), \texttt{outcome}
+bertipe \texttt{AuditOutcome}, \texttt{action\_type} bertipe \texttt{AuditActionType},
+dan \texttt{details} bertipe \texttt{AuditEventDetails}.
+
+Penggunaan \textit{enum} berketik pada \texttt{actor\_type},
+\texttt{target\_object\_type}, \texttt{outcome}, dan \texttt{action\_type}
+alih-alih representasi \texttt{String} bebas merupakan keputusan desain yang
+disengaja. \textit{Enum} berketik memindahkan validasi nilai ke tahap
+deserialisasi: nilai yang tidak dikenal langsung ditolak sebelum masuk ke
+antrian pemrosesan, sehingga tidak diperlukan validasi terpisah di dalam logika
+\textit{handler}. Pendekatan ini juga menjamin konsistensi format di seluruh
+komponen karena hanya nilai yang telah didefinisikan pada \textit{enum} yang
+dapat dikirimkan.
+
+\paragraph{Enum AuditSourceComponent}
+
+\texttt{AuditSourceComponent} mengkategorikan komponen pemangkit \textit{event}.
+Keempat varian yang dirancang sesuai dengan \textit{event source} yang
+diidentifikasi pada Subbab~\ref{sec:analisis-event-source} ditunjukkan pada
+Tabel~\ref{tab:enum-source-component}.
+
+\begin{table}[htbp]
+\centering
+\caption{Varian \texttt{AuditSourceComponent}}
+\label{tab:enum-source-component}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4.5cm}|p{7.5cm}|}
+\hline
+\textbf{Varian} & \textbf{Komponen} \\
+\hline
+\texttt{HospitalClient} & Aplikasi \textit{Hospital Client} berbasis Tauri. \\
+\hline
+\texttt{PatientClient} & Aplikasi \textit{Patient Client} berbasis Tauri. \\
+\hline
+\texttt{MinistryClient} & Aplikasi \textit{Ministry Client} berbasis Tauri. \\
+\hline
+\texttt{ProxyReencryption} & PRE Server. \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Enum AuditActionType}
+
+\texttt{AuditActionType} mengkategorikan jenis tindakan yang dilakukan. Varian
+dirancang berdasarkan operasi CRUD yang diperluas dengan tindakan khas sistem
+dekMed. Nilai serialisasi JSON menggunakan format \texttt{SCREAMING\_SNAKE\_CASE}
+agar mudah dibedakan dari nilai string bebas. Daftar varian yang dirancang
+merupakan superset dari nilai-nilai yang telah didefinisikan pada
+Tabel~\ref{tab:nilai-action-type}, dengan penambahan varian \texttt{SIGN\_IN}
+untuk mencakup peristiwa autentikasi sesi yang terjadi pada aplikasi
+\textit{client}.
+
+\begin{table}[htbp]
+\centering
+\caption{Varian \texttt{AuditActionType}}
+\label{tab:enum-action-type}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{3cm}|p{9cm}|}
+\hline
+\textbf{Varian} & \textbf{Makna} \\
+\hline
+\texttt{CREATE} & Membuat atau menginisialisasi objek baru. \\
+\hline
+\texttt{READ} & Membaca data tanpa mengubah \textit{state}. \\
+\hline
+\texttt{UPDATE} & Memperbarui objek yang sudah ada. \\
+\hline
+\texttt{DELETE} & Menghapus atau mencabut objek. \\
+\hline
+\texttt{VALIDATE} & Memverifikasi keabsahan tanpa mengubah \textit{state}. \\
+\hline
+\texttt{EXECUTE} & Menjalankan proses yang telah disiapkan sebelumnya. \\
+\hline
+\texttt{SIGN\_IN} & Autentikasi sesi pengguna; hanya digunakan pada aplikasi \textit{client}. \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Enum AuditActorType}
+
+\texttt{AuditActorType} mengkategorikan jenis aktor yang memicu \textit{event}.
+Varian mencakup seluruh peran yang terdefinisi pada sistem DecMed, ditambah
+varian \texttt{Unknown} untuk skenario di mana identitas aktor belum dapat
+ditentukan pada saat \textit{event} dibangkitkan (misalnya sebelum autentikasi
+selesai). Daftar varian ditunjukkan pada Tabel~\ref{tab:enum-actor-type}.
+
+\begin{table}[htbp]
+\centering
+\caption{Varian \texttt{AuditActorType}}
+\label{tab:enum-actor-type}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4.5cm}|p{7.5cm}|}
+\hline
+\textbf{Varian} & \textbf{Jenis Aktor} \\
+\hline
+\texttt{AdministrativePersonnel} & Staf administrasi rumah sakit. \\
+\hline
+\texttt{MedicalPersonnel} & Tenaga medis (dokter, perawat, dan sejenisnya). \\
+\hline
+\texttt{Patient} & Pasien. \\
+\hline
+\texttt{Admin} & Administrator rumah sakit. \\
+\hline
+\texttt{Ministry} & Pengguna Kementerian Kesehatan. \\
+\hline
+\texttt{PREServer} & PRE Server yang bertindak sebagai aktor otomatis. \\
+\hline
+\texttt{Unknown} & Identitas aktor belum dapat ditentukan. \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Enum AuditTargetObjectType}
+
+\texttt{AuditTargetObjectType} mengkategorikan jenis objek yang menjadi target
+aktivitas. Varian yang dirancang mencerminkan seluruh sumber daya yang dapat
+diakses atau dimanipulasi dalam sistem DecMed, sebagaimana ditunjukkan pada
+Tabel~\ref{tab:enum-target-object-type}.
+
+\begin{table}[htbp]
+\centering
+\caption{Varian \texttt{AuditTargetObjectType}}
+\label{tab:enum-target-object-type}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{4.5cm}|p{7.5cm}|}
+\hline
+\textbf{Varian} & \textbf{Objek yang Dikategorikan} \\
+\hline
+\texttt{ActivationKey} & Kunci aktivasi akun pengguna. \\
+\hline
+\texttt{AccessCapability} & \textit{Capability} akses pada \textit{smart contract}. \\
+\hline
+\texttt{MedicalRecord} & Berkas rekam medis. \\
+\hline
+\texttt{MedicalRecordMetadata} & Metadata rekam medis yang tersimpan \textit{on-chain}. \\
+\hline
+\texttt{AccessDelegationQR} & QR \textit{code} delegasi akses. \\
+\hline
+\texttt{AdministrativeData} & Data administratif rumah sakit. \\
+\hline
+\texttt{Nonce} & \textit{Nonce} sesi yang tersimpan sementara. \\
+\hline
+\texttt{AccessKeys} & Pasangan kunci akses (termasuk kunci PRE). \\
+\hline
+\texttt{Transaction} & Transaksi IOTA yang dikirimkan ke jaringan. \\
+\hline
+\texttt{IPFSObject} & Objek yang tersimpan pada IPFS. \\
+\hline
+\texttt{GasReservation} & Reservasi \textit{gas} melalui Gas Station Server. \\
+\hline
+\texttt{PREEndPoint} & \textit{Endpoint} layanan PRE Server. \\
+\hline
+\texttt{OnChainData} & Data yang tersimpan langsung pada \textit{ledger} IOTA. \\
+\hline
+\end{tabular}
+\end{table}
