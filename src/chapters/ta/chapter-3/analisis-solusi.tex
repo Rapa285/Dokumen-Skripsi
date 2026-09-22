@@ -83,14 +83,40 @@ Setelah menentukan sumber kejadian (\textit{event source}) dan memilih pendekata
 
 Dalam menentukan mekanisme pengiriman, dianalisis dua dimensi teknis pengiriman data. Pertama, dari segi pola komunikasi, dipertimbangkan antara pendekatan \textit{Pull-based} (\textit{polling}) dan \textit{Push-based}. Pendekatan \textit{Pull-based} memberikan kendali beban bagi pengumpul, tetapi menimbulkan latensi pencatatan dan memaksa \textit{event source} menyediakan penyimpanan sementara lokal. Sebaliknya, pendekatan \textit{Push-based} memungkinkan log dikirimkan secara langsung sesaat setelah kejadian berlangsung. Kedua, dari segi sifat eksekusi, dipertimbangkan antara \textit{Synchronous} dan \textit{Asynchronous}. Pengiriman \textit{Synchronous} memastikan log diterima sebelum transaksi utama selesai, tetapi menambah latensi dan berisiko menggagalkan transaksi utama jika pengumpul bermasalah. Sementara itu, pengiriman \textit{Asynchronous} bersifat \textit{non-blocking} sehingga tidak mengganggu \textit{response time} transaksi klinis maupun kriptografis utama.
 
-\subsubsection{Analisis Keaslian dan \textit{Non-Repudiation} Log}
+\subsubsection{Analisis Keaslian dan Pencegahan \textit{Event} Palsu}
 \label{subsubsec:analisis-non-repudiation}
 
-Penggunaan protokol komunikasi terenkripsi seperti TLS/HTTPS hanya mengamankan jalur pengiriman (\textit{transport layer}), tetapi belum memberikan jaminan integritas dan pembuktian asal pesan secara independen di tingkat aplikasi. Untuk mengatasi keterbatasan tersebut, setiap \textit{event source} diwajibkan menandatangani \textit{payload} \textit{event} sebelum dikirim ke ALS.
+Penggunaan protokol komunikasi terenkripsi seperti TLS/HTTPS hanya
+mengamankan jalur pengiriman (\textit{transport layer}), tetapi belum
+memberikan jaminan bahwa \textit{event} yang diterima ALS benar-benar
+berasal dari komponen sistem yang sah. Tanpa mekanisme verifikasi di
+tingkat aplikasi, ALS tidak dapat membedakan \textit{event} yang
+dikirimkan oleh komponen DecMed yang legitim dengan \textit{event}
+palsu yang disisipkan oleh pihak tidak berwenang. Untuk mengatasi
+keterbatasan tersebut, setiap \textit{event source} diwajibkan
+menandatangani \textit{payload event} sebelum dikirim ke ALS, sehingga
+ALS dapat memverifikasi keaslian setiap \textit{event} yang masuk
+sebelum dicatat ke dalam audit log.
 
-Mekanisme penandatanganan yang dipilih adalah tanda tangan digital berbasis kunci privat IOTA (\texttt{IotaKeyPair}) milik aktor yang terlibat pada saat kejadian berlangsung. Pendekatan ini memiliki keunggulan krusial dibandingkan alternatif seperti penggunaan kunci Ed25519 yang dibangkitkan secara acak pada saat inisialisasi komponen: kunci privat IOTA sudah terikat pada identitas aktor yang terdaftar pada \textit{ledger} IOTA, sehingga tanda tangan yang dihasilkan dapat diverifikasi secara kriptografis terhadap identitas tersebut. Dengan demikian, apabila sebuah \textit{event} telah ditandatangani menggunakan kunci privat IOTA seorang aktor, aktor tersebut tidak dapat menyangkal bahwa \textit{event} tersebut berasal dari dirinya, karena kepemilikan kunci privat tersebut secara langsung mencerminkan identitas yang teregistrasi pada sistem. Penguatan \textit{non-repudiation} ini merupakan perbaikan signifikan terhadap mekanisme sebelumnya di mana kunci penandatanganan dibangkitkan secara acak dan tidak terikat pada identitas aktor mana pun.
+Mekanisme penandatanganan yang dipilih adalah tanda tangan digital
+berbasis kunci privat IOTA (\texttt{IotaKeyPair}) milik aktor yang
+terlibat pada saat kejadian berlangsung. Pendekatan ini memiliki
+keunggulan dibandingkan alternatif seperti penggunaan kunci Ed25519
+yang dibangkitkan secara acak pada saat inisialisasi komponen: kunci
+privat IOTA sudah terikat pada identitas aktor yang terdaftar pada
+\textit{ledger} IOTA, sehingga tanda tangan yang dihasilkan dapat
+diverifikasi secara kriptografis terhadap identitas yang terregistrasi
+pada sistem. Dengan demikian, ALS dapat memastikan bahwa setiap
+\textit{event} yang masuk ke dalam audit log berasal dari komponen
+atau aktor yang memang terdaftar dalam sistem DecMed, bukan dari
+sumber yang tidak dikenal atau tidak berwenang.
 
-Dengan menerapkan mekanisme \textit{signed payload} berbasis kunci IOTA aktor, komponen pengumpul dapat memverifikasi otentisitas pengirim dan integritas isi log sebelum diproses lebih lanjut, sehingga mencegah penyusupan data palsu dan menjamin sifat \textit{non-repudiation} yang lebih kuat.
+Dengan menerapkan mekanisme \textit{signed payload} berbasis kunci
+IOTA aktor, ALS dapat menolak seluruh \textit{event} yang tidak
+memiliki tanda tangan valid sebelum diproses lebih lanjut. Hal ini
+menjamin bahwa isi audit log hanya memuat catatan aktivitas yang
+berasal dari sumber yang terverifikasi, sehingga keaslian dan
+keandalan audit log sebagai catatan aktivitas sistem dapat terjaga.
 
 \subsubsection{Analisis Kerahasiaan Log dalam Transit}
 \label{subsubsec:analisis-kerahasiaan-log-transit}
