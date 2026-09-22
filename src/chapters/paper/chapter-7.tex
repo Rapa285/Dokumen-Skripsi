@@ -1,0 +1,21 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+This paper presented the Audit Log Service (ALS), a STRIDE-grounded audit
+logging component for the DecMed decentralized EHR framework. Starting from
+a formal per-interaction threat model that yields 25 threats across all six
+STRIDE categories, we derived a minimal and complete catalog of 13 audit
+event types. ALS enforces tamper-evidence locally via SHA-256 hash-chaining
+and achieves long-term immutability via IPFS Cluster pinning and IOTA Move
+frozen objects. ALS integrates non-intrusively: it does not alter DecMed's
+business logic or data paths, and reuses existing IOTA and IPFS
+infrastructure.
+
+Three directions remain for future work. First, Ed25519 key pairs should be
+persisted securely---via hardware security modules or secure enclaves---to
+ensure cryptographic continuity of non-repudiation across service restarts.
+Second, ALS should expose a query interface enabling authorized investigators
+to retrieve and verify log batches by time range or actor identifier. Third,
+the retention strategy should be evaluated against production IPFS Cluster
+failure modes to quantify the minimum replication factor required for a
+target durability SLA.

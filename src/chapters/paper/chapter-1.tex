@@ -1,4 +1,47 @@
-
 \section{Introduction}
-This document is a model and instructions for \LaTeX.
-Please observe the conference page limits.
+\label{sec:introduction}
+
+Indonesia's Ministry of Health Regulation No.\ 24/2022 mandates that every
+healthcare facility operate Electronic Health Record (EHR) systems that
+guarantee the confidentiality, integrity, and availability of patient
+data~\cite{permenkes24_2022}. These guarantees extend beyond access control:
+a credible audit trail---one that can reconstruct who accessed or modified a
+record, when, and from which component---is a prerequisite for regulatory
+compliance, forensic investigation, and insider-threat
+detection~\cite{cert2022insiderthreat}.
+
+DecMed addressed the access-control dimension of EHR security by combining
+Capability-Based Access Control (CapBAC) enforced via IOTA smart contracts,
+Proxy Re-Encryption (PRE) for key delegation without exposing plaintext, and
+IPFS for off-chain clinical data storage~\cite{DecMed}. Despite these
+contributions, DecMed's audit capabilities exhibit three structural
+weaknesses. First, on-chain capability entries record \emph{granted
+permissions}, not \emph{realized accesses}; the system cannot reconstruct who
+actually read a record at a given time. Second, operations such as access
+revocation overwrite existing state rather than appending a new entry,
+violating the append-only invariant required for non-repudiation. Third,
+logging is scattered across independent components with heterogeneous formats,
+no central collector, and no retention strategy against IOTA's data-pruning
+mechanism.
+
+This paper makes two contributions:
+\begin{enumerate}
+    \item A systematic derivation of audit event requirements for DecMed using
+    STRIDE threat modeling applied per-interaction on a Data Flow Diagram
+    (DFD), yielding 13 event types that cover all six STRIDE categories.
+
+    \item The design and implementation of the \textbf{Audit Log Service
+    (ALS)}, a standalone Rust service that enforces tamper-evidence through
+    SHA-256 hash-chaining, delivers long-term immutability through IPFS
+    pinning and IOTA Move frozen objects, and integrates non-intrusively with
+    DecMed's existing infrastructure.
+\end{enumerate}
+
+The remainder of this paper is organized as follows. Section~\ref{sec:background}
+reviews EHR accountability standards, the DecMed framework, and relevant
+security primitives. Section~\ref{sec:threat-analysis} presents the STRIDE
+threat model and derives the audit event catalog. Section~\ref{sec:design}
+describes the ALS architecture and key design decisions.
+Section~\ref{sec:implementation} covers implementation details.
+Section~\ref{sec:evaluation} evaluates correctness and security properties.
+Section~\ref{sec:conclusion} concludes and outlines future work.

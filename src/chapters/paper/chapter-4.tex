@@ -1,0 +1,100 @@
+\section{System Design}
+\label{sec:design}
+
+\subsection{Architecture}
+
+ALS is designed as a \emph{centralized audit collector} following the same
+supporting-service pattern as the PRE Server: an independent Rust binary with
+a single well-defined responsibility, reusing DecMed's existing IOTA and IPFS
+infrastructure. Four event sources feed into ALS: Patient Client, Hospital
+Client, Ministry Client, and PRE Server.
+
+ALS comprises four internal components:
+
+\begin{itemize}
+    \item \textbf{Audit Receiver}: an Axum HTTP endpoint
+    (\texttt{POST /api/events}) that accepts encrypted-and-signed event
+    payloads from event sources.
+
+    \item \textbf{Internal Queue}: a bounded async channel (capacity 10{,}000)
+    that decouples event reception from processing, preventing back-pressure
+    on event sources.
+
+    \item \textbf{Audit Logger}: an async worker that dequeues events,
+    verifies signatures, forms structured \texttt{AuditRecord}s, applies
+    hash-chaining, and appends records to the active log file.
+
+    \item \textbf{Log Rotation \& Archival Worker}: a timer-driven worker that
+    seals the active log file, uploads it to IPFS Cluster with pinning, and
+    commits rotation metadata to IOTA.
+\end{itemize}
+
+\subsection{Event Encapsulation and Non-Repudiation}
+
+Non-repudiation requires that the origin of each audit event be
+cryptographically bound to the sending component. Each event source generates
+an ephemeral Ed25519 key pair at initialization. When an auditable operation
+completes, the source constructs an \texttt{AuditEvent}, serializes it, and
+signs it with its Ed25519 private key. The signed payload is then encrypted
+under ALS's ECDH P-256 public key using ECIES (AES-256-GCM for symmetric
+encryption, SHA-256 as the KDF), yielding an \texttt{EncryptedSignedEvent}.
+
+ALS decrypts the payload, verifies the Ed25519 signature against the
+registered public key of the source component, and only then enqueues the
+event. Events with invalid or absent signatures are rejected and themselves
+logged as EV12 (policy violation) entries.
+
+The asynchronous delivery model means that ALS events do not add latency
+to the critical path of clinical operations. Each event source integrates an
+\texttt{ALSClient} backed by a local \texttt{AlsQueue}; a retry worker
+re-attempts delivery with exponential backoff if ALS is temporarily
+unavailable, so events survive transient ALS downtime without being dropped.
+
+\subsection{Audit Record Schema and Hash-Chaining}
+
+Each verified event is materialized into an \texttt{AuditRecord}:
+
+\begin{itemize}
+    \item \texttt{record\_id}: UUID v7 (monotone, time-ordered).
+    \item \texttt{timestamp}: RFC~3339 UTC, set at materialization time by ALS.
+    \item \texttt{prev\_record\_hash}: SHA-256 hex digest of the preceding
+    record's serialization, or \texttt{null} for the first record in a log
+    file.
+    \item Common fields: \texttt{source\_component}, \texttt{actor\_id},
+    \texttt{actor\_type}, \texttt{action} (EV1--EV13), \texttt{target\_object\_id},
+    \texttt{target\_type}, \texttt{outcome}, \texttt{event\_signature}.
+    \item \texttt{details}: a tagged enum (\texttt{AuditEventDetails})
+    carrying event-specific evidence attributes.
+\end{itemize}
+
+Records are written in JSON-Lines format to an append-only local log file.
+The \texttt{prev\_record\_hash} field of record $n$ contains
+$\text{SHA-256}(\text{serialize}(r_{n-1}))$. Any modification, insertion, or
+deletion of a record breaks the chain at that position and is detected
+during pre-rotation verification before the file is sealed and uploaded.
+
+\subsection{Log Rotation and Long-Term Retention}
+
+IPFS's content-addressed storage prohibits in-place append after a file is
+published; each upload produces a new CID. ALS therefore buffers records
+locally and applies a time-based rotation strategy:
+
+\begin{enumerate}
+    \item At the configured rotation interval, the Audit Logger seals the
+    active log file (verifying the hash chain) and opens a new one.
+
+    \item The sealed file is uploaded to IPFS Cluster. The cluster applies
+    \emph{pinning} to mark the file as permanent, preventing garbage
+    collection.
+
+    \item ALS submits a Move transaction via the existing Gas Station Server
+    to call \texttt{als::audit\_log::commit\_rotation}. The resulting on-chain
+    object stores the CID, file hash (SHA-256), record count, and time period
+    as a \emph{frozen} (immutable) object.
+\end{enumerate}
+
+This dual-layer strategy eliminates both failure modes: IPFS pinning prevents
+GC removal of the log archive; the on-chain frozen object prevents IOTA node
+pruning from erasing the metadata anchor. The IOTA frozen object cannot be
+modified by any actor, including the ALS operator, after the transaction is
+finalized.

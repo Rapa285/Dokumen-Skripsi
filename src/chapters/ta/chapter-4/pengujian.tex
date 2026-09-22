@@ -55,7 +55,7 @@ Pengujian P-KF-05 memverifikasi KF-TA-05, yaitu kemampuan ALS menyediakan mekani
 
 Keberhasilan pengujian diverifikasi melalui tiga indikator: (1) berkas arsip \texttt{logs/uploading\_\{timestamp\}.log} terbentuk selama proses pengarsipan kemudian terhapus setelah selesai, (2) log konsol menampilkan pesan \texttt{[rotation] upload IPFS berhasil. CID: \{cid\}} dengan nilai CID yang valid, dan (3) log konsol menampilkan pesan \texttt{[iota] LogRecord dibuat. Object ID: \{id\} | TX: \{digest\}} yang menandakan metadata berhasil diterbitkan pada jaringan IOTA.
 
-Hasil pengujian menunjukkan seluruh tiga indikator terpenuhi. CID yang dihasilkan oleh IPFS dapat digunakan untuk mengambil kembali berkas arsip melalui \textit{gateway} IPFS, dan \textit{object ID} \texttt{LogRecord} pada IOTA dapat diverifikasi melalui IOTA Explorer pada jaringan Localnet.
+Hasil pengujian menunjukkan seluruh tiga indikator terpenuhi dalam lingkungan prototipe dan skenario uji yang ditetapkan. CID yang dihasilkan oleh IPFS dapat digunakan untuk mengambil kembali berkas arsip melalui \textit{gateway} IPFS, dan \textit{object ID} \texttt{LogRecord} pada IOTA dapat diverifikasi melalui IOTA Explorer pada jaringan Localnet.
 
 \subsection{Pengujian End-to-end Audit Log}
 \label{subsec:pengujian-siklus-lengkap}

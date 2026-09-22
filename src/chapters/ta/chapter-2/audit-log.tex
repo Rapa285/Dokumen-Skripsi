@@ -25,42 +25,10 @@ spesifik tunggal dalam siklus hidup rekam medis elektronik
 adalah kumpulan satu atau lebih \textit{audit log} yang secara
 keseluruhan membentuk riwayat lengkap atas suatu entitas atau proses
 (\cite{iso27789_2021}). Dengan kata lain, satu \textit{audit event}
-menghasilkan satu \textit{audit record}; sejumlah \textit{audit record}
-yang tersusun membentuk sebuah \textit{audit log}; dan satu atau lebih
+menghasilkan satu \textit{audit record}, sejumlah \textit{audit record}
+yang tersusun membentuk sebuah \textit{audit log}, dan satu atau lebih
 \textit{audit log} secara kolektif membentuk sebuah \textit{audit
 trail}.
-
-\begin{figure}[htbp]
-\centering
-% Ganti dengan diagram hierarki jika tersedia
-% \includegraphics[width=0.75\textwidth]{chapter-2/hierarki-audit.png}
-\caption{Hierarki Konsep Audit Menurut ISO 27789:2021}
-\label{fig:hierarki-audit}
-\end{figure}
-
-Tugas Akhir ini berfokus pada level \textit{audit log}: pengembangan
-mekanisme pembangkitan \textit{audit record} dari berbagai komponen
-sistem, pengumpulannya ke dalam sebuah \textit{audit log} yang
-terstruktur, serta penyimpanannya secara \textit{tamper-evident}.
-Mekanisme ini merupakan prasyarat sebelum \textit{audit log} yang
-utuh dapat terbentuk dari satu atau lebih \textit{audit log} yang
-dihasilkan.
-
-Konsep audit log perlu dibedakan secara tegas dari konsep pencatatan
-izin akses (\textit{access grant log}). Audit log bersifat komplementer
-terhadap kontrol akses, bukan pengganti maupun bagian darinya: kontrol
-akses menentukan kebijakan mengenai siapa \textit{berhak} mengakses
-data, sedangkan audit log mencatat apa yang \textit{benar-benar
-terjadi} pada sistem, termasuk apabila terjadi penyimpangan dari
-kebijakan tersebut (\cite{iso27789_2021}). Perbedaan ini penting untuk
-digarisbawahi karena suatu sistem dapat saja memiliki kontrol akses
-yang ketat dan mencatat metadata pemberian izin secara lengkap, namun
-tetap tidak memiliki audit log yang memadai apabila tidak ada catatan
-terpisah mengenai peristiwa akses aktual (\textit{access event}) yang
-terjadi setelah izin tersebut diberikan. Dengan kata lain, audit log
-idealnya mencatat peristiwa (\textit{event}) sebagai representasi dari
-tindakan nyata yang terjadi pada sistem, bukan semata representasi dari
-kebijakan atau otorisasi yang berlaku.
 
 % -------------------------------------------------------------------
 \subsection{Karakteristik Audit Log yang Baik}

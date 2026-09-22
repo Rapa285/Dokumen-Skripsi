@@ -1,9 +1,26 @@
 \begin{abstract}
-	This document is a model and instructions for \LaTeX.
-	This and the IEEEtran.cls file define the components of your paper [title, text, heads, etc.]. *CRITICAL:\ Do Not Use Symbols, Special Characters, Footnotes,
-	or Math in Paper Title or Abstract.
+Electronic Health Records (EHR) impose strict accountability requirements:
+every access, modification, and delegation event must be provably recorded
+and tamper-evident. DecMed, a prior decentralized EHR framework built on
+IOTA Distributed Ledger Technology, Proxy Re-Encryption (PRE), and IPFS,
+addressed access control but left audit logging fragmented, narrow in scope,
+and vulnerable to data pruning. This paper introduces the \textbf{Audit Log
+Service (ALS)}, an independent backend component integrated into DecMed's
+existing architecture. Starting from a STRIDE threat model applied
+per-interaction on DecMed's Data Flow Diagram, we derive 25 threats across
+all six STRIDE categories, which map to 13 mandatory audit event types. ALS
+aggregates events from all four event sources using Ed25519-signed payloads
+over an asynchronous push channel, chains each audit record cryptographically
+via SHA-256 hash-chaining for local tamper-evidence, and achieves long-term
+retention by archiving sealed log files to IPFS Cluster with pinning and
+committing rotation metadata as an immutable Move object on the IOTA smart
+contract. Evaluation confirms that all 13 event types are captured, the hash
+chain detects any single-record tampering, and the dual-layer persistence
+strategy eliminates the data-pruning vulnerability without modifying
+DecMed's existing business logic.
 \end{abstract}
 
 \begin{IEEEkeywords}
-	component, formatting, style, styling, insert
+electronic health record, audit log, STRIDE, threat modeling, IOTA, IPFS,
+hash-chaining, non-repudiation, decentralized systems
 \end{IEEEkeywords}

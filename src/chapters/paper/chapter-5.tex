@@ -1,0 +1,73 @@
+\section{Implementation}
+\label{sec:implementation}
+
+ALS is implemented as a standalone Rust crate (\texttt{audit-trail}) using
+the Tokio async runtime. Table~\ref{tab:deps} lists the primary crate
+dependencies. The four event sources each integrate an \texttt{als} module
+that exposes \texttt{ALSClient} and \texttt{AlsQueue}; this module is
+identical across all sources, keeping integration non-intrusive.
+
+\begin{table}[htbp]
+    \caption{Key ALS Dependencies}
+    \label{tab:deps}
+    \begin{center}
+        \begin{tabular}{l l p{4cm}}
+            \toprule
+            \textbf{Crate} & \textbf{Version} & \textbf{Role} \\
+            \midrule
+            \texttt{axum}       & 0.8.4  & HTTP server for event ingestion \\
+            \texttt{tokio}      & 1.44.2 & Async runtime \\
+            \texttt{aes-gcm}    & 0.10   & AES-256-GCM encryption \\
+            \texttt{p256}       & 0.13   & ECDH P-256 for ECIES key wrapping \\
+            \texttt{iota-sdk}   & 1.x    & IOTA transaction construction \\
+            \texttt{sha2}       & 0.10   & SHA-256 for hash-chaining and KDF \\
+            \texttt{uuid}       & 1.x    & UUID v7 record identifiers \\
+            \texttt{reqwest}    & 0.12   & HTTP client for IPFS upload \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+\end{table}
+
+\subsection{Event Source Integration}
+
+Integration into each event source is limited to adding an \texttt{als}
+module call after each auditable operation. The call is non-blocking: it
+enqueues an \texttt{AuditEvent} into the local \texttt{AlsQueue} and returns
+immediately. The retry worker inside \texttt{ALSClient} handles delivery
+failures transparently, retrying with exponential backoff up to a configured
+limit before dropping the event and emitting a warning log.
+
+\subsection{Move Smart Contract}
+
+The on-chain component is a Move module \texttt{als::audit\_log} deployed
+on the IOTA smart contract. Its entry function is:
+
+\begin{verbatim}
+public entry fun commit_rotation(
+    cap: &AuditLogCap,
+    cid: vector<u8>,
+    file_hash: vector<u8>,
+    record_count: u64,
+    period_start: u64,
+    period_end: u64,
+    ctx: &mut TxContext
+)
+\end{verbatim}
+
+The function creates a \texttt{RotationRecord} struct and immediately freezes
+it via \texttt{transfer::freeze\_object}. A frozen Move object becomes
+permanently read-only: no entry function---including one signed by the
+\texttt{AuditLogCap} holder---can mutate it after finalization.
+\texttt{AuditLogCap} is a one-time capability object held by ALS, preventing
+unauthorized parties from publishing false rotation records.
+
+\subsection{Implementation Scope}
+
+Six implementation units (I-ALS-01 through I-ALS-06) map directly to the
+design components described in Section~\ref{sec:design}: type schema
+(I-ALS-01), event encapsulation (I-ALS-02), Audit Receiver (I-ALS-03),
+Audit Logger with hash-chaining (I-ALS-04), rotation and archival worker
+(I-ALS-05), and event source integration module (I-ALS-06). The
+implementation was carried out in a prototype environment running Ubuntu
+24.04 (WSL2) for ALS and client components, with a VPS hosting IPFS Cluster
+and Gas Station, and IOTA Localnet for the smart contract.

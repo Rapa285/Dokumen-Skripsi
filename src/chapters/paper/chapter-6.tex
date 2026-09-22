@@ -1,0 +1,93 @@
+\section{Evaluation}
+\label{sec:evaluation}
+
+We evaluate ALS along two dimensions: functional correctness and security
+property verification. Five functional (P-KF) and eight non-functional
+(P-KNF) test scenarios are executed in the prototype environment described
+in Section~\ref{sec:implementation}.
+
+\subsection{Functional Correctness}
+
+\textbf{P-KF-01 (Centralized ingestion).} ALS receives and records events
+from all four sources concurrently via \texttt{POST /api/events}. Records
+from interleaved sessions are ordered correctly by UUID v7 timestamp;
+no record is lost or duplicated.
+
+\textbf{P-KF-02 (Event coverage).} All 13 event types (EV1--EV13) are
+triggered by their corresponding DecMed operations. Each appears in the log
+file with the correct \texttt{action} label and fully populated
+\texttt{AuditEventDetails} fields.
+
+\textbf{P-KF-03 (Schema consistency).} Audit records produced across all
+event types parse correctly using the same \texttt{AuditRecord}
+deserializer; no field is absent or mistyped.
+
+\textbf{P-KF-04 (Append-only writes).} Log files are opened in append mode;
+no in-place modification of existing records is possible through the ALS
+API surface.
+
+\textbf{P-KF-05 (Rotation and on-chain commitment).} After rotation, the
+IPFS CID and file hash are verifiably committed to the IOTA smart contract
+as a frozen object retrievable by any IOTA node.
+
+All five scenarios pass.
+
+\subsection{Security Property Verification}
+
+\textbf{P-KNF-01 (Tamper detection).} Modifying a single byte in any
+record in a sealed log file causes the hash-chain verifier to report a
+broken chain at that position, with the correct record index identified.
+
+\textbf{P-KNF-02 (Signature enforcement).} Events submitted with an invalid
+or absent Ed25519 signature are rejected by the Audit Receiver before
+entering the queue; no \texttt{AuditRecord} is created for rejected events.
+
+\textbf{P-KNF-03 (Record standardization).} All records across all event
+types conform to the JSON-Lines schema; automated schema validation
+reports zero violations.
+
+\textbf{P-KNF-04 (IPFS persistence).} Pinned log files remain retrievable
+after triggering a manual garbage-collection run on the IPFS Cluster node;
+unpinned files of the same size are removed.
+
+\textbf{P-KNF-05 (On-chain immutability).} Attempts to mutate a frozen
+\texttt{RotationRecord} object via the IOTA RPC return a
+\texttt{MoveAbort} error; the object is unmodifiable by any transaction.
+
+All eight non-functional scenarios pass.
+
+\subsection{Gap Resolution Traceability}
+
+Table~\ref{tab:traceability} maps each gap identified in
+Section~\ref{sec:threat-analysis} to the ALS mechanism that resolves it and
+the test that verifies the resolution.
+
+\begin{table}[htbp]
+    \caption{Gap--Solution--Test Traceability}
+    \label{tab:traceability}
+    \begin{center}
+        \begin{tabular}{c p{3cm} p{2.5cm} c}
+            \toprule
+            \textbf{Gap} & \textbf{ALS Mechanism} & \textbf{Test} \\
+            \midrule
+            M-TA-01 & Single \texttt{POST /api/events} endpoint & P-KF-01 \\
+            M-TA-02 & 13-type event catalog from STRIDE & P-KF-02 \\
+            M-TA-03 & Hash-chaining + frozen on-chain object & P-KNF-01, P-KNF-05 \\
+            M-TA-04 & Uniform \texttt{AuditRecord} JSON-Lines schema & P-KNF-03 \\
+            M-TA-05 & IPFS pinning + IOTA frozen object & P-KNF-04, P-KNF-05 \\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+\end{table}
+
+\subsection{Limitations}
+
+The evaluation was conducted on IOTA Localnet rather than Testnet or Mainnet;
+behavior under production network conditions---particularly transaction
+latency variability and IPFS Cluster node failures---has not been measured.
+The rotation interval was set to 60 seconds for testing; production
+deployments should use 300 seconds or longer to reduce on-chain transaction
+overhead. Ed25519 key pairs are currently ephemeral, regenerated at each
+component restart, which limits forensic continuity across process restarts;
+a persistent key management solution (e.g., HSM or secure enclave) is
+required for full production-grade non-repudiation.

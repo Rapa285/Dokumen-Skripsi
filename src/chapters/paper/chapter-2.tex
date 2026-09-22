@@ -1,11 +1,87 @@
-\section{Ease of Use}
+\section{Background}
+\label{sec:background}
 
-\subsection{Maintaining the Integrity of the Specifications}
+\subsection{Audit Logging in Healthcare Systems}
 
-The IEEEtran class file is used to format your paper and style the text. All margins,
-column widths, line spaces, and text fonts are prescribed; please do not
-alter them. You may note peculiarities. For example, the head margin
-measures proportionately more than is customary. This measurement
-and others are deliberate, using specifications that anticipate your paper
-as one part of the entire proceedings, and not as an independent document.
-Please do not revise any of the current designations.
+ISO/IEC 27789 defines the hierarchy of audit artifacts: an \emph{audit
+event} triggers one \emph{audit record}; a chronological collection of
+records forms an \emph{audit log}; one or more logs collectively constitute
+an \emph{audit trail}~\cite{iso27789_2021}. A well-formed audit log must
+satisfy four properties: (i)~\emph{unambiguous identification}---sufficient
+data to identify every user or external system that accessed health data;
+(ii)~\emph{integrity and confidentiality}---protection against tampering,
+including logging events when the audit system itself is disabled; (iii)~%
+\emph{completeness}---all create, read, update, and archive operations on
+health data must be recorded; and (iv)~\emph{availability}---entries must
+be captured whenever the health information system is
+operational~\cite{iso27789_2021}.
+
+NIST SP 800-53 Rev.\ 5 further formalizes these requirements through the
+Audit and Accountability (AU) control family, covering event definition
+(AU-2), record content (AU-3), log protection (AU-9), and retention
+(AU-11)~\cite{nist80053r5}. Audit logs are also the primary evidentiary
+source for detecting and attributing insider threats---a particularly
+relevant concern in multi-role healthcare environments where actors hold
+legitimate access by default~\cite{cert2022insiderthreat}.
+
+\subsection{The DecMed Framework}
+
+DecMed is a three-tier decentralized EHR framework~\cite{DecMed}. Its
+\emph{client layer} comprises three Tauri/SvelteKit applications: Patient
+Client (mobile), Hospital Client (desktop), and Ministry Client (desktop).
+All cryptographic identity is managed non-custodially via BIP39 mnemonic
+phrases stored on user devices.
+
+The \emph{proxy layer} centers on a Rust/Axum PRE Server that mediates
+data access. When a healthcare provider requests a patient record, the PRE
+Server (1) verifies an active capability entry on the IOTA smart contract,
+(2) re-encrypts the IPFS-stored clinical ciphertext under the requester's
+public key using pre-uploaded key fragments (\texttt{kfrag}), and (3)
+returns the re-encrypted payload. A Gas Station Server sponsors IOTA
+transaction fees so end-users need not hold IOTA tokens.
+
+The \emph{storage layer} combines IOTA smart contracts (Move language)
+for on-chain state---capability entries, administrative metadata---and IPFS
+Cluster for off-chain encrypted clinical data. IOTA Rebased uses a DAG
+consensus (Mysticeti, BFT Delegated Proof-of-Stake) achieving approximately
+500\,ms finality at over 50{,}000 TPS.
+
+DecMed claims to produce tamper-evident audit trails by recording
+capability entries on-chain~\cite{DecMed}. However, capability entries
+represent \emph{granted permissions}, not realized accesses; revocation
+overwrites state rather than appending; and event coverage is limited to
+smart-contract invocations, missing interactions that do not trigger a Move
+call.
+
+\subsection{STRIDE Threat Modeling}
+
+STRIDE is a threat classification framework developed at
+Microsoft~\cite{shostack2014}. It enumerates six categories:
+\textbf{S}poofing (false identity), \textbf{T}ampering (unauthorized data
+modification), \textbf{R}epudiation (deniability of an action),
+\textbf{I}nformation Disclosure (unauthorized exposure), \textbf{D}enial of
+Service (availability degradation), and \textbf{E}levation of Privilege
+(exceeding authorization). Applied per-interaction on a Data Flow
+Diagram~\cite{owasp_threat_modeling}, each data flow crossing a trust
+boundary is evaluated against applicable categories. The Repudiation
+category has a direct correspondence with audit logging: if a system lacks,
+fails to retain, or cannot verify its logs, repudiation threats cannot be
+rebutted~\cite{shostack2014}.
+
+\subsection{Hash-Chaining for Tamper-Evidence}
+
+Hash-chaining is a lightweight integrity mechanism in which each log record
+includes the SHA-256 digest of the immediately preceding record. A chain
+of $N$ records is tamper-evident: modifying, inserting, or deleting any
+record invalidates all subsequent hashes, making manipulation detectable
+without requiring trusted hardware~\cite{nist800_92}.
+
+\subsection{IPFS and Content-Addressed Storage}
+
+IPFS is a peer-to-peer distributed file system that addresses data by a
+cryptographic hash of its content, called a Content Identifier
+(CID)~\cite{benet2014ipfscontentaddressed}. Because a CID uniquely
+identifies a specific byte sequence, any modification produces a distinct
+CID. IPFS nodes apply \emph{garbage collection} (GC) to remove
+unpinned blocks; pinning marks a CID as permanent, preventing GC from
+removing it.
