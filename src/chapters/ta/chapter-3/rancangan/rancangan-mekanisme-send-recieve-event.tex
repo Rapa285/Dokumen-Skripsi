@@ -2,7 +2,7 @@
 % File: chapters/ta/chapter-3/rancangan/rancangan-mekanisme-send-recieve-event.tex
 %
 % PERUBAHAN:
-%   - "ATS" → "ALS" di seluruh file
+%   - "ALS" → "ALS" di seluruh file
 %   - Paragraf satu baris
 %   - Konten mekanisme enkapsulasi/pengiriman tidak berubah substantif
 % =============================================================
@@ -32,9 +32,9 @@ Setelah enkripsi selesai, \textit{event source} menandatangani \textit{ciphertex
 \subsubsection{Rancangan Mekanisme Pengiriman}
 \label{subsubsec:rancangan-mekanisme-pengiriman}
 
-Berdasarkan analisis pada Subbab~\ref{subsubsec:analisis-mekanisme-pengiriman-log}, mekanisme pengiriman yang dipilih adalah \textit{asynchronous push-based}. Setiap \textit{event source} mengimplementasikan modul \texttt{ATSClient} yang bertanggung jawab membungkus \textit{event}, mengirimkannya ke ALS, dan menangani kegagalan pengiriman. Pengiriman dilakukan secara asinkron menggunakan \textit{fire-and-forget pattern}: komponen utama tidak menunggu konfirmasi dari ALS sebelum melanjutkan pemrosesan, sehingga tidak ada latensi tambahan yang dirasakan oleh pengguna.
+Berdasarkan analisis pada Subbab~\ref{subsubsec:analisis-mekanisme-pengiriman-log}, mekanisme pengiriman yang dipilih adalah \textit{asynchronous push-based}. Setiap \textit{event source} mengimplementasikan modul \texttt{ALSClient} yang bertanggung jawab membungkus \textit{event}, mengirimkannya ke ALS, dan menangani kegagalan pengiriman. Pengiriman dilakukan secara asinkron menggunakan \textit{fire-and-forget pattern}: komponen utama tidak menunggu konfirmasi dari ALS sebelum melanjutkan pemrosesan, sehingga tidak ada latensi tambahan yang dirasakan oleh pengguna.
 
-Untuk mengakomodasi kemungkinan kegagalan jaringan sementara, \texttt{ATSClient} menerapkan mekanisme \textit{retry} dengan \textit{exponential backoff}. Apabila pengiriman pertama gagal, komponen akan mencoba ulang dengan jeda yang semakin panjang hingga batas percobaan maksimum tercapai. Kegagalan pengiriman yang melampaui batas percobaan dicatat ke \textit{stderr} komponen pengirim.
+Untuk mengakomodasi kemungkinan kegagalan jaringan sementara, \texttt{ALSClient} menerapkan mekanisme \textit{retry} dengan \textit{exponential backoff}. Apabila pengiriman pertama gagal, komponen akan mencoba ulang dengan jeda yang semakin panjang hingga batas percobaan maksimum tercapai. Kegagalan pengiriman yang melampaui batas percobaan dicatat ke \textit{stderr} komponen pengirim.
 
 \subsubsection{Rancangan Penerimaan dan Verifikasi pada ALS}
 \label{subsubsec:rancangan-penerimaan-verifikasi}

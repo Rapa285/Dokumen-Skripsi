@@ -5,11 +5,11 @@ Implementasi sistem dilakukan pada lingkungan prototipe yang merepresentasikan
 komponen utama DecMed, yaitu \textit{Patient Client}, \textit{Hospital Client},
 \textit{Ministry Client}, PRE Server, penyimpanan \textit{off-chain} IPFS
 Cluster, IOTA Gas Station, \textit{smart contract} IOTA Move, dan layanan
-Audit Trail Service (ATS) yang berjalan pada jaringan IOTA Localnet. Lingkungan
+Audit Log Service (ALS) yang berjalan pada jaringan IOTA Localnet. Lingkungan
 ini dipilih agar rancangan pada Bab III dapat diuji tanpa bergantung pada
 integrasi langsung dengan sistem informasi rumah sakit yang sesungguhnya.
 
-Komponen ATS dan PRE Server dijalankan bersama pada lingkungan lokal bersama
+Komponen ALS dan PRE Server dijalankan bersama pada lingkungan lokal bersama
 ketiga aplikasi \textit{client}. Komponen pendukung yang membutuhkan ketersediaan
 jaringan, yaitu IPFS Cluster dan IOTA Gas Station, dijalankan pada Virtual
 Private Server (VPS). \textit{Smart contract} IOTA Move di-\textit{deploy} pada
@@ -40,33 +40,33 @@ konsep dan alur yang sudah ditetapkan di Bab III dirujuk ulang; fokus di sini
 adalah komponen kode, antarmuka, dan perilaku konkret sistem.
 
 Daftar komponen dan keterkaitannya dengan rancangan ditunjukkan pada
-Tabel~\ref{tab:daftar-implementasi-ats}. ID I-ATS dipakai sebagai rujukan.
+Tabel~\ref{tab:daftar-implementasi-als}. ID I-ALS dipakai sebagai rujukan.
 R-TA-01 (rancangan arsitektur solusi) mencakup keseluruhan sistem sehingga
 tidak muncul sebagai baris tersendiri.
 
 \begin{table}[htbp]
 \centering
-\caption{Daftar Implementasi Sistem Audit Trail}
-\label{tab:daftar-implementasi-ats}
+\caption{Daftar Implementasi Sistem Audit Log}
+\label{tab:daftar-implementasi-als}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabular}{|p{1.8cm}|p{5cm}|p{5.5cm}|}
 \hline
 \textbf{ID} & \textbf{Komponen} & \textbf{Merealisasikan Rancangan} \\
 \hline
-I-ATS-01 & Skema tipe data \texttt{AuditEvent}, \texttt{AuditRecord}, dan \texttt{AuditBatch}. & Katalog \textit{audit event} (EV1--EV13) dan skema atribut audit pada Subbab~\ref{subsec:rancangan-audit-record}. \\
+I-ALS-01 & Skema tipe data \texttt{AuditEvent}, \texttt{AuditRecord}, dan \texttt{AuditBatch}. & Katalog \textit{audit event} (EV1--EV13) dan skema atribut audit pada Subbab~\ref{subsec:rancangan-audit-record}. \\
 \hline
-I-ATS-02 & \textit{Endpoint} \texttt{POST /api/events} dan mekanisme verifikasi \textit{signed event}. & Subbab~\ref{subsec:rancangan-pembangkitan-event} (komponen Audit Receiver). \\
+I-ALS-02 & \textit{Endpoint} \texttt{POST /api/events} dan mekanisme verifikasi \textit{signed event}. & Subbab~\ref{subsec:rancangan-pembangkitan-event} (komponen Audit Receiver). \\
 \hline
-I-ATS-03 & Komponen \texttt{AuditLogger} dengan antrian asinkron internal. & Subbab~\ref{subsec:rancangan-pembentukan-record} (komponen Audit Logger dan mekanisme \textit{hash-chaining}). \\
+I-ALS-03 & Komponen \texttt{AuditLogger} dengan antrian asinkron internal. & Subbab~\ref{subsec:rancangan-pembentukan-record} (komponen Audit Logger dan mekanisme \textit{hash-chaining}). \\
 \hline
-I-ATS-04 & \textit{Worker} rotasi log, unggah IPFS, dan publikasi metadata ke IOTA. & Subbab~\ref{subsec:rancangan-rotasi-log}--\ref{subsec:rancangan-publikasi-iota} (Log Rotation \& Archival Worker). \\
+I-ALS-04 & \textit{Worker} rotasi log, unggah IPFS, dan publikasi metadata ke IOTA. & Subbab~\ref{subsec:rancangan-rotasi-log}--\ref{subsec:rancangan-publikasi-iota} (Log Rotation \& Archival Worker). \\
 \hline
-I-ATS-05 & Modul \texttt{ats} dan \texttt{ATSClient} pada setiap \textit{event source}. & Subbab~\ref{subsec:rancangan-pembangkitan-event} (integrasi ATS ke dalam arsitektur DecMed). \\
+I-ALS-05 & Modul \texttt{als} dan \texttt{ALSClient} pada setiap \textit{event source}. & Subbab~\ref{subsec:rancangan-pembangkitan-event} (integrasi ALS ke dalam arsitektur DecMed). \\
 \hline
 \end{tabular}
 \end{table}
 
-Tabel~\ref{tab:daftar-implementasi-ats} menjadi acuan urutan pembahasan
+Tabel~\ref{tab:daftar-implementasi-als} menjadi acuan urutan pembahasan
 implementasi berikut, dari skema tipe data, penerimaan \textit{event}, pembentukan
 \textit{audit record} dengan \textit{hash-chaining}, rotasi log dan pengarsipan,
 hingga integrasi ke seluruh \textit{event source} DecMed.
@@ -75,8 +75,8 @@ hingga integrasi ke seluruh \textit{event source} DecMed.
 
 Implementasi mempertahankan arsitektur kerangka kerja DecMed sebagaimana
 dijelaskan pada Subbab~\ref{subsec:rancangan-arsitektur}. Komponen perangkat
-lunak ATS diimplementasikan sebagai \textit{crate} Rust yang berdiri sendiri.
-Dependensi utama yang digunakan ditunjukkan pada Tabel~\ref{tab:dependensi-ats}.
+lunak ALS diimplementasikan sebagai \textit{crate} Rust yang berdiri sendiri.
+Dependensi utama yang digunakan ditunjukkan pada Tabel~\ref{tab:dependensi-als}.
 Pada PRE Server yang telah ada, dependensi \texttt{ed25519-dalek} versi 2.x
 ditambahkan untuk mendukung pembangkitan pasangan kunci penandatanganan
 \textit{event} pada sisi pengirim. Batasan cakupan implementasi, konfigurasi
@@ -85,8 +85,8 @@ diuraikan pada Subbab~\ref{sec:pengujian}.
 
 \begin{table}[htbp]
 \centering
-\caption{Dependensi Utama Audit Trail Service}
-\label{tab:dependensi-ats}
+\caption{Dependensi Utama Audit Log Service}
+\label{tab:dependensi-als}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabular}{|p{3.5cm}|p{2cm}|p{6.5cm}|}
 \hline
@@ -216,8 +216,8 @@ text
 \subsection{Implementasi Audit Receiver}
 
 Komponen Audit Receiver diimplementasikan melalui \textit{handler}
-\texttt{handle\_event} pada berkas \texttt{audit-trail/src/handlers.rs} dan
-\textit{routing} pada \texttt{audit-trail/src/main.rs}. \textit{Endpoint}
+\texttt{handle\_event} pada berkas \texttt{audit-trail/src/handlers.rs}
+dan \textit{routing} pada \texttt{audit-trail/src/main.rs}. \textit{Endpoint}
 \texttt{POST /api/events} menerima \textit{request} berisi objek
 \texttt{SignedEvent} dalam format JSON.
 
@@ -347,7 +347,7 @@ Implementasi \texttt{IotaLogClient} pada berkas
 jaringan IOTA. Fungsi \texttt{publish\_metadata} menserialisasi metadata ke JSON
 \textit{string}, membangun transaksi IOTA menggunakan
 \texttt{ProgrammableTransactionBuilder}, mereservasi \textit{gas} dari Gas Station
-Server, menandatangani transaksi dengan kunci privat ATS, kemudian mengeksekusi
+Server, menandatangani transaksi dengan kunci privat ALS, kemudian mengeksekusi
 transaksi melalui Gas Station Server. Apabila transaksi berhasil, fungsi
 mengembalikan \texttt{PublishResult} yang memuat \texttt{object\_id} objek
 \texttt{LogRecord} yang dibuat \textit{on-chain} serta \texttt{tx\_digest}
@@ -392,56 +392,56 @@ Penanganan kegagalan siklus dengan retensi berkas \texttt{uploading\_*} & Terimp
 
 \subsection{Implementasi Smart Contract IOTA Move}
 
-\textit{Smart contract} IOTA Move yang digunakan ATS didefinisikan pada
-\texttt{move/ats/sources/audit\_trail.move}. Modul \texttt{ats::audit\_log}
+\textit{Smart contract} IOTA Move yang digunakan ALS didefinisikan pada
+\texttt{move/als/sources/audit\_log.move}. Modul \texttt{als::audit\_log}
 menyediakan satu fungsi utama, yaitu \texttt{create\_log}, yang menerima
 representasi JSON dari metadata rotasi dan membuat objek \texttt{LogRecord}
 baru pada \textit{ledger} IOTA.
 
 Aspek terpenting dari rancangan \textit{smart contract} ini adalah bahwa modul
-\texttt{ats::audit\_log} tidak menyediakan fungsi apa pun untuk mengubah atau
+\texttt{als::audit\_log} tidak menyediakan fungsi apa pun untuk mengubah atau
 menghapus objek \texttt{LogRecord} yang telah dibuat. Satu-satunya operasi yang
 tersedia adalah \texttt{create\_log}. Setiap objek \texttt{LogRecord} yang dibuat
 langsung dibekukan melalui \texttt{transfer::freeze\_object}, sehingga tidak ada
-entitas mana pun --- termasuk ATS itu sendiri --- yang dapat mengubah isinya
+entitas mana pun --- termasuk ALS itu sendiri --- yang dapat mengubah isinya
 setelah transaksi pembuatannya \textit{final}. Rancangan ini secara langsung
 mengatasi masalah M-TA-03 yang mengidentifikasi bahwa mekanisme pencatatan
 eksisting pada DecMed masih menyediakan fungsi pembaruan pada \textit{smart
 contract} Move yang ada.
 
-\subsection{Implementasi Integrasi ATS ke DecMed}
+\subsection{Implementasi Integrasi ALS ke DecMed}
 
-Integrasi ATS ke dalam arsitektur DecMed dilakukan secara seragam pada seluruh
+Integrasi ALS ke dalam arsitektur DecMed dilakukan secara seragam pada seluruh
 \textit{event source} yang telah diidentifikasi: PRE Server, \textit{Patient Client},
 \textit{Hospital Client}, dan \textit{Ministry Client}. Setiap \textit{event source}
-diberikan penambahan modul \texttt{ats} dengan pola struktur yang konsisten di
-setiap komponen: berkas \texttt{ats.rs} yang memuat implementasi utama dan
+diberikan penambahan modul \texttt{als} dengan pola struktur yang konsisten di
+setiap komponen: berkas \texttt{als.rs} yang memuat implementasi utama dan
 \texttt{mod.rs} yang mengekspor tipe-tipe publik.
 
 \subsubsection{Tipe Data Bersama}
 
-Pada setiap \textit{event source}, berkas \texttt{ats.rs} mendefinisikan ulang
+Pada setiap \textit{event source}, berkas \texttt{als.rs} mendefinisikan ulang
 tipe-tipe data \texttt{AuditEvent}, \texttt{AuditOutcome}, dan
-\texttt{AuditEventDetails} yang strukturnya setara dengan yang ada di ATS.
+\texttt{AuditEventDetails} yang strukturnya setara dengan yang ada di ALS.
 Pendekatan ini dipilih agar setiap komponen sumber \textit{event} tidak bergantung
-pada \textit{crate} ATS secara langsung, mempertahankan independensi
+pada \textit{crate} ALS secara langsung, mempertahankan independensi
 antarkomponen. Varian \texttt{AuditEventDetails} yang diimplementasikan pada
 masing-masing \textit{event source} dibatasi hanya pada jenis \textit{event} yang
 relevan dengan aktivitas komponen tersebut.
 
-\subsubsection{Implementasi ATSClient}
+\subsubsection{Implementasi ALSClient}
 
-Setiap modul \texttt{ats} menyediakan \textit{struct} \texttt{ATSClient} yang
+Setiap modul \texttt{als} menyediakan \textit{struct} \texttt{ALSClient} yang
 mengelola pasangan kunci Ed25519 untuk penandatanganan \textit{event} serta
-mengirimkan \textit{signed event} ke ATS. Kunci Ed25519 dibangkitkan secara acak
+mengirimkan \textit{signed event} ke ALS. Kunci Ed25519 dibangkitkan secara acak
 pada saat inisialisasi menggunakan \texttt{SigningKey::generate(\&mut OsRng)},
 sehingga setiap instans komponen memiliki kunci penandatanganan yang unik. Kunci
-publik yang bersesuaian disertakan pada setiap \textit{signed event} agar ATS
+publik yang bersesuaian disertakan pada setiap \textit{signed event} agar ALS
 dapat memverifikasi tanda tangan tanpa perlu menyimpan daftar kunci yang diizinkan
 terlebih dahulu.
 
-\texttt{ATSClient} menyediakan dua metode pengiriman. Metode \texttt{send\_event}
-bersifat \textit{async} dan menunggu respons dari ATS. Metode
+\texttt{ALSClient} menyediakan dua metode pengiriman. Metode \texttt{send\_event}
+bersifat \textit{async} dan menunggu respons dari ALS. Metode
 \texttt{send\_event\_nonblocking} men-\textit{spawn task} Tokio terpisah yang
 berjalan secara \textit{fire-and-forget}; apabila pengiriman gagal, \textit{error}
 hanya dicatat ke \textit{stderr} tanpa memblokir alur utama. Metode kedua
@@ -450,10 +450,10 @@ audit tidak menambah latensi pada alur layanan utama.
 
 \subsubsection{Integrasi ke State Komponen}
 
-Pada setiap \textit{event source}, sebuah bidang \texttt{ats\_client: ATSClient}
+Pada setiap \textit{event source}, sebuah bidang \texttt{als\_client: ALSClient}
 ditambahkan pada \textit{struct state} utama komponen tersebut --- misalnya
 \texttt{AppState} pada PRE Server. Inisialisasi dilakukan pada titik masuk masing-masing
-komponen dengan membaca \texttt{ATS\_ENDPOINT} dari \textit{environment variable}.
+komponen dengan membaca \texttt{ALS\_ENDPOINT} dari \textit{environment variable}.
 Nilai \textit{default endpoint} adalah \texttt{http://localhost:3000/api/events}
 apabila variabel tidak dikonfigurasi.
 
@@ -461,7 +461,7 @@ apabila variabel tidak dikonfigurasi.
 
 \textit{Patient Client}, \textit{Hospital Client}, dan \textit{Ministry Client}
 merupakan aplikasi \textit{client} berbasis Tauri. Pada ketiga aplikasi tersebut,
-modul \texttt{ats} diimplementasikan pada sisi \textit{backend} Rust dari aplikasi
+modul \texttt{als} diimplementasikan pada sisi \textit{backend} Rust dari aplikasi
 Tauri, sehingga penandatanganan dan pengiriman \textit{event} tidak terekspos ke
 lapisan antarmuka SvelteKit/TypeScript. Distribusi \textit{event} berdasarkan \textit{event source} ditunjukkan pada Tabel~\ref{tab:oevent-source-distribution}.
 

@@ -1,31 +1,31 @@
 \section{Audit Log}
 \label{sec:audit-trail}
 
-\subsection{Definisi dan Konsep Audit Trail}
+\subsection{Definisi dan Konsep Audit Log}
 \label{subsec:definisi-audit-trail}
 
-Audit trail didefinisikan sebagai rekaman kronologis atas aktivitas sistem yang cukup untuk memungkinkan rekonstruksi, peninjauan, dan pemeriksaan urutan kejadian yang mengelilingi atau menyebabkan suatu operasi, prosedur, atau peristiwa dalam suatu transaksi, sejak awal hingga hasil akhirnya (\cite{iso27789_2021}). Definisi ini menegaskan bahwa audit trail bukan sekadar kumpulan catatan yang berdiri sendiri, melainkan suatu rangkaian catatan yang secara kolektif membentuk kronologi yang dapat ditelusuri ulang, sehingga setiap catatan di dalamnya perlu memiliki keterkaitan yang jelas dengan catatan lain dari kejadian yang sama. Standar yang sama juga membedakan secara eksplisit antara \textit{audit record} sebagai catatan satu peristiwa tunggal dalam siklus hidup suatu rekam medis elektronik, \textit{audit log} sebagai kumpulan audit record yang tersusun secara kronologis, dan \textit{audit trail} sebagai kumpulan audit log yang secara keseluruhan membentuk riwayat lengkap suatu entitas (\cite{iso27789_2021}).
+Audit log didefinisikan sebagai rekaman kronologis atas aktivitas sistem yang cukup untuk memungkinkan rekonstruksi, peninjauan, dan pemeriksaan urutan kejadian yang mengelilingi atau menyebabkan suatu operasi, prosedur, atau peristiwa dalam suatu transaksi, sejak awal hingga hasil akhirnya (\cite{iso27789_2021}). Definisi ini menegaskan bahwa audit log bukan sekadar kumpulan catatan yang berdiri sendiri, melainkan suatu rangkaian catatan yang secara kolektif membentuk kronologi yang dapat ditelusuri ulang, sehingga setiap catatan di dalamnya perlu memiliki keterkaitan yang jelas dengan catatan lain dari kejadian yang sama. Standar yang sama juga membedakan secara eksplisit antara \textit{audit record} sebagai catatan satu peristiwa tunggal dalam siklus hidup suatu rekam medis elektronik, \textit{audit log} sebagai kumpulan audit record yang tersusun secara kronologis, dan \textit{audit log} sebagai kumpulan audit log yang secara keseluruhan membentuk riwayat lengkap suatu entitas (\cite{iso27789_2021}).
 
-Konsep audit trail perlu dibedakan secara tegas dari konsep kontrol akses maupun pencatatan izin akses (\textit{access grant log}). Audit trail bersifat komplementer terhadap kontrol akses, bukan pengganti maupun bagian dari kontrol akses itu sendiri: kontrol akses menentukan kebijakan mengenai siapa \textit{berhak} mengakses data, sedangkan audit trail mencatat apa yang \textit{benar-benar terjadi} pada sistem, termasuk apabila terjadi penyimpangan dari kebijakan tersebut (\cite{iso27789_2021}). Perbedaan ini penting untuk digarisbawahi karena suatu sistem dapat saja memiliki kontrol akses yang ketat dan mencatat metadata pemberian izin secara lengkap, namun tetap tidak memiliki audit trail yang memadai apabila tidak ada catatan terpisah mengenai peristiwa akses aktual (\textit{access event}) yang terjadi setelah izin tersebut diberikan. Dengan kata lain, audit trail idealnya mencatat peristiwa (\textit{event}) sebagai representasi dari tindakan nyata yang terjadi pada sistem, bukan semata representasi dari kebijakan atau otorisasi yang berlaku.
+Konsep audit log perlu dibedakan secara tegas dari konsep kontrol akses maupun pencatatan izin akses (\textit{access grant log}). Audit log bersifat komplementer terhadap kontrol akses, bukan pengganti maupun bagian dari kontrol akses itu sendiri: kontrol akses menentukan kebijakan mengenai siapa \textit{berhak} mengakses data, sedangkan audit log mencatat apa yang \textit{benar-benar terjadi} pada sistem, termasuk apabila terjadi penyimpangan dari kebijakan tersebut (\cite{iso27789_2021}). Perbedaan ini penting untuk digarisbawahi karena suatu sistem dapat saja memiliki kontrol akses yang ketat dan mencatat metadata pemberian izin secara lengkap, namun tetap tidak memiliki audit log yang memadai apabila tidak ada catatan terpisah mengenai peristiwa akses aktual (\textit{access event}) yang terjadi setelah izin tersebut diberikan. Dengan kata lain, audit log idealnya mencatat peristiwa (\textit{event}) sebagai representasi dari tindakan nyata yang terjadi pada sistem, bukan semata representasi dari kebijakan atau otorisasi yang berlaku.
 
-ISO 27789:2021 membedakan empat istilah yang berkaitan dalam hierarki yang berjenjang. \textit{Audit event} adalah satu peristiwa pada sistem yang memicu pembangkitan catatan audit (\cite{iso27789_2021}), misalnya seorang pengguna membaca data rekam medis. \textit{Audit record} adalah catatan dari satu peristiwa spesifik tunggal dalam siklus hidup rekam medis elektronik (\cite{iso27789_2021}). \textit{Audit log} adalah kumpulan \textit{audit record} yang tersusun secara kronologis (\cite{iso27789_2021}), sedangkan \textit{audit trail} adalah kumpulan satu atau lebih \textit{audit log} yang secara keseluruhan membentuk riwayat lengkap atas suatu entitas atau proses (\cite{iso27789_2021}). Dengan kata lain, satu \textit{audit event} menghasilkan satu \textit{audit record}; sejumlah \textit{audit record} yang tersusun membentuk sebuah \textit{audit log}; dan satu atau lebih \textit{audit log} secara kolektif membentuk sebuah \textit{audit trail}.
+ISO 27789:2021 membedakan empat istilah yang berkaitan dalam hierarki yang berjenjang. \textit{Audit event} adalah satu peristiwa pada sistem yang memicu pembangkitan catatan audit (\cite{iso27789_2021}), misalnya seorang pengguna membaca data rekam medis. \textit{Audit record} adalah catatan dari satu peristiwa spesifik tunggal dalam siklus hidup rekam medis elektronik (\cite{iso27789_2021}). \textit{Audit log} adalah kumpulan \textit{audit record} yang tersusun secara kronologis (\cite{iso27789_2021}), sedangkan \textit{audit log} adalah kumpulan satu atau lebih \textit{audit log} yang secara keseluruhan membentuk riwayat lengkap atas suatu entitas atau proses (\cite{iso27789_2021}). Dengan kata lain, satu \textit{audit event} menghasilkan satu \textit{audit record}; sejumlah \textit{audit record} yang tersusun membentuk sebuah \textit{audit log}; dan satu atau lebih \textit{audit log} secara kolektif membentuk sebuah \textit{audit log}.
 
-\subsection{Karakteristik Audit Trail yang Baik}
+\subsection{Karakteristik Audit Log yang Baik}
 \label{subsec:karakteristik-audit-trail}
 
-Agar dapat berfungsi sebagai bukti yang dapat diandalkan, audit trail perlu memenuhi sejumlah karakteristik tertentu. Karakteristik pertama adalah kemampuan mengidentifikasi pengguna secara tidak ambigu (\textit{unambiguous identification}), yaitu audit trail harus menyediakan data yang cukup untuk mengidentifikasi secara pasti setiap pengguna maupun sistem eksternal yang telah mengakses atau menerima data rekam medis (\cite{iso27789_2021}). Karakteristik kedua adalah integritas (\textit{integrity}) dan kerahasiaan (\textit{confidentiality}) dari audit trail itu sendiri, yaitu jaminan bahwa catatan yang telah dibuat terlindungi dari upaya perusakan (\textit{tampering}), termasuk perlunya audit trail mencatat setiap tindakan yang dilakukan terhadap audit trail itu sendiri, seperti kapan sistem audit tidak berfungsi atau dinonaktifkan (\cite{iso27789_2021}).
+Agar dapat berfungsi sebagai bukti yang dapat diandalkan, audit log perlu memenuhi sejumlah karakteristik tertentu. Karakteristik pertama adalah kemampuan mengidentifikasi pengguna secara tidak ambigu (\textit{unambiguous identification}), yaitu audit log harus menyediakan data yang cukup untuk mengidentifikasi secara pasti setiap pengguna maupun sistem eksternal yang telah mengakses atau menerima data rekam medis (\cite{iso27789_2021}). Karakteristik kedua adalah integritas (\textit{integrity}) dan kerahasiaan (\textit{confidentiality}) dari audit log itu sendiri, yaitu jaminan bahwa catatan yang telah dibuat terlindungi dari upaya perusakan (\textit{tampering}), termasuk perlunya audit log mencatat setiap tindakan yang dilakukan terhadap audit log itu sendiri, seperti kapan sistem audit tidak berfungsi atau dinonaktifkan (\cite{iso27789_2021}).
 
-Karakteristik lain yang tidak kalah penting adalah kelengkapan (\textit{completeness}) dan ketersediaan (\textit{availability}). Kelengkapan berarti audit trail harus mencatat seluruh tindakan yang relevan terhadap data -- termasuk pembuatan, pembacaan, pembaruan, maupun pengarsipan -- setiap kali tindakan tersebut dilakukan terhadap data kesehatan pribadi (\cite{iso27789_2021}), sedangkan ketersediaan berarti sistem audit harus memastikan entri tercatat setiap kali sistem informasi kesehatan sedang beroperasi (\cite{iso27789_2021}). Selain keempat karakteristik tersebut, audit trail yang baik juga perlu mendukung kemampuan deteksi terhadap potensi penyalahgunaan oleh pihak internal (\textit{insider threat}), mengingat pelaku insider pada umumnya memiliki akses sah terhadap sistem sehingga satu-satunya cara untuk mendeteksi maupun membuktikan penyalahgunaan tersebut adalah melalui pencatatan aktivitas yang menyeluruh dan tidak dapat dimanipulasi oleh pelaku itu sendiri (\cite{cert2022insiderthreat}). Karakteristik-karakteristik tersebut menjadi acuan utama dalam menilai apakah suatu mekanisme pencatatan pada sistem informasi, termasuk pada DecMed, telah dapat disebut sebagai audit trail yang memadai.
+Karakteristik lain yang tidak kalah penting adalah kelengkapan (\textit{completeness}) dan ketersediaan (\textit{availability}). Kelengkapan berarti audit log harus mencatat seluruh tindakan yang relevan terhadap data -- termasuk pembuatan, pembacaan, pembaruan, maupun pengarsipan -- setiap kali tindakan tersebut dilakukan terhadap data kesehatan pribadi (\cite{iso27789_2021}), sedangkan ketersediaan berarti sistem audit harus memastikan entri tercatat setiap kali sistem informasi kesehatan sedang beroperasi (\cite{iso27789_2021}). Selain keempat karakteristik tersebut, audit log yang baik juga perlu mendukung kemampuan deteksi terhadap potensi penyalahgunaan oleh pihak internal (\textit{insider threat}), mengingat pelaku insider pada umumnya memiliki akses sah terhadap sistem sehingga satu-satunya cara untuk mendeteksi maupun membuktikan penyalahgunaan tersebut adalah melalui pencatatan aktivitas yang menyeluruh dan tidak dapat dimanipulasi oleh pelaku itu sendiri (\cite{cert2022insiderthreat}). Karakteristik-karakteristik tersebut menjadi acuan utama dalam menilai apakah suatu mekanisme pencatatan pada sistem informasi, termasuk pada DecMed, telah dapat disebut sebagai audit log yang memadai.
 
-\subsection{Komponen Audit Trail}
+\subsection{Komponen Audit Log}
 \label{subsec:komponen-audit-trail}
 
-Untuk dapat berfungsi secara menyeluruh, suatu sistem audit trail perlu dibangun melalui beberapa komponen fungsional yang saling berurutan. Kerangka kerja audit trail untuk rekam medis elektronik membagi persoalan menjadi penentuan peristiwa apa saja yang perlu dipicu untuk dicatat (\textit{trigger events}), format dan isi dari setiap catatan yang dihasilkan, hingga bagaimana catatan tersebut dikelola secara aman sepanjang siklus hidupnya (\cite{iso27789_2021}). Pembagian yang serupa juga ditemukan pada kerangka manajemen log komputer secara umum, yang memandang manajemen log sebagai suatu infrastruktur yang terdiri atas perangkat keras, perangkat lunak, jaringan, dan media yang digunakan untuk menghasilkan (\textit{generate}), mengirimkan (\textit{transmit}), menyimpan (\textit{store}), serta menganalisis (\textit{analyze}) data log (\cite{nist80092}). Berdasarkan kedua kerangka tersebut, komponen audit trail pada Tugas Akhir ini dikelompokkan menjadi empat bagian, yaitu penentuan event, pengumpulan event, penyimpanan event, dan pembacaan event, sebagaimana diuraikan pada subbagian berikut.
+Untuk dapat berfungsi secara menyeluruh, suatu sistem audit log perlu dibangun melalui beberapa komponen fungsional yang saling berurutan. Kerangka kerja audit log untuk rekam medis elektronik membagi persoalan menjadi penentuan peristiwa apa saja yang perlu dipicu untuk dicatat (\textit{trigger events}), format dan isi dari setiap catatan yang dihasilkan, hingga bagaimana catatan tersebut dikelola secara aman sepanjang siklus hidupnya (\cite{iso27789_2021}). Pembagian yang serupa juga ditemukan pada kerangka manajemen log komputer secara umum, yang memandang manajemen log sebagai suatu infrastruktur yang terdiri atas perangkat keras, perangkat lunak, jaringan, dan media yang digunakan untuk menghasilkan (\textit{generate}), mengirimkan (\textit{transmit}), menyimpan (\textit{store}), serta menganalisis (\textit{analyze}) data log (\cite{nist80092}). Berdasarkan kedua kerangka tersebut, komponen audit log pada Tugas Akhir ini dikelompokkan menjadi empat bagian, yaitu penentuan event, pengumpulan event, penyimpanan event, dan pembacaan event, sebagaimana diuraikan pada subbagian berikut.
 
 \subsubsection{Penentuan Event}
 \label{subsubsec:penentuan-event}
 
-Komponen pertama adalah penentuan peristiwa (\textit{event}) apa saja yang perlu memicu pencatatan audit trail. Peristiwa pemicu (\textit{trigger events}) pada sistem rekam medis elektronik pada umumnya ditentukan berdasarkan skala, tujuan, serta kebijakan privasi dan keamanan dari masing-masing sistem informasi kesehatan, dengan cakupan minimal berupa peristiwa akses (\textit{access events}) dan peristiwa kueri (\textit{query events}) terhadap data kesehatan pribadi (\cite{iso27789_2021}). Standar tersebut turut memberikan contoh peristiwa yang secara eksplisit berada di luar cakupan audit trail rekam medis, seperti peristiwa mulai/berhenti aplikasi, peristiwa autentikasi pengguna, maupun peristiwa yang dihasilkan oleh sistem operasi (\cite{iso27789_2021}).
+Komponen pertama adalah penentuan peristiwa (\textit{event}) apa saja yang perlu memicu pencatatan audit log. Peristiwa pemicu (\textit{trigger events}) pada sistem rekam medis elektronik pada umumnya ditentukan berdasarkan skala, tujuan, serta kebijakan privasi dan keamanan dari masing-masing sistem informasi kesehatan, dengan cakupan minimal berupa peristiwa akses (\textit{access events}) dan peristiwa kueri (\textit{query events}) terhadap data kesehatan pribadi (\cite{iso27789_2021}). Standar tersebut turut memberikan contoh peristiwa yang secara eksplisit berada di luar cakupan audit log rekam medis, seperti peristiwa mulai/berhenti aplikasi, peristiwa autentikasi pengguna, maupun peristiwa yang dihasilkan oleh sistem operasi (\cite{iso27789_2021}).
 
 Di luar peristiwa akses dan kueri, penentuan trigger events pada suatu sistem juga dapat diturunkan melalui pendekatan pemodelan ancaman (\textit{threat modeling}), seperti metode STRIDE, yang mengidentifikasi ancaman keamanan pada suatu sistem secara sistematis dan dapat digunakan sebagai dasar penentuan kebutuhan pencatatan (\cite{laksono2021stride}).
 
@@ -46,14 +46,14 @@ Pengumpulan event pada praktiknya menghadapi tantangan tersendiri, terutama pada
 \subsubsection{Penyimpanan Event}
 \label{subsubsec:penyimpanan-event}
 
-Komponen ketiga adalah penyimpanan event, yaitu bagaimana catatan peristiwa yang telah dikumpulkan disimpan dan dikelola secara aman sepanjang siklus hidupnya. Sistem audit trail perlu menyediakan langkah pengamanan yang cukup untuk melindungi audit log dari perusakan (\textit{tampering}), termasuk mengamankan akses terhadap audit record, mengamankan akses terhadap perangkat audit itu sendiri, serta mencatat seluruh tindakan yang dilakukan terhadap audit trail dengan menyertakan waktu, jenis tindakan, dan pelakunya (\cite{iso27789_2021}). Selain itu, audit record juga perlu tunduk pada kebijakan retensi (\textit{retention policy}) yang idealnya disesuaikan dengan masa berlaku data rekam medis yang bersangkutan, mengingat audit record dapat dibutuhkan sebagai bukti dalam jangka waktu yang panjang (\cite{iso27789_2021}).
+Komponen ketiga adalah penyimpanan event, yaitu bagaimana catatan peristiwa yang telah dikumpulkan disimpan dan dikelola secara aman sepanjang siklus hidupnya. Sistem audit log perlu menyediakan langkah pengamanan yang cukup untuk melindungi audit log dari perusakan (\textit{tampering}), termasuk mengamankan akses terhadap audit record, mengamankan akses terhadap perangkat audit itu sendiri, serta mencatat seluruh tindakan yang dilakukan terhadap audit log dengan menyertakan waktu, jenis tindakan, dan pelakunya (\cite{iso27789_2021}). Selain itu, audit record juga perlu tunduk pada kebijakan retensi (\textit{retention policy}) yang idealnya disesuaikan dengan masa berlaku data rekam medis yang bersangkutan, mengingat audit record dapat dibutuhkan sebagai bukti dalam jangka waktu yang panjang (\cite{iso27789_2021}).
 
 Pada level infrastruktur, pertimbangan penyimpanan log turut mencakup keseimbangan antara volume data log yang dihasilkan dengan kapasitas penyimpanan yang tersedia, baik untuk penyimpanan daring (\textit{online}) maupun luring (\textit{offline}), serta kebutuhan keamanan atas data tersebut (\cite{nist80092}).
 
 \subsubsection{Pembacaan Event}
 \label{subsubsec:pembacaan-event}
 
-Komponen keempat adalah pembacaan event, yaitu bagaimana catatan peristiwa yang telah tersimpan dapat diakses kembali dan dianalisis oleh pihak yang berwenang. Akses terhadap audit data harus dikendalikan secara ketat dan itu sendiri menjadi objek audit (\textit{itself subject to audit}), dengan akses yang idealnya dilakukan melalui sistem informasi yang dapat menegakkan kontrol tersebut, bukan akses langsung terhadap audit trail (\cite{iso27789_2021}). Fasilitas pembacaan audit trail idealnya juga mendukung analisis berdasarkan kombinasi berbagai bidang data yang tercatat, seperti seluruh akses oleh pengguna tertentu, seluruh tindakan penghapusan yang dilakukan oleh pengguna dengan peran tertentu, atau seluruh peristiwa yang melibatkan data pasien tertentu dalam rentang waktu tertentu (\cite{iso27789_2021}).
+Komponen keempat adalah pembacaan event, yaitu bagaimana catatan peristiwa yang telah tersimpan dapat diakses kembali dan dianalisis oleh pihak yang berwenang. Akses terhadap audit data harus dikendalikan secara ketat dan itu sendiri menjadi objek audit (\textit{itself subject to audit}), dengan akses yang idealnya dilakukan melalui sistem informasi yang dapat menegakkan kontrol tersebut, bukan akses langsung terhadap audit log (\cite{iso27789_2021}). Fasilitas pembacaan audit log idealnya juga mendukung analisis berdasarkan kombinasi berbagai bidang data yang tercatat, seperti seluruh akses oleh pengguna tertentu, seluruh tindakan penghapusan yang dilakukan oleh pengguna dengan peran tertentu, atau seluruh peristiwa yang melibatkan data pasien tertentu dalam rentang waktu tertentu (\cite{iso27789_2021}).
 
 Kemampuan pembacaan yang fleksibel semacam ini menjadi penting bagi pihak yang bertanggung jawab atas suatu sistem untuk dapat melakukan investigasi maupun evaluasi kepatuhan kebijakan secara efektif, karena analisis log pada dasarnya merupakan proses berkelanjutan yang perlu dilakukan secara berkala, bukan hanya ketika terjadi insiden (\cite{nist80092}).
 
@@ -85,7 +85,7 @@ Prinsip kerjanya adalah: pengirim menandatangani data menggunakan
 diverifikasi oleh siapa pun yang memiliki \textit{public key}
 bersesuaian (\cite{shostack2014}).
 
-Dalam konteks audit trail, tanda tangan digital memenuhi dua kebutuhan
+Dalam konteks audit log, tanda tangan digital memenuhi dua kebutuhan
 sekaligus. \textit{Pertama}, keaslian (\textit{authenticity}): karena
 hanya pemegang \textit{private key} yang dapat menghasilkan tanda
 tangan yang valid untuk kunci publik tertentu, verifikasi tanda tangan
@@ -109,7 +109,7 @@ lingkungan yang membutuhkan verifikasi tanda tangan dalam volume tinggi.
 Rotasi log adalah praktik manajemen log di mana berkas log aktif secara
 berkala diganti dengan berkas baru, sementara berkas lama diarsipkan
 untuk keperluan retensi (\cite{nist80092}). Praktik ini memiliki tiga
-manfaat utama dalam konteks audit trail.
+manfaat utama dalam konteks audit log.
 
 \textit{Pertama}, manajemen ukuran: berkas log yang terus tumbuh tanpa
 batas akan menyulitkan pengelolaan dan dapat menghabiskan kapasitas
@@ -127,15 +127,15 @@ Kombinasi antara \textit{hash-chaining} pada level \textit{record},
 tanda tangan digital untuk keaslian \textit{event}, dan rotasi log
 untuk pengarsipan berkala membentuk tiga lapisan mekanisme yang saling
 melengkapi dalam menjamin integritas, keaslian, dan ketersediaan jangka
-panjang dari sebuah sistem audit trail.
+panjang dari sebuah sistem audit log.
 
 
-\subsection{Kebutuhan Sistem Audit Trail}
+\subsection{Kebutuhan Sistem Audit Log}
 \label{subsec:kebutuhan-audit-trail}
 
 Berdasarkan definisi, karakteristik, komponen, dan model layanan yang
 telah diuraikan pada subbab sebelumnya, dapat diidentifikasi
-kebutuhan-kebutuhan yang harus dipenuhi oleh suatu sistem audit trail
+kebutuhan-kebutuhan yang harus dipenuhi oleh suatu sistem audit log
 agar dapat berfungsi secara efektif sebagai bukti digital dalam proses
 audit maupun investigasi insiden keamanan. Kebutuhan tersebut dapat
 dikelompokkan menjadi kebutuhan fungsional dan kebutuhan keamanan.
@@ -143,7 +143,7 @@ dikelompokkan menjadi kebutuhan fungsional dan kebutuhan keamanan.
 \subsubsection{Kebutuhan Fungsional}
 
 Kebutuhan fungsional berkaitan dengan kemampuan yang harus dimiliki
-sistem audit trail untuk menjalankan fungsinya:
+sistem audit log untuk menjalankan fungsinya:
 
 \begin{itemize}
     \item \textbf{Pencatatan event yang komprehensif.} Sistem harus
@@ -215,15 +215,15 @@ tidak dapat diandalkan sebagai bukti digital, sedangkan sistem yang
 memenuhi kebutuhan keamanan namun tidak memenuhi kebutuhan fungsional
 tidak dapat digunakan untuk investigasi yang komprehensif. Kebutuhan
 inilah yang akan digunakan sebagai tolok ukur dalam mengevaluasi
-kondisi audit trail pada sistem DecMed di Bab III.
+kondisi audit log pada sistem DecMed di Bab III.
 
-\subsection{Mekanisme Integritas dan Non-Repudiation pada Audit Trail}
+\subsection{Mekanisme Integritas dan Non-Repudiation pada Audit Log}
 \label{subsec:mekanisme-integritas}
 
 Untuk memenuhi kebutuhan keamanan yang telah diidentifikasi pada
 Subbab~\ref{subsec:kebutuhan-audit-trail}, khususnya integritas,
 keaslian, dan non-repudiation, terdapat beberapa mekanisme kriptografis
-yang lazim digunakan dalam perancangan sistem audit trail.
+yang lazim digunakan dalam perancangan sistem audit log.
 
 % ======================================================================
 % CATATAN REFERENSI UNTUK SUBBAB II.2
@@ -262,7 +262,7 @@ yang lazim digunakan dalam perancangan sistem audit trail.
 %     kamu baca ulang klausul yang saya rujuk (terutama Clause 6, 7.1,
 %     9.2-9.5 pada ISO 27789, dan Section 2.3.1 pada NIST SP 800-92)
 %     untuk memastikan parafrase saya akurat.
-%   - Struktur "empat komponen audit trail" (penentuan, pengumpulan,
+%   - Struktur "empat komponen audit log" (penentuan, pengumpulan,
 %     penyimpanan, pembacaan) adalah SINTESIS saya sendiri dari kedua
 %     standar tersebut, bukan istilah baku yang persis sama di kedua
 %     dokumen aslinya -- ISO 27789 memakai istilah "trigger events",

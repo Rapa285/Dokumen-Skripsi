@@ -2,9 +2,9 @@
 % File: chapters/ta/chapter-3/rancangan.tex
 %
 % PERUBAHAN:
-%   - "Audit Trail Service (ATS)" → "Audit Log Service (ALS)"
-%   - Semua "ATS" → "ALS"
-%   - Caption figure: "Audit Trail" → "Audit Log"
+%   - "Audit Log Service (ALS)" → "Audit Log Service (ALS)"
+%   - Semua "ALS" → "ALS"
+%   - Caption figure: "Audit Log" → "Audit Log"
 %   - "rekam jejak aktivitas" → "aktivitas"
 %   - "immutable" pada klaim lokal → "tamper-evident"
 %     (tetap "immutable trust anchor" untuk IOTA — itu akurat)
@@ -123,7 +123,7 @@ Kombinasi \texttt{cid} dan \texttt{file\_hash} pada skema metadata memberikan du
 \subsubsection{Penerbitan Metadata melalui \textit{Smart Contract} Move}
 \label{subsubsec:rancangan-sc-move}
 
-Metadata rotasi log diterbitkan ke jaringan IOTA melalui \textit{smart contract} Move yang didefinisikan pada modul \texttt{ats::audit\_log}. Modul ini menyediakan fungsi \texttt{create\_log} yang menerima representasi JSON dari metadata rotasi, membuat objek \texttt{LogRecord} pada \textit{ledger} IOTA, kemudian langsung membekukannya melalui \texttt{transfer::freeze\_object}. Pembekuan objek menjadikan \texttt{LogRecord} bersifat \textit{immutable} secara penuh setelah transaksi final: tidak ada entitas mana pun, termasuk ALS itu sendiri, yang dapat mengubah isi \texttt{LogRecord} setelah diterbitkan. Rancangan ini secara langsung mengatasi masalah M-TA-03 yang mengidentifikasi bahwa mekanisme pencatatan eksisting pada DecMed masih menyediakan fungsi pembaruan pada \textit{smart contract} Move yang ada. Penerbitan dilakukan melalui Gas Station Server yang sudah tersedia pada DecMed, sehingga ALS tidak perlu mengelola aset IOTA secara mandiri. Apabila transaksi berhasil dieksekusi, worker memperoleh \textit{transaction digest} dan \textit{object ID} dari \texttt{LogRecord} yang baru dibuat.
+Metadata rotasi log diterbitkan ke jaringan IOTA melalui \textit{smart contract} Move yang didefinisikan pada modul \texttt{als::audit\_log}. Modul ini menyediakan fungsi \texttt{create\_log} yang menerima representasi JSON dari metadata rotasi, membuat objek \texttt{LogRecord} pada \textit{ledger} IOTA, kemudian langsung membekukannya melalui \texttt{transfer::freeze\_object}. Pembekuan objek menjadikan \texttt{LogRecord} bersifat \textit{immutable} secara penuh setelah transaksi final: tidak ada entitas mana pun, termasuk ALS itu sendiri, yang dapat mengubah isi \texttt{LogRecord} setelah diterbitkan. Rancangan ini secara langsung mengatasi masalah M-TA-03 yang mengidentifikasi bahwa mekanisme pencatatan eksisting pada DecMed masih menyediakan fungsi pembaruan pada \textit{smart contract} Move yang ada. Penerbitan dilakukan melalui Gas Station Server yang sudah tersedia pada DecMed, sehingga ALS tidak perlu mengelola aset IOTA secara mandiri. Apabila transaksi berhasil dieksekusi, worker memperoleh \textit{transaction digest} dan \textit{object ID} dari \texttt{LogRecord} yang baru dibuat.
 
 Bidang \texttt{prev\_tx\_digest} pada skema metadata dirancang untuk membentuk rantai antar entri metadata \textit{on-chain} yang analog dengan mekanisme \textit{hash-chaining} pada level \textit{audit record} (Subbab~\ref{subsec:rancangan-pembentukan-record}). Setiap \texttt{LogRecord} yang diterbitkan ke IOTA membawa referensi eksplisit terhadap \texttt{LogRecord} sebelumnya, sehingga membentuk urutan yang dapat ditelusuri dari entri terbaru ke entri paling awal. Melalui penelusuran rantai ini, pihak yang berwenang dapat memverifikasi kelengkapan arsip log secara kronologis dengan mencocokkan \texttt{log\_sequence\_number} untuk memastikan tidak ada rotasi yang terlewat. Setelah publikasi metadata ke IOTA berhasil, worker memperbarui nilai \texttt{prev\_tx\_digest} yang tersimpan dalam memori untuk digunakan pada siklus rotasi berikutnya, kemudian menghapus berkas arsip dari penyimpanan lokal. Penghapusan berkas lokal ini dilakukan karena bukti integritas jangka panjang sudah tersedia melalui dua lapis mekanisme: berkas arsip tersimpan secara permanen di IPFS melalui \textit{pinning}, dan metadata dengan CID serta \texttt{file\_hash} tersimpan secara \textit{immutable} di IOTA.
 

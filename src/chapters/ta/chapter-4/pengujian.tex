@@ -8,34 +8,34 @@ Pengujian sistem dilakukan untuk memastikan implementasi memenuhi kebutuhan yang
 
 Strategi pengujian disusun berdasarkan kebutuhan sistem pada Tabel~\ref{tab:kebutuhan-fungsional} dan Tabel~\ref{tab:kebutuhan-nonfungsional}. Pengujian dibagi menjadi pengujian kebutuhan fungsional dan pengujian kebutuhan nonfungsional.
 
-Pengujian kebutuhan fungsional diberi ID P-KF dan dijalankan melalui skenario manual untuk memeriksa perilaku sistem dari sudut pandang komponen DecMed sebagai pengirim \textit{audit event} dan ATS sebagai penerima. Pengujian kebutuhan nonfungsional diberi ID P-KNF dan dijalankan melalui pengujian unit atau integrasi terhadap komponen verifikasi tanda tangan digital, mekanisme \textit{hash-chaining}, penulisan berkas log, rotasi dan pengarsipan ke IPFS, serta publikasi metadata ke IOTA. Pengujian otomatis dijalankan dengan \texttt{cargo test} pada komponen yang relevan.
+Pengujian kebutuhan fungsional diberi ID P-KF dan dijalankan melalui skenario manual untuk memeriksa perilaku sistem dari sudut pandang komponen DecMed sebagai pengirim \textit{audit event} dan ALS sebagai penerima. Pengujian kebutuhan nonfungsional diberi ID P-KNF dan dijalankan melalui pengujian unit atau integrasi terhadap komponen verifikasi tanda tangan digital, mekanisme \textit{hash-chaining}, penulisan berkas log, rotasi dan pengarsipan ke IPFS, serta publikasi metadata ke IOTA. Pengujian otomatis dijalankan dengan \texttt{cargo test} pada komponen yang relevan.
 
 Kriteria keberhasilan pengujian ditentukan berdasarkan kesesuaian hasil skenario manual terhadap kebutuhan fungsional dan kelulusan pengujian otomatis terhadap kebutuhan nonfungsional. Setiap pengujian dikaitkan langsung dengan ID kebutuhan yang diuji untuk memastikan ketertelusuran.
 
 \subsection{Pengujian Kebutuhan Fungsional}
 \label{subsec:pengujian-fungsional}
 
-Pengujian kebutuhan fungsional dijalankan secara manual untuk memastikan perilaku sistem sesuai dengan rancangan pada Subbab~\ref{subsec:rancangan-arsitektur} hingga~\ref{subsec:rancangan-publikasi-iota}. Terdapat lima skenario pengujian dengan ID P-KF-01 sampai P-KF-05 yang dijalankan untuk memverifikasi kemampuan ATS menerima, memformat, menyimpan, dan menyajikan kembali \textit{audit event} dari seluruh \textit{event source}.
+Pengujian kebutuhan fungsional dijalankan secara manual untuk memastikan perilaku sistem sesuai dengan rancangan pada Subbab~\ref{subsec:rancangan-arsitektur} hingga~\ref{subsec:rancangan-publikasi-iota}. Terdapat lima skenario pengujian dengan ID P-KF-01 sampai P-KF-05 yang dijalankan untuk memverifikasi kemampuan ALS menerima, memformat, menyimpan, dan menyajikan kembali \textit{audit event} dari seluruh \textit{event source}.
 
 \subsubsection{P-KF-01: Penerimaan dan Agregasi \textit{Audit Event} dari Berbagai \textit{Event Source}}
 
-Pengujian P-KF-01 memverifikasi KF-TA-01, yaitu kemampuan ATS mengagregasi data log dari berbagai komponen DecMed ke dalam satu repositori terpusat. Skenario pengujian dilakukan dengan mengirimkan \textit{signed event} secara berturut-turut dari empat \textit{event source} yang berbeda, yaitu \textit{Patient Client}, \textit{Hospital Client}, \textit{Ministry Client}, dan PRE Server, ke \textit{endpoint} \texttt{POST /api/events} pada ATS.
+Pengujian P-KF-01 memverifikasi KF-TA-01, yaitu kemampuan ALS mengagregasi data log dari berbagai komponen DecMed ke dalam satu repositori terpusat. Skenario pengujian dilakukan dengan mengirimkan \textit{signed event} secara berturut-turut dari empat \textit{event source} yang berbeda, yaitu \textit{Patient Client}, \textit{Hospital Client}, \textit{Ministry Client}, dan PRE Server, ke \textit{endpoint} \texttt{POST /api/events} pada ALS.
 
-Setiap \textit{event source} mengirimkan dua event: satu event dengan hasil \texttt{Success} dan satu event dengan hasil \texttt{Failure}, untuk memastikan ATS dapat menangani seluruh varian \texttt{AuditOutcome}. Setelah seluruh pengiriman selesai, berkas log \texttt{./logs/audit\_logs.log} diperiksa untuk memastikan seluruh delapan event berhasil ditulis sebagai baris JSON-Lines yang terpisah tanpa ada yang terlewat.
+Setiap \textit{event source} mengirimkan dua event: satu event dengan hasil \texttt{Success} dan satu event dengan hasil \texttt{Failure}, untuk memastikan ALS dapat menangani seluruh varian \texttt{AuditOutcome}. Setelah seluruh pengiriman selesai, berkas log \texttt{./logs/audit\_logs.log} diperiksa untuk memastikan seluruh delapan event berhasil ditulis sebagai baris JSON-Lines yang terpisah tanpa ada yang terlewat.
 
 Hasil pengujian menunjukkan seluruh delapan \textit{audit record} berhasil tersimpan pada berkas log. Setiap \textit{record} memuat atribut \texttt{source\_component} yang mencerminkan komponen pengirimnya masing-masing, sehingga asal setiap entri dapat ditelusuri tanpa ambiguitas.
 
 \subsubsection{P-KF-02: Pencatatan Keseluruhan Jenis \textit{Audit Event} EV1--EV13}
 
-Pengujian P-KF-02 memverifikasi KF-TA-02, yaitu kemampuan ATS menangkap dan merekam keseluruhan 13 jenis \textit{audit event} yang telah didefinisikan. Skenario pengujian dilakukan dengan mengirimkan satu \textit{signed event} untuk setiap varian \texttt{AuditEventDetails} (EV1 hingga EV13) ke ATS.
+Pengujian P-KF-02 memverifikasi KF-TA-02, yaitu kemampuan ALS menangkap dan merekam keseluruhan 13 jenis \textit{audit event} yang telah didefinisikan. Skenario pengujian dilakukan dengan mengirimkan satu \textit{signed event} untuk setiap varian \texttt{AuditEventDetails} (EV1 hingga EV13) ke ALS.
 
-Setiap \textit{event} dikonstruksi dengan nilai bidang yang valid sesuai skema masing-masing varian pada Lampiran~\ref{code:audit-event-details}. ATS diharapkan berhasil mem-\textit{parse} seluruh 13 varian tersebut melalui mekanisme \textit{tagged enum} \texttt{\#[serde(tag = "event\_type")]} dan menuliskannya ke berkas log.
+Setiap \textit{event} dikonstruksi dengan nilai bidang yang valid sesuai skema masing-masing varian pada Lampiran~\ref{code:audit-event-details}. ALS diharapkan berhasil mem-\textit{parse} seluruh 13 varian tersebut melalui mekanisme \textit{tagged enum} \texttt{\#[serde(tag = "event\_type")]} dan menuliskannya ke berkas log.
 
 Hasil pengujian menunjukkan seluruh 13 jenis \textit{event} berhasil diterima dan disimpan. Setiap \textit{record} memuat bidang \texttt{event\_type} dengan nilai yang sesuai (misalnya \texttt{"EV1"} untuk \textit{event} autentikasi dan \texttt{"EV13"} untuk validasi \textit{capability}), beserta atribut tambahan spesifik yang sesuai dengan varian masing-masing.
 
 \subsubsection{P-KF-03: Standardisasi Format \textit{Audit Record}}
 
-Pengujian P-KF-03 memverifikasi KF-TA-03, yaitu kemampuan ATS memformat dan menstandardisasi \textit{audit record} ke dalam skema terstruktur sebelum disimpan. Skenario pengujian dilakukan dengan mengirimkan satu \textit{signed event} bertipe EV4 (\textit{Medical Record Access}) ke ATS, kemudian memeriksa struktur JSON dari \textit{audit record} yang dihasilkan.
+Pengujian P-KF-03 memverifikasi KF-TA-03, yaitu kemampuan ALS memformat dan menstandardisasi \textit{audit record} ke dalam skema terstruktur sebelum disimpan. Skenario pengujian dilakukan dengan mengirimkan satu \textit{signed event} bertipe EV4 (\textit{Medical Record Access}) ke ALS, kemudian memeriksa struktur JSON dari \textit{audit record} yang dihasilkan.
 
 \textit{Audit record} yang dihasilkan diverifikasi terhadap skema \texttt{AuditRecord} pada Kode~\ref{code:audit-record}. Pemeriksaan mencakup keberadaan seluruh bidang wajib, yaitu \texttt{record\_id} (berformat UUID v7), \texttt{timestamp} (berformat UTC ISO 8601), \texttt{prev\_record\_hash} (bernilai \texttt{null} untuk \textit{record} pertama), \texttt{record\_hash} (berupa \textit{string} heksadesimal SHA-256 sepanjang 64 karakter), dan seluruh atribut umum \texttt{AuditEvent} beserta atribut tambahan EV4.
 
@@ -43,7 +43,7 @@ Hasil pengujian menunjukkan \textit{audit record} yang dihasilkan memiliki struk
 
 \subsubsection{P-KF-04: Penyimpanan \textit{Audit Record} secara \textit{Append-Only}}
 
-Pengujian P-KF-04 memverifikasi KF-TA-04, yaitu kemampuan ATS menyimpan \textit{audit record} pada media penyimpanan yang bersifat \textit{append-only}. Skenario pengujian dilakukan dengan mengirimkan lima \textit{event} secara berurutan ke ATS, kemudian memeriksa berkas log untuk memastikan setiap \textit{event} tersimpan sebagai baris baru tanpa menimpa baris sebelumnya.
+Pengujian P-KF-04 memverifikasi KF-TA-04, yaitu kemampuan ALS menyimpan \textit{audit record} pada media penyimpanan yang bersifat \textit{append-only}. Skenario pengujian dilakukan dengan mengirimkan lima \textit{event} secara berurutan ke ALS, kemudian memeriksa berkas log untuk memastikan setiap \textit{event} tersimpan sebagai baris baru tanpa menimpa baris sebelumnya.
 
 Pemeriksaan dilakukan dengan menghitung jumlah baris pada berkas log sebelum dan sesudah pengiriman lima \textit{event}. Jumlah baris setelah pengiriman harus bertambah tepat lima baris dari jumlah sebelumnya. Selain itu, isi baris-baris lama diverifikasi untuk memastikan tidak ada perubahan.
 
@@ -51,7 +51,7 @@ Hasil pengujian menunjukkan jumlah baris bertambah tepat lima setelah pengiriman
 
 \subsubsection{P-KF-05: Retensi Jangka Panjang melalui Rotasi Log, Pengarsipan IPFS, dan Publikasi Metadata IOTA}
 
-Pengujian P-KF-05 memverifikasi KF-TA-05, yaitu kemampuan ATS menyediakan mekanisme retensi jangka panjang. Skenario pengujian dilakukan dengan mengonfigurasi \texttt{LOG\_ROTATION\_INTERVAL\_SECS} ke nilai kecil (60 detik) untuk mempercepat siklus rotasi, kemudian mengisi berkas log dengan sejumlah \textit{event} dan menunggu siklus rotasi berjalan.
+Pengujian P-KF-05 memverifikasi KF-TA-05, yaitu kemampuan ALS menyediakan mekanisme retensi jangka panjang. Skenario pengujian dilakukan dengan mengonfigurasi \texttt{LOG\_ROTATION\_INTERVAL\_SECS} ke nilai kecil (60 detik) untuk mempercepat siklus rotasi, kemudian mengisi berkas log dengan sejumlah \textit{event} dan menunggu siklus rotasi berjalan.
 
 Keberhasilan pengujian diverifikasi melalui tiga indikator: (1) berkas arsip \texttt{logs/uploading\_\{timestamp\}.log} terbentuk selama proses pengarsipan kemudian terhapus setelah selesai, (2) log konsol menampilkan pesan \texttt{[rotation] upload IPFS berhasil. CID: \{cid\}} dengan nilai CID yang valid, dan (3) log konsol menampilkan pesan \texttt{[iota] LogRecord dibuat. Object ID: \{id\} | TX: \{digest\}} yang menandakan metadata berhasil diterbitkan pada jaringan IOTA.
 
@@ -60,7 +60,7 @@ Hasil pengujian menunjukkan seluruh tiga indikator terpenuhi. CID yang dihasilka
 \subsection{Pengujian Kebutuhan Nonfungsional}
 \label{subsec:pengujian-nonfungsional}
 
-Pengujian kebutuhan nonfungsional dijalankan untuk mengevaluasi pemenuhan aspek integritas, interoperabilitas, ketersediaan, dan konsistensi pencatatan pada sistem ATS. Setiap pengujian dikaitkan dengan kebutuhan nonfungsional yang telah didefinisikan pada Tabel~\ref{tab:kebutuhan-nonfungsional}. Unit testing menyimulasikan skenario ancaman STRIDE yang relevan, khususnya ancaman kategori \textit{Tampering} (T14, T18) dan \textit{Repudiation} (T6, T7, T8, T9, T16) yang dipetakan ke kebutuhan nonfungsional.
+Pengujian kebutuhan nonfungsional dijalankan untuk mengevaluasi pemenuhan aspek integritas, interoperabilitas, ketersediaan, dan konsistensi pencatatan pada sistem ALS. Setiap pengujian dikaitkan dengan kebutuhan nonfungsional yang telah didefinisikan pada Tabel~\ref{tab:kebutuhan-nonfungsional}. Unit testing menyimulasikan skenario ancaman STRIDE yang relevan, khususnya ancaman kategori \textit{Tampering} (T14, T18) dan \textit{Repudiation} (T6, T7, T8, T9, T16) yang dipetakan ke kebutuhan nonfungsional.
 
 \subsubsection{Pengujian KNF-TA-01: Integritas \textit{Audit Record} yang \textit{Tamper-Proof}}
 
@@ -80,19 +80,19 @@ Pengujian P-KNF-03 dijalankan melalui unit testing yang membaca kembali berkas l
 
 Hasil pengujian menunjukkan seluruh baris berkas log berhasil dideserializasi. Penggunaan \texttt{\#[serde(flatten)]} pada \texttt{AuditEvent} dan \texttt{AuditEventDetails} terbukti menghasilkan format JSON yang datar (\textit{flat}) dan mudah diproses, tanpa hierarki objek yang bersarang secara berlebihan.
 
-\subsubsection{Pengujian KNF-TA-03: Ketersediaan Data \textit{Audit Trail} dalam Jangka Panjang}
+\subsubsection{Pengujian KNF-TA-03: Ketersediaan Data \textit{Audit Log} dalam Jangka Panjang}
 
-Pengujian KNF-TA-03 memastikan ketersediaan dan keteraksesan data \textit{audit trail} dalam jangka panjang melalui kombinasi \textit{IPFS pinning} dan penyimpanan metadata \textit{on-chain} pada IOTA.
+Pengujian KNF-TA-03 memastikan ketersediaan dan keteraksesan data \textit{audit log} dalam jangka panjang melalui kombinasi \textit{IPFS pinning} dan penyimpanan metadata \textit{on-chain} pada IOTA.
 
 Pengujian P-KNF-04 dijalankan dengan mengunggah sebuah berkas arsip log ke IPFS melalui fungsi \texttt{Utils::add\_file\_to\_ipfs}, kemudian mengambil kembali berkas tersebut menggunakan CID yang diperoleh melalui \textit{endpoint} \texttt{GET \{IPFS\_GATEWAY\_BASE\_URL\}/ipfs/\{cid\}}. Konten yang diambil kembali harus identik dengan konten berkas yang diunggah, diverifikasi dengan membandingkan nilai \textit{hash} SHA-256 dari keduanya.
 
 Pengujian P-KNF-05 dijalankan dengan memverifikasi bahwa objek \texttt{LogRecord} yang diterbitkan ke IOTA melalui \texttt{IotaLogClient::publish\_metadata}. Pemeriksaan dilakukan melalui \textit{endpoint} \texttt{GET /object/\{object\_id\}} pada IOTA Localnet RPC. Respons harus memuat field \texttt{"owner": "Immutable"} yang menandakan objek tidak dapat dimodifikasi oleh siapa pun setelah transaksi pembuatannya final.
 
-Hasil pengujian P-KNF-04 menunjukkan berkas arsip yang diambil kembali dari IPFS memiliki nilai \textit{hash} SHA-256 yang identik dengan berkas aslinya, membuktikan integritas data selama penyimpanan dan pengambilan. Hasil pengujian P-KNF-05 menunjukkan objek \texttt{LogRecord} pada IOTA Localnet berstatus \textit{immutable}, membuktikan bahwa mekanisme \texttt{transfer::freeze\_object} pada \textit{smart contract} Move \texttt{ats::audit\_log} berhasil menegakkan sifat \textit{append-only} pada level \textit{on-chain}.
+Hasil pengujian P-KNF-04 menunjukkan berkas arsip yang diambil kembali dari IPFS memiliki nilai \textit{hash} SHA-256 yang identik dengan berkas aslinya, membuktikan integritas data selama penyimpanan dan pengambilan. Hasil pengujian P-KNF-05 menunjukkan objek \texttt{LogRecord} pada IOTA Localnet berstatus \textit{immutable}, membuktikan bahwa mekanisme \texttt{transfer::freeze\_object} pada \textit{smart contract} Move \texttt{als::audit\_log} berhasil menegakkan sifat \textit{append-only} pada level \textit{on-chain}.
 
 \subsubsection{Pengujian KNF-TA-04: Konsistensi Pencatatan melalui Verifikasi Tanda Tangan Digital}
 
-Pengujian KNF-TA-04 memastikan konsistensi pencatatan dengan memverifikasi bahwa mekanisme \textit{signed payload} Ed25519 mencegah \textit{event} palsu masuk ke rantai \textit{audit record}. Pengujian ini menguji mitigasi terhadap ancaman T6 (pasien menyangkal pemberian akses) dan T16 (PRE Server menyangkal pengajuan sponsorship), karena \textit{event} yang masuk ke ATS harus dapat dibuktikan berasal dari komponen pengirim yang sah.
+Pengujian KNF-TA-04 memastikan konsistensi pencatatan dengan memverifikasi bahwa mekanisme \textit{signed payload} Ed25519 mencegah \textit{event} palsu masuk ke rantai \textit{audit record}. Pengujian ini menguji mitigasi terhadap ancaman T6 (pasien menyangkal pemberian akses) dan T16 (PRE Server menyangkal pengajuan sponsorship), karena \textit{event} yang masuk ke ALS harus dapat dibuktikan berasal dari komponen pengirim yang sah.
 
 Pengujian pertama, yaitu P-KNF-06, dijalankan melalui unit testing pada fungsi \texttt{Utils::verify\_and\_extract\_event}. Skenario pengujian membuat sebuah \texttt{SignedEvent} yang valid dengan \textit{payload}, \textit{signature}, dan \textit{public key} yang sesuai, kemudian memanggil \texttt{verify\_and\_extract\_event}. Fungsi harus mengembalikan \texttt{AuditEvent} yang valid tanpa \textit{error}.
 
@@ -112,12 +112,12 @@ Berdasarkan hasil pengujian kebutuhan fungsional dan nonfungsional, kebutuhan si
 \subsection{Evaluasi terhadap Kebutuhan Sistem}
 \label{subsec:evaluasi-kebutuhan}
 
-Berdasarkan kebutuhan sistem pada Subbab~\ref{subsec:impl-skema-tipe-data} hingga~\ref{subsec:rancangan-publikasi-iota}, implementasi dievaluasi terhadap kebutuhan fungsional dan nonfungsional yang menjadi dasar pengembangan ATS. Setiap kebutuhan diperiksa berdasarkan komponen yang merealisasikannya dan skenario pengujian yang memverifikasi perilakunya. Pemetaan ini menunjukkan keterhubungan antara kebutuhan, implementasi, dan pengujian.
+Berdasarkan kebutuhan sistem pada Subbab~\ref{subsec:impl-skema-tipe-data} hingga~\ref{subsec:rancangan-publikasi-iota}, implementasi dievaluasi terhadap kebutuhan fungsional dan nonfungsional yang menjadi dasar pengembangan ALS. Setiap kebutuhan diperiksa berdasarkan komponen yang merealisasikannya dan skenario pengujian yang memverifikasi perilakunya. Pemetaan ini menunjukkan keterhubungan antara kebutuhan, implementasi, dan pengujian.
 
 Ringkasan pemetaan kebutuhan sistem terhadap implementasi dan pengujian disajikan pada Tabel~\ref{tab:evaluasi-kebutuhan}.
 
 \begin{xltabular}{\textwidth}{|p{1.8cm}|p{3.5cm}|p{3.5cm}|p{3.2cm}|}
-\caption{Evaluasi Pemenuhan Kebutuhan Sistem \textit{Audit Trail}}
+\caption{Evaluasi Pemenuhan Kebutuhan Sistem \textit{Audit Log}}
 \label{tab:evaluasi-kebutuhan}\\
 \hline
 \textbf{ID Kebutuhan} & \textbf{Komponen Implementasi} & \textbf{Skenario Pengujian} & \textbf{Status} \\
@@ -154,7 +154,7 @@ Tabel~\ref{tab:evaluasi-kebutuhan} menunjukkan bahwa seluruh kebutuhan fungsiona
 
 Kebutuhan fungsional diverifikasi melalui skenario P-KF-01 sampai P-KF-05, sedangkan kebutuhan nonfungsional diverifikasi melalui pengujian P-KNF-01 sampai P-KNF-08.
 
-Evaluasi terhadap masalah-masalah yang diidentifikasi pada Tabel~\ref{tab:identifikasi-masalah} menghasilkan temuan sebagai berikut. Masalah M-TA-01 (belum adanya sistem \textit{audit trail} terintegrasi) diselesaikan melalui penambahan ATS sebagai \textit{centralized audit collector} dengan titik masuk tunggal \texttt{POST /api/events}, diverifikasi oleh P-KF-01. Masalah M-TA-02 (cakupan \textit{event} yang sempit) diselesaikan melalui katalog 13 jenis \textit{event} (EV1--EV13) yang diturunkan dari analisis ancaman STRIDE, diverifikasi oleh P-KF-02. Masalah M-TA-03 (\textit{audit record} yang masih dapat dimodifikasi) diselesaikan melalui mekanisme \textit{hash-chaining} pada berkas log lokal dan penyimpanan pada \textit{on-chain} melalui \textit{smart contract} Move, diverifikasi oleh P-KNF-01, P-KNF-02, dan P-KNF-05. Masalah M-TA-04 (format \textit{audit record} yang tidak terstandarisasi) diselesaikan melalui skema \texttt{AuditRecord} yang seragam dengan format JSON-Lines, diverifikasi oleh P-KNF-03. Masalah M-TA-05 (kerentanan terhadap \textit{data pruning}) diselesaikan melalui strategi persistensi ganda berbasis \textit{IPFS pinning} dan penyimpanan \textit{state object} Move, diverifikasi oleh P-KNF-04 dan P-KNF-05.
+Evaluasi terhadap masalah-masalah yang diidentifikasi pada Tabel~\ref{tab:identifikasi-masalah} menghasilkan temuan sebagai berikut. Masalah M-TA-01 (belum adanya sistem \textit{audit log} terintegrasi) diselesaikan melalui penambahan ALS sebagai \textit{centralized audit collector} dengan titik masuk tunggal \texttt{POST /api/events}, diverifikasi oleh P-KF-01. Masalah M-TA-02 (cakupan \textit{event} yang sempit) diselesaikan melalui katalog 13 jenis \textit{event} (EV1--EV13) yang diturunkan dari analisis ancaman STRIDE, diverifikasi oleh P-KF-02. Masalah M-TA-03 (\textit{audit record} yang masih dapat dimodifikasi) diselesaikan melalui mekanisme \textit{hash-chaining} pada berkas log lokal dan penyimpanan pada \textit{on-chain} melalui \textit{smart contract} Move, diverifikasi oleh P-KNF-01, P-KNF-02, dan P-KNF-05. Masalah M-TA-04 (format \textit{audit record} yang tidak terstandarisasi) diselesaikan melalui skema \texttt{AuditRecord} yang seragam dengan format JSON-Lines, diverifikasi oleh P-KNF-03. Masalah M-TA-05 (kerentanan terhadap \textit{data pruning}) diselesaikan melalui strategi persistensi ganda berbasis \textit{IPFS pinning} dan penyimpanan \textit{state object} Move, diverifikasi oleh P-KNF-04 dan P-KNF-05.
 
 \subsection{Keterbatasan Implementasi}
 \label{subsec:keterbatasan-implementasi}
@@ -162,7 +162,7 @@ Evaluasi terhadap masalah-masalah yang diidentifikasi pada Tabel~\ref{tab:identi
 Implementasi pada Tugas Akhir ini memiliki beberapa keterbatasan sebagai berikut.
 
 \begin{enumerate}
-    \item Implementasi dilakukan dalam lingkungan prototipe yang terdiri atas komputer lokal, VPS, dan jaringan IOTA Localnet. Seluruh komponen ATS dan PRE Server dijalankan pada komputer lokal dengan sistem operasi Ubuntu 24.04.4 di lingkungan WSL2. VPS menjalankan IPFS Cluster dan IOTA Gas Station. \textit{Smart contract} \texttt{ats::audit\_log} diunggah ke jaringan IOTA Localnet, bukan jaringan IOTA Testnet maupun Mainnet, sehingga perilaku sistem pada jaringan publik yang sesungguhnya belum dapat diverifikasi.
+    \item Implementasi dilakukan dalam lingkungan prototipe yang terdiri atas komputer lokal, VPS, dan jaringan IOTA Localnet. Seluruh komponen ALS dan PRE Server dijalankan pada komputer lokal dengan sistem operasi Ubuntu 24.04.4 di lingkungan WSL2. VPS menjalankan IPFS Cluster dan IOTA Gas Station. \textit{Smart contract} \texttt{als::audit\_log} diunggah ke jaringan IOTA Localnet, bukan jaringan IOTA Testnet maupun Mainnet, sehingga perilaku sistem pada jaringan publik yang sesungguhnya belum dapat diverifikasi.
     \item Mekanisme \textit{IPFS pinning} yang diimplementasikan bergantung pada konfigurasi IPFS Cluster yang diwarisi dari implementasi DecMed sebelumnya dengan tiga \textit{peer}. Ketahanan \textit{pinning} terhadap kegagalan \textit{node} pada kluster berskala produksi belum diuji.
     \item Nilai \texttt{LOG\_ROTATION\_INTERVAL\_SECS} yang digunakan dalam pengujian (60 detik) berbeda dari nilai yang direkomendasikan untuk produksi (300 detik sesuai konstanta). Implikasi rotasi yang terlalu sering terhadap konsumsi \textit{gas} IOTA dan kuota transaksi Gas Station belum dievaluasi secara menyeluruh.
     \item Kunci privat Ed25519 yang digunakan oleh setiap \textit{event source} untuk menandatangani \textit{audit event} dibangkitkan secara acak pada saat komponen diinisialisasi dan tidak dipersistensikan. Apabila komponen di-\textit{restart}, kunci baru akan dibangkitkan sehingga tidak ada mekanisme untuk menghubungkan \textit{event} dari sesi sebelumnya dengan sesi baru secara kriptografis. Pengelolaan kunci jangka panjang untuk keperluan \textit{non-repudiation} yang sesungguhnya memerlukan mekanisme penyimpanan kunci yang aman dan persisten.
