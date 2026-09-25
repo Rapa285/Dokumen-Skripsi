@@ -69,7 +69,32 @@ Setelah \textit{event} yang telah terverifikasi diteruskan dari antrian internal
     \item Seluruh atribut \texttt{AuditEvent} yang telah terverifikasi.
 \end{itemize}
 
-Mekanisme \textit{hash-chaining} pada \textit{audit record} menjamin sifat \textit{tamper-evident} pada berkas log lokal sebelum berkas tersebut diarsipkan ke IPFS. Nilai \texttt{record\_hash} yang menyertakan \texttt{prev\_record\_hash} menjadikan setiap \textit{record} terikat secara kriptografis pada seluruh \textit{record} sebelumnya dalam rantai, sebagaimana dianalisis pada Subbab~\ref{subsubsec:analisis-hash-chaining}. Penambahan, modifikasi, atau penghapusan \textit{record} pada posisi mana pun akan menyebabkan nilai \texttt{record\_hash} seluruh \textit{record} sesudahnya menjadi tidak konsisten, sehingga perusakan dapat terdeteksi melalui pemeriksaan konsistensi rantai.
+Mekanisme \textit{hash-chaining} pada \textit{audit record} memberikan sifat
+\textit{tamper-evident} pada berkas log lokal sebelum berkas tersebut diarsipkan
+ke IPFS. Nilai \texttt{record\_hash} yang menyertakan \texttt{prev\_record\_hash}
+menjadikan setiap \textit{record} terikat secara kriptografis pada seluruh
+\textit{record} sebelumnya dalam rantai, sebagaimana dianalisis pada
+Subbab~\ref{subsubsec:analisis-hash-chaining}. Modifikasi \textit{record},
+penyisipan \textit{record}, maupun penghapusan \textit{record} yang masih diikuti
+oleh \textit{record} lain akan menyebabkan ketidaksesuaian antara
+\texttt{prev\_record\_hash} dan \texttt{record\_hash} pada \textit{record}
+sesudahnya, sehingga perusakan dapat terdeteksi melalui pemeriksaan konsistensi
+rantai.
+ 
+Namun, \textit{hash chain} hanya dapat membuktikan konsistensi internal antar
+\textit{record} yang masih ada. Penghapusan satu atau beberapa \textit{record}
+terakhir pada berkas log aktif menghasilkan rantai yang lebih pendek tetapi
+tetap konsisten, karena tidak ada \textit{record} sesudahnya yang merujuk pada
+\textit{record} yang dihapus. Penghapusan semacam ini hanya dapat terdeteksi
+apabila nilai \textit{hash} ujung rantai telah dicatat pada media di luar
+kendali ALS. Pada rancangan ini, peran tersebut dijalankan oleh
+\texttt{final\_record\_hash} dan \texttt{record\_count} pada \texttt{AuditBatch}
+yang dipublikasikan sebagai \textit{frozen object} di IOTA pada saat rotasi,
+sebagaimana diuraikan pada Subbab~\ref{subsec:rancangan-rotasi-log}. Dengan
+demikian, \textit{record} yang telah melalui rotasi terlindungi dari
+penghapusan pada bagian ujung, sedangkan \textit{record} pada berkas log aktif
+yang belum dirotasi hanya terlindungi dari modifikasi, penyisipan, dan
+penghapusan di tengah rantai.
 
 Setiap \texttt{AuditRecord} yang terbentuk kemudian ditulis secara \textit{append} ke berkas log lokal dalam format JSON-Lines (satu objek JSON per baris), menjamin bahwa berkas log tidak pernah menimpa entri yang sudah ada. Hal ini merealisasikan sifat \textit{append-only} yang disyaratkan oleh kebutuhan nonfungsional KNF-TA-01 pada Tabel~\ref{tab:kebutuhan-nonfungsional}.
 
@@ -199,7 +224,8 @@ KNF-TA-02 & Format data log yang konsisten dan mudah diproses. & Skema \texttt{A
 \hline
 KNF-TA-03 & Ketersediaan data audit log dalam jangka panjang. & \textit{IPFS pinning} dan penyimpanan metadata sebagai \textit{frozen object} di IOTA (R-TA-05). \\
 \hline
-KNF-TA-04 & Konsistensi pencatatan tanpa \textit{event} bernilai audit tinggi yang terlewat. & Verifikasi tanda tangan Ed25519 pada ALS dan antrian asinkron berkapasitas 10.000 (R-TA-03). \\
+KNF-TA-04 & Konsistensi pencatatan tanpa \textit{event} bernilai audit tinggi yang terlewat. & Verifikasi \texttt{IotaSignature} atas \texttt{EncryptedSignedEvent} pada ALS, serta \texttt{AlsQueue} dengan \textit{retry worker} pada setiap \textit{event source} untuk mengurangi risiko \textit{event} tidak terkirim (R-TA-03). \\
+\hline \\
 \hline
 
 \end{xltabular}

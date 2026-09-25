@@ -393,37 +393,37 @@ memuat \texttt{capability\_id}, \texttt{requester\_id},
 \texttt{AuditEventDetails} ditunjukkan pada Lampiran~\ref{code:audit-event-details}.
 
 \subsubsection{Tipe Data AuditRecord}
-
-\texttt{AuditRecord} mewakili catatan audit yang telah terbentuk dan siap
-disimpan ke berkas log. Tipe ini memuat empat bidang tambahan di luar konten
-\textit{event}: \texttt{record\_id} bertipe \texttt{Uuid} (UUID v7 yang
-mengandung informasi waktu sehingga bersifat monoton dan dapat diurutkan secara
-kronologis), \texttt{timestamp} bertipe \texttt{DateTime<Utc>} (waktu pembentukan
-\textit{record} menurut jam ALS), \texttt{prev\_record\_hash} bertipe
-\texttt{Option<String>} (nilai \textit{hash} SHA-256 dari \textit{record}
-sebelumnya, atau \texttt{None} apabila merupakan \textit{record} pertama dalam
-rantai), dan \texttt{record\_hash} bertipe \texttt{String} (nilai \textit{hash}
-SHA-256 yang dihitung dari kombinasi keempat bidang tersebut bersama isi
-\textit{event}). Seluruh atribut \texttt{AuditEvent} diserialisasi sejajar ke
-dalam \texttt{AuditRecord} menggunakan \texttt{\#[serde(flatten)]}, sehingga
-berkas JSON-Lines yang dihasilkan memuat seluruh atribut pada satu tingkat yang
-sama. Implementasi \texttt{AuditRecord} ditunjukkan pada Kode~\ref{code:audit-record}.
-
-\begin{minted}{rust}
+ 
+\texttt{AuditRecord} merupakan satuan penyimpanan pada berkas log. Setiap
+\textit{record} memuat atribut rantai yang dibentuk oleh ALS, yaitu
+\texttt{record\_id}, \texttt{timestamp}, \texttt{prev\_record\_hash}, dan
+\texttt{record\_hash}, serta \texttt{EncryptedSignedEvent} yang diterima dari
+\textit{event source} tanpa perubahan. Dengan demikian, berkas log menyimpan
+atribut rantai dalam bentuk \textit{plaintext}, sedangkan isi \textit{event}
+tetap tersimpan sebagai \textit{ciphertext} beserta tanda tangan dan alamat IOTA
+penanda tangannya. Implementasi \texttt{AuditRecord} ditunjukkan pada
+Kode~\ref{code:audit-record}.
+ 
+\begin{listing}[ht]
+\caption{Implementasi \texttt{AuditRecord}}
+\label{code:audit-record}
+\begin{minted}[linenos, breaklines]{rust}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditRecord {
     pub record_id: Uuid,
     pub timestamp: DateTime<Utc>,
     pub prev_record_hash: Option<String>,
     pub record_hash: String,
-
+ 
     #[serde(flatten)]
-    pub event: AuditEvent,
+    pub event: EncryptedSignedEvent,
 }
 \end{minted}
-
-\captionof{listing}{Implementasi \texttt{AuditRecord}}
-\label{code:audit-record}
+\end{listing}
+ 
+Karena \texttt{record\_hash} dihitung atas \texttt{EncryptedSignedEvent},
+mekanisme \textit{hash-chaining} tetap menjamin sifat \textit{tamper-evident}
+tanpa ALS perlu membuka isi \textit{event}.
 
 \subsubsection{Tipe Data AuditBatch}
 
@@ -541,7 +541,7 @@ Subbab~\ref{subsec:impl-als-queue}.
 \subsection{Implementasi AlsQueue dan Retry Worker}
 \label{subsec:impl-als-queue}
 
-Untuk menjamin tidak ada \textit{event} yang hilang akibat kegagalan jaringan
+Untuk mengurangi risiko kehilangan \textit{event} akibat kegagalan jaringan
 sementara, setiap \textit{event source} mengimplementasikan \texttt{AlsQueue},
 sebuah antrian berbasis berkas (\textit{file-based queue}) yang menyimpan
 \texttt{EncryptedSignedEvent} yang belum berhasil dikirimkan. Implementasi
@@ -575,40 +575,41 @@ Entri yang telah melampaui batas percobaan tidak dikirim ulang tetapi tetap
 disimpan dalam antrian untuk keperluan diagnostik.
 
 \subsection{Implementasi Audit Receiver}
-
+ 
 Komponen Audit Receiver diimplementasikan melalui \textit{handler}
 \texttt{handle\_event} pada berkas \texttt{audit-trail/src/handlers.rs}
 dan \textit{routing} pada \texttt{audit-trail/src/main.rs}. \textit{Endpoint}
 \texttt{POST /api/events} menerima \textit{request} berisi objek
 \texttt{EncryptedSignedEvent} dalam format JSON.
+ 
+Proses pada \textit{handler} \texttt{handle\_event} terdiri atas dua fase.
+Fase pertama adalah verifikasi tanda tangan melalui
+\texttt{Utils::verify\_event\_signature}: ALS memverifikasi
+\texttt{IotaSignature} pada bidang \texttt{signature} terhadap \textit{byte}
+\textit{ciphertext}, menggunakan \texttt{iota\_address} yang disertakan sebagai
+identitas penanda tangan. Apabila verifikasi gagal, \textit{event} ditolak dan
+tidak diteruskan ke tahap berikutnya.
+ 
+Fase kedua adalah penerusan ke antrian internal: \texttt{EncryptedSignedEvent}
+yang telah terverifikasi diteruskan \emph{tanpa didekripsi} ke antrian asinkron
+\texttt{tokio::sync::mpsc} berkapasitas 10.000 \textit{event} melalui
+\texttt{state.audit\_tx.send(event).await}. ALS tidak membuka isi \textit{event}
+pada saat penerimaan, sehingga atribut sensitif seperti \texttt{actor\_id},
+\texttt{target\_object}, dan \texttt{details} tetap berada dalam bentuk
+\textit{ciphertext} sejak dikirim oleh \textit{event source} hingga tersimpan
+pada berkas log. Pemisahan antrian ini juga memungkinkan ALS menerima
+\textit{event} berikutnya tanpa menunggu penulisan ke berkas log selesai.
 
-Proses pada \textit{handler} \texttt{handle\_event} terdiri atas tiga fase.
-Fase pertama adalah verifikasi tanda tangan: ALS memverifikasi
-\texttt{IotaSignature} yang ada di bidang \texttt{signature} terhadap
-\textit{byte-byte ciphertext}, menggunakan \texttt{iota\_address} yang
-disertakan sebagai referensi kunci publik. Apabila verifikasi gagal,
-\textit{handler} mengembalikan respons \textit{error} tanpa memproses
-\textit{event} lebih lanjut, sehingga \textit{ciphertext} yang dimanipulasi
-pihak luar tidak pernah masuk ke tahap dekripsi.
-
-Fase kedua adalah dekripsi \textit{payload}: ALS mendekripsi \texttt{enc\_aes\_key}
-menggunakan kunci privat P-256 miliknya untuk memperoleh kunci sesi AES, kemudian
-mendekripsi \texttt{ciphertext} menggunakan kunci sesi dan \texttt{nonce} tersebut
-untuk memperoleh JSON \textit{plaintext} \texttt{AuditEvent}. AES-256-GCM
-secara otomatis memverifikasi \textit{authentication tag} selama dekripsi; apabila
-\textit{ciphertext} telah dirusak, dekripsi gagal dan \textit{event} ditolak.
-
-Fase ketiga adalah pengiriman ke antrian internal: \textit{event} yang telah
-terverifikasi dan terdekripsi diurai menjadi objek \texttt{AuditEvent} dan
-diteruskan ke antrian asinkron \texttt{tokio::sync::mpsc} berkapasitas 10.000
-\textit{event} melalui \texttt{state.audit\_tx.send(audit\_event).await}. Desain
-ini memisahkan tanggung jawab penerimaan HTTP dari pemrosesan dan penulisan log,
-sehingga ALS dapat menerima \textit{event} berikutnya tanpa menunggu penulisan
-ke berkas log selesai.
-
+Karena \textit{handler} mengembalikan respons berhasil setelah
+\texttt{audit\_tx.send} selesai, respons tersebut menandakan bahwa
+\textit{event} telah diterima ke antrian internal, bukan bahwa \textit{event}
+telah ditulis ke berkas log. \textit{Event} yang masih berada di antrian
+internal pada saat ALS berhenti secara tidak terduga tidak akan tercatat,
+sementara salinannya pada \texttt{AlsQueue} di sisi pengirim telah dihapus.
+ 
 Status implementasi komponen Audit Receiver ditunjukkan pada
 Tabel~\ref{tab:status-implementasi-receiver}.
-
+ 
 \begin{table}[htbp]
 \centering
 \caption{Status Implementasi Komponen Audit Receiver}
@@ -622,18 +623,13 @@ Tabel~\ref{tab:status-implementasi-receiver}.
 \hline
 Verifikasi \texttt{IotaSignature} atas \textit{ciphertext} & Terimplementasi. \\
 \hline
-Dekripsi ECIES untuk memperoleh kunci sesi AES & Terimplementasi. \\
-\hline
-Dekripsi AES-256-GCM untuk memperoleh \textit{plaintext event} & Terimplementasi. \\
-\hline
-\textit{Parsing} \texttt{AuditEvent} dari \textit{plaintext} yang valid & Terimplementasi. \\
-\hline
-Pengiriman ke antrian asinkron internal (kapasitas 10.000) & Terimplementasi. \\
-\hline
 Penolakan \textit{event} dengan tanda tangan tidak valid & Terimplementasi. \\
+\hline
+Penerusan \texttt{EncryptedSignedEvent} tanpa dekripsi ke antrian asinkron internal (kapasitas 10.000) & Terimplementasi. \\
 \hline
 \end{tabular}
 \end{table}
+
 
 \subsection{Implementasi Audit Logger}
 
@@ -653,6 +649,15 @@ Metode \texttt{run} menjalankan \textit{loop} utama menggunakan pola
 (2) memanggil \texttt{write\_audit\_record} untuk menulis \textit{record} ke
 berkas log, dan (3) memperbarui \texttt{self.prev\_record\_hash} dengan
 \textit{hash} dari \textit{record} yang baru saja ditulis.
+
+Nilai \texttt{prev\_record\_hash} disimpan sebagai bidang pada
+\texttt{AuditLogger} di memori dan diinisialisasi dengan \texttt{None} pada saat
+aplikasi dimulai. Implementasi tidak memulihkan nilai tersebut dari
+\textit{record} terakhir pada berkas log aktif maupun dari
+\texttt{final\_record\_hash} pada IOTA setelah ALS dimulai ulang. Akibatnya, setiap \textit{restart} memulai rantai baru:
+\textit{record} pertama setelah \textit{restart} memiliki
+\texttt{prev\_record\_hash} bernilai \texttt{null} meskipun berkas log aktif
+masih berisi \textit{record} sebelumnya.
 
 Fungsi \texttt{create\_audit\_record} merealisasikan mekanisme
 \textit{hash-chaining} dengan membangkitkan \texttt{record\_id} baru menggunakan
@@ -793,12 +798,7 @@ dibangkitkan.
 
 \subsubsection{Distribusi Event per Event Source}
 
-\textit{Patient Client}, \textit{Hospital Client}, dan \textit{Ministry Client}
-merupakan aplikasi \textit{client} berbasis Tauri. Pada ketiga aplikasi tersebut,
-modul \texttt{als} diimplementasikan pada sisi \textit{backend} Rust dari aplikasi
-Tauri, sehingga enkripsi, penandatanganan, dan pengiriman \textit{event} tidak
-terekspos ke lapisan antarmuka SvelteKit/TypeScript. Distribusi \textit{event}
-berdasarkan \textit{event source} ditunjukkan pada Tabel~\ref{tab:event-source-distribution}.
+\textit{Patient Client}, \textit{Hospital Client}, dan \textit{Ministry Client} merupakan aplikasi \textit{client} berbasis Tauri. Pada ketiga aplikasi tersebut, modul \texttt{als} diimplementasikan pada sisi \textit{backend} Rust dari aplikasi Tauri, sehingga enkripsi, penandatanganan, dan pengiriman \textit{event} tidak terekspos ke lapisan antarmuka SvelteKit/TypeScript. Distribusi \textit{event} berdasarkan \textit{event source} ditunjukkan pada Tabel~\ref{tab:event-source-distribution}.
 
 Perlu dicatat bahwa \textit{event} EV8 (IOTA Transaction Submission) dan EV9 (Gas Sponsorship Request) tercatat pada sisi pemohon, bukan pada Gas Station
 Server.

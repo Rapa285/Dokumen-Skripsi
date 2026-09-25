@@ -1,0 +1,75 @@
+
+\chapter{Audit Log Hasil Pengujian End to end}
+\label{app:kode-pengujian}
+
+Lampiran ini memuat audit log yang ter-generate saat melakukan skenario dari pengujian P-INT-01.
+
+\begin{minted}[linenos, breaklines]{json}
+{
+"cid": "QmX8NKFUg9e45h7vZqUSJ97uzbknGHME6UFMJdJ5JimXL9",
+"total_records": 2,
+"chain_valid": true,
+"results": [
+{
+"record_id": "01a0c726-f0dd-7c13-a0cb-7444d31bd472",
+"timestamp": "2026-09-22T03:26:53.149417366Z",
+"prev_record_hash": null,
+"record_hash": "e7c7954ff847965f1ae47010fe4c5e7adf8721d4a991c4253ec239ec899ae96c",
+"iota_address": "0x24ec61172735ba2ca03c70ed6eb0a5301cd10380dc73cf2f41ad1c1916a9812d",
+"signature_valid": true,
+"decrypt_error": null,
+"event": {
+"source_component": "PatientClient",
+"source_timestamp": "2026-09-22T03:25:21.994080338Z",
+"event": {
+"actor_id": "HospitalClient",
+"actor_type": "Client",
+"target_object_type": "GasReservation",
+"target_object": "62",
+"outcome": "Success",
+"action_type": "EXECUTE",
+"event_type": "EV9",
+"gas_budget_requested": 2000000000,
+"reserve_duration_secs": 10,
+"reservation_id": 62,
+"sponsor_address": "0x26c40fcf6b5454823cfcd11896f34f6482ee0452db91436a17194a70d81b28c8",
+"transaction_digest": null,
+"gas_coin_object_ids": [
+"0x0f914c176adcd1ea3ca62bc7c426fa04fe604bf4ddcef106f7a4b30e408b4c31",
+"... (19 obyek koin gas lainnya disembunyikan untuk keringkasan lampiran)"
+]
+}
+}
+},
+{
+"record_id": "01a0c726-f0e1-74e2-ae52-fd77e0d3d14b",
+"timestamp": "2026-09-22T03:26:53.153872401Z",
+"prev_record_hash": "e7c7954ff847965f1ae47010fe4c5e7adf8721d4a991c4253ec239ec899ae96c",
+"record_hash": "aeabafbc0e5b38d2669305448fcc8d90a83c68bf988c80a9e9e0e5f3d203d99e",
+"iota_address": "0x24ec61172735ba2ca03c70ed6eb0a5301cd10380dc73cf2f41ad1c1916a9812d",
+"signature_valid": true,
+"decrypt_error": null,
+"event": {
+"source_component": "PatientClient",
+"source_timestamp": "2026-09-22T03:25:23.481414487Z",
+"event": {
+"actor_id": "0x24ec61172735ba2ca03c70ed6eb0a5301cd10380dc73cf2f41ad1c1916a9812d",
+"actor_type": "Ministry",
+"target_object_type": "Transaction",
+"target_object": "tx://7sV8geo2CdtyhaPvn4UgktvkgRYRRQZttdKK7bYaud2r",
+"outcome": "Success",
+"action_type": "EXECUTE",
+"event_type": "EV8",
+"transaction_digest": "7sV8geo2CdtyhaPvn4UgktvkgRYRRQZttdKK7bYaud2r",
+"payload_hash": "7sV8geo2CdtyhaPvn4UgktvkgRYRRQZttdKK7bYaud2r",
+"move_function": "update_administrative_metadata",
+"move_module": "patient",
+"network_confirmation_status": "success",
+"gas_used": 0,
+"sponsor_address": "0x26c40fcf6b5454823cfcd11896f34f6482ee0452db91436a17194a70d81b28c8"
+}
+}
+}
+]
+}
+\end{minted}

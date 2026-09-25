@@ -188,9 +188,22 @@ Meskipun sifat kekekalan (\textit{immutability}) dan keterlacakan bukti digital 
 
 Untuk mengatasi kerentanan pada media penyimpanan sementara tersebut, diperlukan mekanisme perlindungan integritas di tingkat data log lokal yang mampu memberikan sifat \textit{tamper-evident}. Mekanisme \textit{hash chaining} dipilih sebagai solusi untuk menyambungkan setiap entri \textit{audit record} yang masuk secara berurutan.
 
-Dalam skema \textit{hash chaining}, setiap kali sebuah entri \textit{audit record} baru dibentuk, struktur data wajib menyertakan nilai \textit{hash} dari entri \textit{audit record} sebelumnya pada bidang \texttt{prev\_record\_hash}. Dengan pola keterikatan ini, setiap entri log secara kriptografis mengunci entri sebelumnya sehingga membentuk rantai data yang tidak dapat diubah sebagian. Apabila penyerang mencoba mengubah, menyisipkan, atau menghapus satu entri log pada berkas lokal, nilai \textit{hash} dari entri terkait akan berubah dan merusak konsistensi rantai \textit{hash} pada seluruh entri berikutnya.
-
-Melalui penerapan \textit{hash chaining} ini, berkas log sementara pada lingkungan lokal menjadi bersifat \textit{tamper-evident}. Setiap upaya manipulasi data log selama masa pengumpulan lokal dapat langsung terdeteksi oleh komponen pengumpul sebelum berkas tersebut ditutup, di-rotasi, dan diunggah secara permanen ke jaringan IPFS.
+Dalam skema \textit{hash chaining}, setiap kali sebuah entri \textit{audit
+record} baru dibentuk, struktur data wajib menyertakan nilai \textit{hash} dari
+entri \textit{audit record} sebelumnya pada bidang \texttt{prev\_record\_hash}.
+Dengan pola keterikatan ini, setiap entri log secara kriptografis mengunci entri
+sebelumnya. Apabila penyerang mengubah, menyisipkan, atau menghapus entri yang
+masih diikuti oleh entri lain, konsistensi rantai \textit{hash} pada entri
+berikutnya akan rusak.
+ 
+Melalui penerapan \textit{hash chaining} ini, berkas log sementara pada
+lingkungan lokal menjadi bersifat \textit{tamper-evident} terhadap perubahan di
+dalam rantai. Akan tetapi, \textit{hash chaining} tidak dapat mendeteksi
+penghapusan entri terakhir, karena rantai yang terpotong di bagian ujung tetap
+konsisten secara internal. Kelemahan ini memerlukan \textit{anchor} eksternal,
+yaitu pencatatan nilai \textit{hash} ujung rantai pada media yang tidak dapat
+diubah oleh pengelola log, yang pada Tugas Akhir ini dipenuhi melalui publikasi
+metadata rotasi ke IOTA.
 
 \subsubsection{Analisis Strategi Persistensi Data terhadap Risiko \textit{Pruning}}
 \label{subsubsec:analisis-persistensi-data}

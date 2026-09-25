@@ -2,26 +2,15 @@
 \chapter*{ABSTRACT}
 \addcontentsline{toc}{chapter}{ABSTRACT}
 
-\begin{center}
-	\begin{singlespace}
-		\large\bfseries\MakeUppercase{\thetitle}
-
-		\normalfont\normalsize
-		By:
-
-		\bfseries \theauthor
-	\end{singlespace}
-\end{center}
-
 \begin{singlespace}
 	\small
-	Electronic Health Records (EHR) are a fundamental component of healthcare delivery in Indonesia. Ministry of Health Regulation No.\ 24/2022 requires all healthcare facilities to implement EHR systems that guarantee the confidentiality, integrity, and availability of patient data. To address this requirement, prior research developed DecMed, a decentralized EHR management framework built on IOTA Distributed Ledger Technology, Proxy Re-Encryption (PRE), and IPFS. While DecMed successfully resolved access-control concerns, its existing activity logging mechanism falls short of a proper audit log: logs are scattered across components without a central collector, event coverage is narrow, old records can be overwritten, formats are unstandardized, and digital evidence is vulnerable to erasure through DLT data pruning.
+	Electronic Medical Records (EMR) are a fundamental component of healthcare service delivery in Indonesia. Minister of Health Regulation Number 24 of 2022 requires all healthcare facilities to implement EMR while ensuring data confidentiality, integrity, and availability. To meet these requirements, previous research developed DecMed, a decentralized EMR management framework based on IOTA DLT, Proxy Re-Encryption (PRE), and IPFS. Although DecMed successfully addresses access control, its existing activity recording mechanism does not constitute an adequate audit log: records are scattered across individual components without a centralized manager, event coverage is narrow, old records can be overwritten in violation of the immutability principle, the format is not standardized, and digital evidence is vulnerable to deletion due to the data pruning mechanism of the DLT network.
 
-	This thesis develops the \textbf{Audit Log Service (ALS)}, an independent backend service integrated into DecMed's architecture. The design begins with STRIDE threat modeling of DecMed's Data Flow Diagram, producing 25 threats that are mapped to 13 audit event types (EV1--EV13). Each event source (Patient Client, Hospital Client, Ministry Client, and PRE Server) delivers audit events to ALS asynchronously as Ed25519-signed payloads. ALS verifies the digital signature, forms a structured audit record, and applies SHA-256 hash-chaining between records to ensure tamper-evidence on the local log file. Periodically, ALS rotates the active log file, uploads the archive to IPFS Cluster with pinning to prevent Garbage Collection removal, and publishes rotation metadata as a frozen object on a Move smart contract on the IOTA network via the Gas Station Server already available in DecMed.
+	This final project develops the Audit Log Service (ALS), an independent backend service integrated into the DecMed architecture. The design begins with a threat analysis of the DecMed architecture using the STRIDE method, yielding 25 threats that are mapped into 13 audit event types (EV1--EV13). Each event source (Patient Client, Hospital Client, Ministry Client, and PRE Server) sends audit events to ALS asynchronously using an Encrypt-then-Sign pattern: the event payload is encrypted with AES-256-GCM, its session key is wrapped with the ALS public key using the ECIES P-256 scheme, and the ciphertext is then signed with the sender's IOTA key. Delivery is supported by a local queue with a retry mechanism so that events are not lost when ALS is unreachable. ALS verifies the sender's digital signature without decrypting the event payload, then constructs an audit record and applies SHA-256 hash-chaining between records to guarantee tamper-evidence in the local log file. Periodically, ALS rotates the active log file, uploads the archived file to an IPFS Cluster with pinning so that it is not removed by Garbage Collection, and then publishes the rotation metadata as a frozen object through a Move smart contract on the IOTA network via the Gas Station Server already available in DecMed.
 
-	Implementation results show that ALS successfully aggregates audit events from all DecMed components into a single centralized repository, captures all 13 event types covering every identified STRIDE threat, detects log tampering through cryptographic hash-chaining, and ensures long-term data retention through a combination of IPFS pinning and immutable on-chain metadata. ALS does not alter DecMed's existing business logic and reuses the available IPFS and IOTA infrastructure.
+	The implementation results show that ALS successfully aggregates audit events from all DecMed components into a single centralized repository, records 13 event types covering all identified STRIDE threats, supports the detection of audit trail tampering through hash-chaining at the audit record level, and provides long-term data retention through a combination of IPFS pinning and immutable on-chain metadata storage. Event payloads remain encrypted, both in the local log files and in the IPFS archives, so that they can only be read by the holder of the ALS private key. ALS does not alter DecMed's existing business flows or core functionality; instead, it reuses the IPFS and IOTA infrastructure already in place.
 
-	\textbf{\textit{Keywords: audit log, DecMed, IOTA, IPFS, hash-chaining, digital signature, STRIDE, electronic health record}}
+	\textbf{\textit{Keywords: audit log, DecMed, IOTA, IPFS, hash-chaining, digital signature, encryption, STRIDE, electronic medical record}}
 
 \end{singlespace}
 \clearpage

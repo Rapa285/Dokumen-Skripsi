@@ -19,27 +19,35 @@ Pengujian kebutuhan fungsional dijalankan secara manual untuk memastikan perilak
 
 \subsubsection{P-KF-01: Penerimaan dan Agregasi \textit{Audit Event} dari Berbagai \textit{Event Source}}
 
-Pengujian P-KF-01 memverifikasi KF-TA-01, yaitu kemampuan ALS mengagregasi data log dari berbagai komponen DecMed ke dalam satu repositori terpusat. Skenario pengujian dilakukan dengan mengirimkan \textit{signed event} secara berturut-turut dari empat \textit{event source} yang berbeda, yaitu \textit{Patient Client}, \textit{Hospital Client}, \textit{Ministry Client}, dan PRE Server, ke \textit{endpoint} \texttt{POST /api/events} pada ALS.
+Pengujian P-KF-01 memverifikasi KF-TA-01, yaitu kemampuan ALS mengagregasi data log dari berbagai komponen DecMed ke dalam satu repositori terpusat. Skenario pengujian dilakukan dengan mengirimkan \textit{encryptedsignedevent} secara berturut-turut dari empat \textit{event source} yang berbeda, yaitu \textit{Patient Client}, \textit{Hospital Client}, \textit{Ministry Client}, dan PRE Server, ke \textit{endpoint} \texttt{POST /api/events} pada ALS.
 
 Setiap \textit{event source} mengirimkan dua event: satu event dengan hasil \texttt{Success} dan satu event dengan hasil \texttt{Failure}, untuk memastikan ALS dapat menangani seluruh varian \texttt{AuditOutcome}. Setelah seluruh pengiriman selesai, berkas log \texttt{./logs/audit\_logs.log} diperiksa untuk memastikan seluruh delapan event berhasil ditulis sebagai baris JSON-Lines yang terpisah tanpa ada yang terlewat.
 
-Hasil pengujian menunjukkan seluruh delapan \textit{audit record} berhasil tersimpan pada berkas log. Setiap \textit{record} memuat atribut \texttt{source\_component} yang mencerminkan komponen pengirimnya masing-masing, sehingga asal setiap entri dapat ditelusuri tanpa ambiguitas.
+Hasil pengujian menunjukkan seluruh delapan \textit{audit record} berhasil tersimpan pada berkas log. Seluruh delapan \texttt{EncryptedSignedEvent} berhasil diterima dan disimpan sebagai \texttt{AuditRecord} yang terpisah. Identitas penanda tangan setiap record dapat ditelusuri melalui \texttt{iota\_address}, sedangkan atribut \texttt{source\_component} beserta atribut event lainnya berada di dalam payload terenkripsi (\textit{ciphertext}) dan baru dapat diperiksa setelah proses dekripsi menggunakan \textit{private key} ALS.
 
 \subsubsection{P-KF-02: Pencatatan Keseluruhan Jenis \textit{Audit Event} EV1--EV13}
 
 Pengujian P-KF-02 memverifikasi KF-TA-02, yaitu kemampuan ALS menangkap dan merekam keseluruhan 13 jenis \textit{audit event} yang telah didefinisikan. Skenario pengujian dilakukan dengan mengirimkan satu \textit{signed event} untuk setiap varian \texttt{AuditEventDetails} (EV1 hingga EV13) ke ALS.
 
-Setiap \textit{event} dikonstruksi dengan nilai bidang yang valid sesuai skema masing-masing varian pada Lampiran~\ref{code:audit-event-details}. ALS diharapkan berhasil mem-\textit{parse} seluruh 13 varian tersebut melalui mekanisme \textit{tagged enum} \texttt{\#[serde(tag = "event\_type")]} dan menuliskannya ke berkas log.
+Setiap \textit{event} dikonstruksi dengan nilai bidang yang valid sesuai skema masing-masing varian pada Lampiran~\ref{code:audit-event-details}. Setiap varien EV1-EV13 dibentuk pada event source sesuai dengan skema \texttt{AuditEventDetails}, kemudian dienkripsi, ditandatangani, dan dikirimkan kepada ALS. ALS menyimpan setiap event sebagai \texttt{EncryptedSignedEvent} tanpa melakukan parsing terhadap isi payload (\textit{ciphertext}) pada saat penerimaan.
 
-Hasil pengujian menunjukkan seluruh 13 jenis \textit{event} berhasil diterima dan disimpan. Setiap \textit{record} memuat bidang \texttt{event\_type} dengan nilai yang sesuai (misalnya \texttt{"EV1"} untuk \textit{event} autentikasi dan \texttt{"EV13"} untuk validasi \textit{capability}), beserta atribut tambahan spesifik yang sesuai dengan varian masing-masing.
+Hasil pengujian menunjukkan seluruh 13 jenis \textit{event} berhasil diterima dan disimpan. Seluruh 13 amplop event berhasil diterima dan disimpan sebagai \texttt{AuditRecord}. Jenis dan atribut masing-masing event tidak terlihat langsung pada berkas JSON-Lines karena berada dalam kondisi terenkripsi sebagai \textit{ciphertext}. Oleh karena itu, pengujian ini membuktikan kemampuan ALS menerima dan menyimpan 13 event terenkripsi yang dibangkitkan oleh event source, tanpa adanya parsing dari informasi event itu sendiri dari EV1-EV13 pada saat penerimaan.
 
 \subsubsection{P-KF-03: Standardisasi Format \textit{Audit Record}}
 
 Pengujian P-KF-03 memverifikasi KF-TA-03, yaitu kemampuan ALS memformat dan menstandardisasi \textit{audit record} ke dalam skema terstruktur sebelum disimpan. Skenario pengujian dilakukan dengan mengirimkan satu \textit{signed event} bertipe EV4 (\textit{Medical Record Access}) ke ALS, kemudian memeriksa struktur JSON dari \textit{audit record} yang dihasilkan.
 
-\textit{Audit record} yang dihasilkan diverifikasi terhadap skema \texttt{AuditRecord} pada Kode~\ref{code:audit-record}. Pemeriksaan mencakup keberadaan seluruh bidang wajib, yaitu \texttt{record\_id} (berformat UUID v7), \texttt{timestamp} (berformat UTC ISO 8601), \texttt{prev\_record\_hash} (bernilai \texttt{null} untuk \textit{record} pertama), \texttt{record\_hash} (berupa \textit{string} heksadesimal SHA-256 sepanjang 64 karakter), dan seluruh atribut umum \texttt{AuditEvent} beserta atribut tambahan EV4.
+\textit{Audit record} yang dihasilkan diverifikasi terhadap skema \texttt{AuditRecord} pada Kode~\ref{code:audit-record}. Pemeriksaan mencakup atribut rantai dan seluruh bidang \texttt{EncryptedSignedEvent}. Atribut umum \texttt{AuditEvent} beserta atribut tambahan EV4 hanya dapat diperiksa setelah \textit{ciphertext} didekripsi menggunakan kunci privat ALS.
 
-Hasil pengujian menunjukkan \textit{audit record} yang dihasilkan memiliki struktur yang sesuai dengan skema yang ditentukan. Seluruh bidang wajib tersedia dan berformat benar, serta atribut tambahan EV4 berupa \texttt{access\_type}, \texttt{medical\_record\_id}, \texttt{capability\_id}, dan \texttt{authorization\_token\_id} terserialisasi pada tingkat yang sama dengan atribut umum berkat anotasi \texttt{\#[serde(flatten)]}.
+Hasil pengujian menunjukkan \textit{audit record} yang dihasilkan memiliki
+struktur yang sesuai dengan skema yang ditentukan. Seluruh bidang rantai
+tersedia dan berformat benar, dan isi \textit{event} tersimpan sebagai
+\texttt{EncryptedSignedEvent}. Setelah \textit{ciphertext} didekripsi dengan
+kunci privat ALS, atribut tambahan EV4 berupa \texttt{access\_type},
+\texttt{medical\_record\_id}, \texttt{capability\_id}, dan
+\texttt{authorization\_token\_id} terserialisasi pada tingkat yang sama dengan
+atribut umum berkat anotasi \texttt{\#[serde(flatten)]} pada
+\texttt{AuditEvent}. 
 
 \subsubsection{P-KF-04: Penyimpanan \textit{Audit Record} secara \textit{Append-Only}}
 
@@ -57,7 +65,8 @@ Keberhasilan pengujian diverifikasi melalui tiga indikator: (1) berkas arsip \te
 
 Hasil pengujian menunjukkan seluruh tiga indikator terpenuhi dalam lingkungan prototipe dan skenario uji yang ditetapkan. CID yang dihasilkan oleh IPFS dapat digunakan untuk mengambil kembali berkas arsip melalui \textit{gateway} IPFS, dan \textit{object ID} \texttt{LogRecord} pada IOTA dapat diverifikasi melalui IOTA Explorer pada jaringan Localnet.
 
-\subsection{Pengujian End-to-end Audit Log}
+\subsection{Pengujian End-to-End Pembangkitan, Pengiriman, dan Penyimpanan Audit
+Record}
 \label{subsec:pengujian-siklus-lengkap}
  
 Pengujian end-to-end (P-INT-01) merupakan pengujian integrasi yang
@@ -68,39 +77,36 @@ P-KF atau P-KNF yang menguji komponen secara atomik, melainkan melengkapinya
 dengan membuktikan bahwa seluruh komponen bekerja benar secara terpadu dalam
 satu alur nyata.
  
-Skenario yang digunakan adalah akses rekam medis elektronik (RME) pasien oleh
-tenaga medis dari \textit{Hospital Client}, yang menghasilkan \textit{event}
-jenis EV4 (\textit{Medical Record Access}).
+Skenario yang digunakan adalah mengeksekusi transaksi ke IOTA yaitu update informasi rekam medis pasien oleh pasien sendiri dari \textit{Patient Client}, yang menghasilkan \textit{event}
+jenis EV8 (\textit{IOTA Transaction}).
  
 \subsubsection{Langkah 1: Event yang Terbentuk}
  
-Ketika tenaga medis mengakses RME pasien, \textit{Hospital Client} membangkitkan
+Ketika pasien melakukan sebuah operasi yang mengtrigger transaksi ke IOTA, \textit{Patient Client} membangkitkan
 objek \texttt{Event} berikut dan membungkusnya ke dalam \texttt{AuditEvent}
 sebelum dikirimkan ke ALS.
  
 \begin{minted}[linenos, breaklines]{json}
 {
-  "source_component": "HospitalClient",
-  "source_timestamp": "2025-06-10T08:14:32.104Z",
+  "source_component": "PatientClient",
+  "source_timestamp": "2026-09-22T03:25:23.481414487Z",
   "event": {
-    "actor_id": "0xabc123...tenaga_medis_iota_address",
-    "actor_type": "MedicalPersonnel",
-    "target_object_type": "MedicalRecord",
-    "target_object": "ipfs://bafybeig...cid_rekam_medis",
+    "actor_id": "0x24ec61172735ba2ca03c70ed6eb0a5301cd10380dc73cf2f41ad1c1916a9812d",
+    "actor_type": "Patient",
+    "target_object_type": "Transaction",
+    "target_object": "tx://7sV8geo2CdtyhaPvn4UgktvkgRYRRQZttdKK7bYaud2r",
     "outcome": "Success",
-    "action_type": "READ",
-    "event_type": "EV4",
-    "access_type": "direct",
-    "medical_record_id": "RME-2025-00471",
-    "capability_id": "cap:0xdef456...capability_on_chain",
-    "authorization_token_id": "jwt:ey...token_id"
+    "action_type": "EXECUTE",
+    "event_type": "EV8",
+    "move_module": "patient",
+    "move_function": "update_administrative_metadata"
   }
 }
 \end{minted}
  
 Atribut \texttt{actor\_id} berisi alamat IOTA aktor yang juga digunakan untuk
 menandatangani \textit{ciphertext} \texttt{EncryptedSignedEvent}. Atribut
-\texttt{source\_timestamp} dicatat di sisi \textit{Hospital Client} sebelum
+\texttt{source\_timestamp} dicatat di sisi \textit{Patient Client} sebelum
 enkripsi, sehingga nilainya mencerminkan waktu kejadian menurut jam komponen
 pengirim dan tidak dapat diubah oleh ALS.
  
@@ -120,30 +126,28 @@ Contoh \textit{record} kedua dalam rantai ditunjukkan di bawah (nilai
  
 \begin{minted}[linenos, breaklines]{json}
 {
-  "record_id": "01971b3e-...-uuid-v7",
-  "timestamp": "2025-06-10T08:14:32.381Z",
-  "prev_record_hash": "a3f8c2...hash-record-sebelumnya",
-  "record_hash": "7d4e91...hash-record-ini",
-  "source_component": "HospitalClient",
-  "source_timestamp": "2025-06-10T08:14:32.104Z",
+  "record_id": "01a0c726-f0e1-74e2-ae52-fd77e0d3d14b",
+  "timestamp": "2026-09-22T03:26:53.153872401Z",
+  "prev_record_hash": "e7c7954ff847965f1ae47010fe4c5e7adf8721d4a991c4253ec239ec899ae96c",
+  "record_hash": "aeabafbc0e5b38d2669305448fcc8d90a83c68bf988c80a9e9e0e5f3d203d99e",
+  "source_component": "PatientClient",
+  "source_timestamp": "2026-09-22T03:25:23.481414487Z",
   "event": {
-    "actor_id": "0xabc123...tenaga_medis_iota_address",
-    "actor_type": "MedicalPersonnel",
-    "target_object_type": "MedicalRecord",
-    "target_object": "ipfs://bafybeig...cid_rekam_medis",
+    "actor_id": "0x24ec61172735ba2ca03c70ed6eb0a5301cd10380dc73cf2f41ad1c1916a9812d",
+    "actor_type": "Patient",
+    "target_object_type": "Transaction",
+    "target_object": "tx://7sV8geo2CdtyhaPvn4UgktvkgRYRRQZttdKK7bYaud2r",
     "outcome": "Success",
-    "action_type": "READ",
-    "event_type": "EV4",
-    "access_type": "direct",
-    "medical_record_id": "RME-2025-00471",
-    "capability_id": "cap:0xdef456...capability_on_chain",
-    "authorization_token_id": "jwt:ey...token_id"
+    "action_type": "EXECUTE",
+    "event_type": "EV8",
+    "move_module": "patient",
+    "move_function": "update_administrative_metadata"
   }
 }
 \end{minted}
  
-Selisih antara \texttt{source\_timestamp} (\texttt{08:14:32.104Z}) dan
-\texttt{timestamp} (\texttt{08:14:32.381Z}) sebesar ±277 ms merupakan latensi
+Selisih antara \texttt{source\_timestamp} (\texttt{03:25:23.4814Z}) dan
+\texttt{timestamp} (\texttt{03:26:53.1538Z}) sebesar ±277 ms merupakan latensi
 dari enkripsi, pengiriman jaringan, dan pemrosesan antrian internal ALS.
 Kedua nilai diperlukan: \texttt{source\_timestamp} untuk merekonstruksi urutan
 kejadian yang sesungguhnya, \texttt{timestamp} untuk menentukan urutan
@@ -167,11 +171,10 @@ berurutan pada berkas log, hubungan yang harus terbentuk adalah:
 \hline
 \textbf{N} & \textbf{\texttt{prev\_record\_hash}} & \textbf{\texttt{record\_hash}} \\
 \hline
-1 & \texttt{null} & \texttt{a3f8c2...} \\
+1 & \texttt{null} & \texttt{e7c795...} \\
 \hline
-2 & \texttt{a3f8c2...} & \texttt{7d4e91...} \\
+2 & \texttt{e7c795...} & \texttt{aeabaf...} \\
 \hline
-3 & \texttt{7d4e91...} & \texttt{b91d4f...} \\
 \hline
 \end{tabular}
 \end{center}
@@ -209,13 +212,17 @@ itu, \textit{record} ketiga juga gagal verifikasi karena nilai
 Hasil pengujian yang terekam adalah: skenario a mengembalikan
 \texttt{chain\_valid: true} untuk seluruh 3 \textit{record}, sedangkan skenario
 b mengembalikan \texttt{chain\_valid: false} dengan pesan \texttt{record 2:
-hash mismatch} dan \texttt{record 3: prev\_hash mismatch}. Hasil ini membuktikan
-bahwa perusakan pada posisi mana pun dalam rantai terdeteksi secara otomatis
-melalui efek domino pada seluruh \textit{record} sesudahnya.
+hash mismatch} dan \texttt{record 3: prev\_hash mismatch}. Hasil ini membuktikan bahwa modifikasi pada suatu \textit{record} terdeteksi
+secara otomatis melalui efek domino pada \textit{record} sesudahnya.
  
 \subsubsection{Langkah 5: Kesimpulan dari Satu Record}
  
-Dari \textit{record} EV4 yang tersimpan, dapat disimpulkan secara langsung:
+Atribut \textit{event} pada \textit{record} EV4 tidak dapat dibaca langsung
+dari berkas log karena tersimpan sebagai \textit{ciphertext}. Untuk keperluan
+investigasi, pemegang kunci privat P-256 ALS mendekripsi \texttt{enc\_aes\_key}
+untuk memperoleh kunci sesi AES, kemudian mendekripsi \texttt{ciphertext}
+menjadi \texttt{AuditEvent}. Dari hasil dekripsi \textit{record} EV4 tersebut,
+dapat disimpulkan:
  
 \begin{itemize}
     \item \textbf{Siapa} yang mengakses: \texttt{actor\_id}
@@ -230,26 +237,39 @@ Dari \textit{record} EV4 yang tersimpan, dapat disimpulkan secara langsung:
     \item \textbf{Hasilnya}: akses berhasil (\texttt{outcome: Success}).
 \end{itemize}
  
-Tanda tangan \texttt{IotaSignature} yang valid atas \textit{ciphertext} membuktikan
-bahwa \textit{event} ini benar-benar dibangkitkan oleh pemegang kunci privat
-IOTA yang bersesuaian dengan \texttt{actor\_id} tersebut. Karena kunci IOTA
-terikat pada identitas yang terdaftar di \textit{ledger}, aktor tidak dapat
-menyangkal bahwa akses ini dilakukan darinya selama kunci privat tidak
-dikompromikan.
- 
+Tanda tangan \texttt{IotaSignature} yang valid atas \textit{ciphertext}
+membuktikan bahwa \textit{event} ini dilaporkan oleh pemegang kunci privat
+IOTA yang bersesuaian dengan \texttt{iota\_address} pada \textit{record}.
+Karena \texttt{signature} dan \texttt{iota\_address} ikut tersimpan pada
+\textit{record}, pembuktian ini dapat diulang kapan saja terhadap
+\textit{ciphertext} yang sama. Untuk mengatribusikan tindakan kepada
+\texttt{actor\_id}, investigator mencocokkan \texttt{actor\_id} hasil dekripsi
+dengan \texttt{iota\_address} penanda tangan. Apabila keduanya sama, pihak
+tersebut tidak dapat menyangkal tindakan ini selama kunci privat IOTA-nya tidak
+dikompromikan. Apabila keduanya berbeda, \textit{record} hanya membuktikan bahwa
+pemilik \texttt{iota\_address} melaporkan tindakan tersebut atas nama
+\texttt{actor\_id}, sehingga atribusi kepada \texttt{actor\_id} memerlukan
+bukti pendukung lain.
+
 \subsubsection{Langkah 6: Batas Kesimpulan}
  
 Terdapat tiga batas yang perlu dinyatakan secara eksplisit agar kesimpulan
 di atas tidak melampaui apa yang sesungguhnya dibuktikan oleh sistem.
  
-\textbf{(a) Isi \textit{event} tersimpan dalam bentuk terenkripsi.} Berkas
-\texttt{audit\_logs.log} menyimpan \texttt{AuditRecord} dalam \textit{plaintext}
-JSON-Lines karena dekripsi dilakukan oleh ALS sebelum pembentukan \textit{record}.
-Namun, \textit{event} yang telah diarsipkan ke IPFS dan berkas arsip yang sudah
-dirotasi tersimpan setelah melalui proses ALS; inspeksi berkas arsip memerlukan
-akses langsung ke ALS atau rekonstruksi dari log. Untuk keperluan investigasi
-mendalam, dekripsi \textit{ciphertext} yang masih tersimpan di antrian memerlukan
-kunci privat P-256 ALS.
+\textbf{(a) Isi \textit{event} hanya dapat dibaca oleh pemegang kunci privat
+ALS.} Berkas \texttt{audit\_logs.log} menyimpan \texttt{AuditRecord} dalam
+format JSON-Lines, dengan atribut rantai (\texttt{record\_id},
+\texttt{timestamp}, \texttt{prev\_record\_hash}, \texttt{record\_hash}) dalam
+bentuk \textit{plaintext}, sedangkan isi \textit{event} tersimpan sebagai
+\textit{ciphertext} AES-256-GCM. Hal yang sama berlaku untuk berkas arsip pada
+IPFS, sehingga pihak yang mengetahui CID arsip tidak dapat membaca atribut
+sensitif \textit{event}. Konsekuensinya, investigasi terhadap isi \textit{event}
+bergantung pada ketersediaan kunci privat P-256 ALS; hilangnya kunci tersebut
+menyebabkan isi seluruh \textit{event} tidak dapat dipulihkan, meskipun
+integritas rantai tetap dapat diverifikasi. Selain itu, bidang
+\texttt{iota\_address} pada amplop tersimpan dalam bentuk \textit{plaintext},
+sehingga identitas penanda tangan setiap \textit{record} tetap dapat diketahui
+tanpa dekripsi.
  
 \textbf{(b) Fasilitas pencarian dan filter lintas-record belum tersedia.}
 Implementasi saat ini hanya menyediakan \textit{endpoint} \texttt{GET /api/logs}
@@ -268,6 +288,33 @@ antara waktu kejadian dan waktu investigasi, verifikasi tanda tangan terhadap
 kunci publik saat ini dapat gagal meskipun \textit{event} tersebut sah.
 Mekanisme rotasi kunci dengan riwayat kunci publik yang terekam berada di luar
 cakupan implementasi saat ini.
+
+\textbf{(d) \texttt{actor\_id} tidak diverifikasi oleh ALS pada saat
+penerimaan.} ALS hanya memverifikasi bahwa tanda tangan dibuat oleh pemilik
+\texttt{iota\_address}. Pelapor yang sah secara teknis dapat mengisi
+\texttt{actor\_id} dengan identitas pengguna lain, dan \textit{event} tersebut
+tetap diterima serta tercatat. Manipulasi ini tidak menghilangkan jejak pelapor,
+karena \texttt{iota\_address} dan tanda tangannya tersimpan secara permanen
+pada \textit{record} dan terlindungi oleh \textit{hash-chaining}, sehingga
+ketidaksesuaian dapat terdeteksi dan dilacak ke pelapornya pada saat
+investigasi. Namun, deteksi tersebut bergantung pada investigator yang
+melakukan pencocokan secara eksplisit.
+
+\textbf{(e) Integritas ujung rantai bergantung pada rotasi.}
+\texttt{verify\_chain} memeriksa konsistensi antar \textit{record} yang ada,
+tetapi tidak dapat mengetahui apakah \textit{record} terakhir telah dihapus.
+Untuk \textit{record} yang telah dirotasi, kelengkapan dapat diverifikasi dengan
+membandingkan \texttt{record\_hash} terakhir dan jumlah \textit{record} pada
+berkas arsip terhadap \texttt{final\_record\_hash} dan \texttt{record\_count}
+pada \texttt{LogRecord} di IOTA. Untuk \textit{record} yang masih berada pada
+berkas log aktif, belum ada pembanding eksternal, sehingga penghapusan
+\textit{record} terakhir oleh pihak yang memiliki akses ke berkas tersebut tidak
+dapat dideteksi. Selain itu, karena setiap \textit{restart} ALS memulai rantai
+baru, sebuah berkas log dapat memuat lebih dari satu segmen rantai, dan
+\textit{record} dengan \texttt{prev\_record\_hash} bernilai \texttt{null} di
+tengah berkas harus diinterpretasikan sebagai titik \textit{restart}.
+Penghapusan \textit{record} terakhir sebelum \textit{restart} tidak dapat
+dibedakan dari akhir segmen yang sah.
  
 Dengan demikian, P-INT-01 membuktikan bahwa mekanisme inti sistem berfungsi
 benar: \textit{record} terbentuk sesuai skema, rantai \textit{hash} valid,
@@ -278,7 +325,23 @@ melampaui batas ketiga yang telah disebutkan di atas.
 \subsection{Pengujian Kebutuhan Nonfungsional}
 \label{subsec:pengujian-nonfungsional}
 
-Pengujian kebutuhan nonfungsional dijalankan untuk mengevaluasi pemenuhan aspek integritas, interoperabilitas, ketersediaan, dan konsistensi pencatatan pada sistem ALS. Setiap pengujian dikaitkan dengan kebutuhan nonfungsional yang telah didefinisikan pada Tabel~\ref{tab:kebutuhan-nonfungsional}. Unit testing menyimulasikan skenario ancaman STRIDE yang relevan, khususnya ancaman kategori \textit{Tampering} (T14, T18) dan \textit{Repudiation} (T6, T7, T8, T9, T16) yang dipetakan ke kebutuhan nonfungsional.
+Pengujian menggunakan fungsi verifikasi tanda tangan yang merepresentasikan fungsi pada handler ALS. Proses dekripsi dilakukan melalui fungsi pembantu terpisah untuk merepresentasikan pembacaan audit record oleh pihak yang memiliki kunci privat ALS. \textit{Event} uji dibentuk dengan fungsi pembantu \texttt{seal\_event} yang
+meniru langkah 1 hingga 5 pada \texttt{ALSClient::build\_and\_send}: serialisasi
+\texttt{AuditEvent}, enkripsi AES-256-GCM, pembungkusan kunci sesi dengan ECIES
+P-256, serta penandatanganan \textit{ciphertext} dengan \texttt{IotaKeyPair}.
+Pasangan kunci aktor dan pasangan kunci P-256 ALS dibangkitkan secara acak pada
+setiap pengujian.
+
+Pengujian P-KNF-06 memverifikasi bahwa \textit{event} yang dibentuk secara sah
+diterima dan isinya utuh setelah didekripsi. Pengujian P-KNF-07 memverifikasi
+integritas pada tiga lapisan: modifikasi \textit{ciphertext} harus ditolak oleh
+verifikasi \texttt{IotaSignature} (P-KNF-07a), modifikasi \textit{nonce} yang
+tidak tercakup tanda tangan harus ditolak oleh \textit{authentication tag}
+AES-GCM (P-KNF-07b), dan kunci sesi yang dibungkus untuk kunci publik lain harus
+gagal dibuka oleh ALS (P-KNF-07c). Pengujian P-KNF-08 memverifikasi keaslian
+pengirim: tanda tangan dari kunci lain yang mengaku sebagai alamat aktor sah
+(P-KNF-08a) maupun penggantian \texttt{iota\_address} pada amplop (P-KNF-08b)
+harus ditolak oleh \texttt{verify\_secure}. Pengujian P-KNF-09 memverifikasi kerahasiaan payload pada penyimpanan, yaitu bahwa atribut sensitif event tidak tersimpan dalam bentuk plaintext dan hanya dapat dipulihkan menggunakan kunci privat P-256 ALS.
 
 \subsubsection{Pengujian KNF-TA-01: Integritas \textit{Audit Record} yang \textit{Tamper-Proof}}
 
@@ -288,7 +351,12 @@ Pengujian pertama, yaitu P-KNF-01, dijalankan melalui unit testing pada fungsi \
 
 Pengujian kedua, yaitu P-KNF-02, dijalankan melalui unit testing untuk mensimulasikan perusakan pada posisi tengah rantai. Tiga \texttt{AuditRecord} dibuat secara berurutan sehingga membentuk rantai (setiap \textit{record} menyertakan \texttt{prev\_record\_hash} dari \textit{record} sebelumnya). \textit{Record} kedua kemudian dimodifikasi, dan seluruh tiga \textit{record} diverifikasi. \textit{Record} pertama harus tetap valid, sedangkan \textit{record} kedua dan ketiga harus gagal verifikasi karena efek domino perusakan rantai.
 
-Hasil pengujian menunjukkan bahwa modifikasi pada posisi mana pun dalam rantai \textit{audit record} terdeteksi secara akurat. Implementasi \texttt{calculate\_record\_hash} yang menggabungkan \texttt{record\_id}, \texttt{timestamp}, \texttt{prev\_record\_hash}, dan isi \textit{event} terbukti efektif menjamin sifat \textit{tamper-evident} pada berkas log lokal.
+Hasil pengujian menunjukkan bahwa modifikasi \textit{record} di tengah segmen rantai yang diuji dapat dideteksi melalui ketidaksesuaian \texttt{record\_hash} dan \texttt{prev\_record\_hash}. Pengujian ini tidak membuktikan deteksi penghapusan record terakhir pada log aktif maupun kontinuitas rantai setelah ALS dimulai ulang. Implementasi \texttt{calculate\_record\_hash} yang menggabungkan
+\texttt{record\_id}, \texttt{timestamp}, \texttt{prev\_record\_hash}, dan isi
+\textit{event} terbukti memberikan sifat \textit{tamper-evident} terhadap
+modifikasi pada berkas log lokal. Pengujian ini tidak mencakup penghapusan
+\textit{record} terakhir, yang tidak dapat dideteksi oleh \texttt{verify\_chain}
+tanpa pembanding \textit{hash} ujung rantai dari luar berkas log.
 
 \subsubsection{Pengujian KNF-TA-02: Interoperabilitas dan Keterbacaan Format Data Log}
 
@@ -306,26 +374,75 @@ Pengujian P-KNF-04 dijalankan dengan mengunggah sebuah berkas arsip log ke IPFS 
 
 Pengujian P-KNF-05 dijalankan dengan memverifikasi bahwa objek \texttt{LogRecord} yang diterbitkan ke IOTA melalui \texttt{IotaLogClient::publish\_metadata}. Pemeriksaan dilakukan melalui \textit{endpoint} \texttt{GET /object/\{object\_id\}} pada IOTA Localnet RPC. Respons harus memuat field \texttt{"owner": "Immutable"} yang menandakan objek tidak dapat dimodifikasi oleh siapa pun setelah transaksi pembuatannya final.
 
-Hasil pengujian P-KNF-04 menunjukkan berkas arsip yang diambil kembali dari IPFS memiliki nilai \textit{hash} SHA-256 yang identik dengan berkas aslinya, membuktikan integritas data selama penyimpanan dan pengambilan. Hasil pengujian P-KNF-05 menunjukkan objek \texttt{LogRecord} pada IOTA Localnet berstatus \textit{immutable}, membuktikan bahwa mekanisme \texttt{transfer::freeze\_object} pada \textit{smart contract} Move \texttt{als::audit\_log} berhasil menegakkan sifat \textit{append-only} pada level \textit{on-chain}.
+Hasil pengujian P-KNF-04 menunjukkan berkas arsip yang diambil kembali dari IPFS memiliki nilai \textit{hash} SHA-256 yang identik dengan berkas aslinya, membuktikan integritas data selama penyimpanan dan pengambilan. Hasil pengujian P-KNF-05 menunjukkan objek \texttt{LogRecord} pada IOTA Localnet berstatus \textit{immutable}, membuktikan bahwa Move \texttt{als::audit\_log} berhasil menegakkan sifat \textit{append-only} pada level \textit{on-chain}.
 
-\subsubsection{Pengujian KNF-TA-04: Konsistensi Pencatatan melalui Verifikasi Tanda Tangan Digital}
-
-Pengujian KNF-TA-04 memastikan konsistensi pencatatan dengan memverifikasi bahwa mekanisme \textit{signed payload} Ed25519 mencegah \textit{event} palsu masuk ke rantai \textit{audit record}. Pengujian ini menguji mitigasi terhadap ancaman T6 (pasien menyangkal pemberian akses) dan T16 (PRE Server menyangkal pengajuan sponsorship), karena \textit{event} yang masuk ke ALS harus dapat dibuktikan berasal dari komponen pengirim yang sah.
-
-Pengujian pertama, yaitu P-KNF-06, dijalankan melalui unit testing pada fungsi \texttt{Utils::verify\_and\_extract\_event}. Skenario pengujian membuat sebuah \texttt{SignedEvent} yang valid dengan \textit{payload}, \textit{signature}, dan \textit{public key} yang sesuai, kemudian memanggil \texttt{verify\_and\_extract\_event}. Fungsi harus mengembalikan \texttt{AuditEvent} yang valid tanpa \textit{error}.
-
-Pengujian kedua, yaitu P-KNF-07, dijalankan dengan skenario serupa tetapi \textit{payload} dimodifikasi setelah penandatanganan. Satu karakter pada \textit{payload string} diubah sebelum konstruksi \texttt{SignedEvent}. Fungsi \texttt{verify\_and\_extract\_event} harus mengembalikan \textit{error} dengan pesan yang mengindikasikan kegagalan verifikasi tanda tangan digital.
-
-Pengujian ketiga, yaitu P-KNF-08, dijalankan dengan skenario di mana \textit{signature} diganti dengan \textit{signature} yang dihasilkan oleh pasangan kunci Ed25519 yang berbeda dari yang digunakan untuk menandatangani \textit{payload}. Fungsi \texttt{verify\_and\_extract\_event} harus mengembalikan \textit{error} yang mengindikasikan tanda tangan tidak valid atau \textit{public key} tidak cocok.
-
-Hasil pengujian menunjukkan P-KNF-06 berhasil mengekstrak \texttt{AuditEvent} yang valid, sedangkan P-KNF-07 dan P-KNF-08 keduanya menghasilkan \textit{error} dengan pesan ``Digital signature tidak valid!''. Mekanisme verifikasi Ed25519 menggunakan \texttt{ed25519-dalek} terbukti efektif mencegah \textit{event} yang dimanipulasi atau berasal dari sumber tidak sah masuk ke sistem pencatatan.
+\subsubsection{Pengujian KNF-TA-04: Keaslian, Integritas, dan Kerahasiaan \textit{Event}}
+ 
+Pengujian KNF-TA-04 memastikan bahwa jalur kriptografi yang digunakan pada
+implementasi, yaitu verifikasi \texttt{IotaSignature} pada pola Encrypt-then-Sign mencegah \textit{ciphertext} yang dimodifikasi atau ditandatangani oleh kunci yang tidak sesuai diterima sebagai event yang sah. Bidang amplop yang tidak tercakup tanda tangan, seperti \texttt{nonce} dan \texttt{enc\_aes\_key}, tetap tersimpan sebagai bagian \texttt{AuditRecord} dan dilindungi oleh \texttt{record\_hash}, tetapi karusakan bidang tersebut baru dapat diketahui ketika proses dekripsi dilakukan. Pengujian ini menguji mitigasi
+terhadap ancaman T6 (pasien menyangkal pemberian akses) dan T16 (PRE Server
+menyangkal pengajuan \textit{sponsorship}), karena \textit{event} yang masuk ke
+ALS harus dapat dibuktikan berasal dari pemegang kunci IOTA yang sah.
+ 
+Seluruh pengujian dijalankan melalui \textit{unit testing} terhadap fungsi yang
+dipanggil pada alur produksi, yaitu \texttt{Utils::verify\_event\_signature}
+pada \textit{handler} \texttt{handle\_event} dan \texttt{create\_audit\_record}
+pada \texttt{AuditLogger}. \textit{Event} uji dibentuk dengan fungsi pembantu
+\texttt{seal\_event} yang meniru langkah 1 hingga 5 pada
+\texttt{ALSClient::build\_and\_send}: serialisasi \texttt{AuditEvent}, enkripsi
+AES-256-GCM dengan kunci sesi acak, pembungkusan kunci sesi dengan ECIES P-256
+terhadap kunci publik ALS, serta penandatanganan \textit{ciphertext} dengan
+\texttt{IotaKeyPair} pengirim menggunakan \texttt{IotaSignature}. Pasangan kunci
+IOTA pengirim dan pasangan kunci P-256 ALS dibangkitkan secara acak pada setiap
+pengujian sehingga tidak ada kunci yang ditanam pada kode uji. Skenario
+pengujian dirangkum pada Tabel~\ref{tab:skenario-knf-ta-04}.
+ 
+\begin{table}[htbp]
+\centering
+\caption{Skenario Pengujian KNF-TA-04}
+\label{tab:skenario-knf-ta-04}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|p{1.7cm}|p{6.3cm}|p{4.5cm}|}
+\hline
+\textbf{ID} & \textbf{Skenario} & \textbf{Hasil yang Diharapkan} \\
+\hline
+P-KNF-06 & \texttt{EncryptedSignedEvent} yang dibentuk secara sah diverifikasi oleh ALS. & Diterima. \\
+\hline
+P-KNF-07a & Satu \textit{byte} \texttt{ciphertext} diubah setelah penandatanganan. & Ditolak pada verifikasi tanda tangan. \\
+\hline
+P-KNF-07b & Modifikasi \texttt{nonce} tidak terdeteksi pada tahap verifikasi tanda tangan karena \texttt{nonce} tidak termasuk data yang ditandatangani. Event tersebut dapat diterima dan tersimpan, tetapi proses dekripsi kemudian gagal akibat verifikasi authentication tag AES-GCM. Dengan demikian, skenario ini membuktikan deteksi saat pembacaan, bukan penolakan saat penerimaan. \\
+\hline
+P-KNF-08a & \textit{Ciphertext} ditandatangani kunci lain, tetapi \texttt{iota\_address} diisi alamat pengirim sah. & Ditolak pada verifikasi tanda tangan. \\
+\hline
+P-KNF-08b & \texttt{iota\_address} pada amplop diganti dengan alamat lain. & Ditolak pada verifikasi tanda tangan. \\
+\hline
+P-KNF-09a & \textit{Audit record} yang dibentuk dari \textit{event} EV4 diserialisasi ke JSON-Lines. & Tidak memuat atribut \textit{event} dalam bentuk \textit{plaintext}. \\
+\hline
+P-KNF-09b & Isi \textit{event} pada \textit{record} dibuka dengan kunci privat ALS dan dengan kunci privat P-256 lain. & Hanya kunci privat ALS yang berhasil; isi identik dengan \textit{event} asli. \\
+\hline
+\end{tabular}
+\end{table}
+ 
+Pengujian P-KNF-06 memverifikasi bahwa \textit{event} yang sah tidak ditolak
+oleh ALS. Pengujian P-KNF-07 memverifikasi integritas. Pada P-KNF-07a,
+modifikasi \textit{ciphertext} harus terdeteksi oleh \texttt{IotaSignature}
+karena \textit{ciphertext} merupakan pesan yang ditandatangani. Pada P-KNF-07b,
+bidang \texttt{nonce} tidak tercakup tanda tangan sehingga modifikasinya tidak
+terdeteksi pada saat penerimaan; perlindungan terhadap bidang ini berasal dari
+\textit{authentication tag} AES-GCM, yang menyebabkan dekripsi gagal pada saat
+pembacaan log. Pengujian P-KNF-08 memverifikasi keaslian pengirim, yaitu bahwa
+tanda tangan hanya diterima apabila dibuat oleh kunci privat yang bersesuaian
+dengan \texttt{iota\_address} pada amplop. Pengujian P-KNF-09 memverifikasi
+kerahasiaan pada penyimpanan: \textit{record} pada berkas log tidak memuat isi
+\textit{event} yang dapat dibaca, dan isi tersebut hanya dapat dipulihkan oleh
+pemegang kunci privat P-256 ALS.
 
 \section{Evaluasi}
 \label{sec:evaluasi}
 
 Evaluasi dilakukan dengan membandingkan hasil implementasi dan pengujian terhadap kebutuhan sistem. Hasil evaluasi digunakan untuk menilai apakah pendekatan \textit{Centralized Audit Collector} dengan \textit{signed payload} Ed25519, \textit{hash-chaining}, pengarsipan IPFS, dan publikasi metadata \textit{on-chain} pada IOTA mampu menjawab keterbatasan mekanisme pencatatan pada DecMed awal yang telah diidentifikasi pada Subbab~\ref{analisis-decmed}.
 
-Berdasarkan hasil pengujian kebutuhan fungsional dan nonfungsional, kebutuhan sistem yang diuji pada Tugas Akhir ini dinyatakan terpenuhi dalam batas skenario uji dan batasan prototipe yang ditetapkan.
+Berdasarkan hasil pengujian, kebutuhan fungsional dan KNF-TA-01 sampai KNF-TA-03 dinyatakan terpenuhi dalam batas skenario prototipe, sedangkan KNF-TA-04 terpenuhi sebagian karena belum terdapat jaminan durabilitas end-to-end setelah ALS memberikan respons berhasil.
 
 \subsection{Evaluasi terhadap Kebutuhan Sistem}
 \label{subsec:evaluasi-kebutuhan}
@@ -364,11 +481,20 @@ KNF-TA-02 & Format JSON-Lines, \texttt{\#[serde(flatten)]}, skema \texttt{AuditR
 \hline
 KNF-TA-03 & \textit{IPFS pinning}, \texttt{LogRecord} sebagai \textit{object immutable} di IOTA & P-KNF-04, P-KNF-05 & Terpenuhi \\
 \hline
-KNF-TA-04 & Verifikasi Ed25519 pada \texttt{verify\_and\_extra- ct\_event}, antrian asinkron berkapasitas 10.000 & P-KNF-06, P-KNF-07, P-KNF-08 & Terpenuhi \\
+KNF-TA-04 & Verifikasi \texttt{IotaSignature} pada \texttt{verify\_event\_signature}, \texttt{AlsQueue} dan \textit{retry worker} pada \textit{event source} & P-KNF-06, P-KNF-07, P-KNF-08, P-KNF-09 & Terpenuhi sebagian \\
 \hline
 \end{xltabular}
 
-Tabel~\ref{tab:evaluasi-kebutuhan} menunjukkan bahwa seluruh kebutuhan fungsional (KF-TA-01 hingga KF-TA-05) dan kebutuhan nonfungsional (KNF-TA-01 hingga KNF-TA-04) telah terpenuhi berdasarkan skenario pengujian yang dijalankan. Implementasi \textit{Centralized Audit Collector} dengan pengiriman \textit{asynchronous push-based}, standardisasi skema \texttt{AuditRecord}, \textit{hash-chaining} antar \textit{record}, rotasi dan pengarsipan berkas log ke IPFS, serta publikasi metadata \textit{immutable} ke IOTA melalui \textit{smart contract} Move memenuhi kebutuhan yang diuji.
+Tabel~\ref{tab:evaluasi-kebutuhan} menunjukkan bahwa seluruh kebutuhan
+fungsional (KF-TA-01 hingga KF-TA-05) serta kebutuhan nonfungsional KNF-TA-01
+hingga KNF-TA-03 terpenuhi berdasarkan skenario pengujian yang dijalankan.
+KNF-TA-04 dinyatakan terpenuhi sebagian. Verifikasi tanda tangan digital
+terbukti mencegah \textit{event} palsu atau termanipulasi masuk ke rantai
+\textit{audit record}, dan \texttt{AlsQueue} mengurangi risiko \textit{event}
+tidak terkirim akibat kegagalan sementara. Namun, implementasi belum menjamin
+bahwa setiap \textit{event} yang telah dikonfirmasi oleh ALS pasti tersimpan
+pada berkas log, sebagaimana diuraikan pada
+Subbab~\ref{subsec:keterbatasan-implementasi}.
 
 Kebutuhan fungsional diverifikasi melalui skenario P-KF-01 sampai P-KF-05, sedangkan kebutuhan nonfungsional diverifikasi melalui pengujian P-KNF-01 sampai P-KNF-08.
 
@@ -381,10 +507,39 @@ Implementasi pada Tugas Akhir ini memiliki beberapa keterbatasan sebagai berikut
 
 \begin{enumerate}
     \item Implementasi dilakukan dalam lingkungan prototipe yang terdiri atas komputer lokal, VPS, dan jaringan IOTA Localnet. Seluruh komponen ALS dan PRE Server dijalankan pada komputer lokal dengan sistem operasi Ubuntu 24.04.4 di lingkungan WSL2. VPS menjalankan IPFS Cluster dan IOTA Gas Station. \textit{Smart contract} \texttt{als::audit\_log} diunggah ke jaringan IOTA Localnet, bukan jaringan IOTA Testnet maupun Mainnet, sehingga perilaku sistem pada jaringan publik yang sesungguhnya belum dapat diverifikasi.
+    
     \item Mekanisme \textit{IPFS pinning} yang diimplementasikan bergantung pada konfigurasi IPFS Cluster yang diwarisi dari implementasi DecMed sebelumnya dengan tiga \textit{peer}. Ketahanan \textit{pinning} terhadap kegagalan \textit{node} pada kluster berskala produksi belum diuji.
     \item Nilai \texttt{LOG\_ROTATION\_INTERVAL\_SECS} yang digunakan dalam pengujian (60 detik) berbeda dari nilai yang direkomendasikan untuk produksi (300 detik sesuai konstanta). Implikasi rotasi yang terlalu sering terhadap konsumsi \textit{gas} IOTA dan kuota transaksi Gas Station belum dievaluasi secara menyeluruh.
+    
     \item Kunci privat Ed25519 yang digunakan oleh setiap \textit{event source} untuk menandatangani \textit{audit event} dibangkitkan secara acak pada saat komponen diinisialisasi dan tidak dipersistensikan. Apabila komponen di-\textit{restart}, kunci baru akan dibangkitkan sehingga tidak ada mekanisme untuk menghubungkan \textit{event} dari sesi sebelumnya dengan sesi baru secara kriptografis. Pengelolaan kunci jangka panjang untuk keperluan \textit{non-repudiation} yang sesungguhnya memerlukan mekanisme penyimpanan kunci yang aman dan persisten.
+    
     \item Pengujian verifikasi integritas rantai \textit{audit record} dilakukan pada skala kecil (puluhan \textit{record}). Performa verifikasi rantai pada volume berkas log yang besar (ribuan hingga jutaan \textit{record}) belum dievaluasi.
+    
+    \item Mekanisme pengiriman \textit{event} mengurangi risiko kehilangan \textit{event}, tetapi tidak memberikan jaminan ketercapaian \textit{end-to-end}. Terdapat tiga kondisi yang dapat menyebabkan \textit{event} tidak tercatat. Pertama, ALS mengirim respons berhasil setelah \textit{event} masuk ke antrian \texttt{tokio::sync::mpsc} di memori, sebelum \textit{record} ditulis ke berkas log, sedangkan \textit{event source} menghapus entri dari \texttt{AlsQueue} segera setelah respons tersebut diterima; kegagalan ALS di antara kedua titik ini menyebabkan \textit{event} hilang. Kedua, \textit{event} dengan tanda tangan tidak valid ditolak dengan status HTTP 200, sehingga pengirim memperlakukannya sebagai pengiriman berhasil dan menghapusnya dari antrian tanpa jejak penolakan. Ketiga, entri yang melampaui \texttt{MAX\_ATTEMPTS\_BEFORE\_SKIP} tidak lagi dikirim ulang secara otomatis dan memerlukan penanganan manual oleh operator. Mitigasi yang dapat diterapkan pada pengembangan selanjutnya adalah mengirim respons berhasil hanya setelah \textit{record} tersimpan ke disk, menggunakan status HTTP yang membedakan penolakan dari keberhasilan, serta menyediakan mekanisme pemantauan entri antrian yang gagal terkirim.
+    
+    \item ALS tidak menegakkan kesesuaian antara \texttt{actor\_id} di dalam
+    \textit{event} dan \texttt{iota\_address} penanda tangan, karena isi
+    \textit{event} tidak didekripsi pada saat penerimaan. Akibatnya, pelapor
+    yang sah berpotensi mencatat \textit{event} dengan \texttt{actor\_id} milik
+    pengguna lain. Risiko ini dimitigasi sebagian karena identitas pelapor
+    tetap tersimpan dan terverifikasi pada setiap \textit{record}, sehingga
+    atribusi yang tidak sesuai dapat terdeteksi dan ditelusuri ke pelapornya
+    pada saat investigasi. Penegakan otomatis dapat ditambahkan pada
+    pengembangan selanjutnya, misalnya dengan menolak \textit{event} yang
+    \texttt{actor\_id}-nya berbeda dari \texttt{iota\_address} pada saat
+    dekripsi, atau dengan menambahkan daftar pelapor tepercaya yang diizinkan
+    mencatat tindakan atas nama aktor lain.
+
+    \item Nilai \texttt{prev\_record\_hash} hanya dipelihara di memori dan tidak dipulihkan setelah ALS dimulai ulang,
+    sehingga setiap \textit{restart} memutus keterikatan antara \textit{record}
+    sebelum dan sesudah \textit{restart}. Selain itu, \textit{hash chain} tidak
+    mendeteksi penghapusan \textit{record} terakhir pada berkas log aktif sebelum nilai ujung rantai dipublikasikan ke IOTA melalui rotasi. Rentang kerentanan ini dibatasi oleh \texttt{LOG\_ROTATION\_INTERVAL\_SECS}: semakin
+    pendek interval rotasi, semakin sedikit \textit{record} yang belum memiliki
+    \textit{anchor} eksternal. Mitigasi yang dapat diterapkan pada pengembangan
+    selanjutnya meliputi pemulihan \texttt{prev\_record\_hash} dari \textit{record} terakhir pada berkas log aktif atau dari \texttt{final\_record\_hash} pada IOTA saat inisialisasi, serta publikasi \textit{hash} ujung rantai secara lebih sering, misalnya setiap sejumlah \textit{record} tertentu, tanpa menunggu rotasi berkas. Selain itu, nilai \texttt{prev\_tx\_digest} yang menghubungkan metadata antarrotasi juga dipelihara di memori dan belum dipulihkan dari IOTA setelah restart. Oleh karena itu, restart ALS berpotensi memutus bukan hanya rantai antarrecord, tetapi juga rantai metadata antarrotasi.
+
+    \item Implementasi menggunakan pasangan kunci P-256 ALS untuk membuka kunci sesi seluruh audit event, tetapi belum menyediakan mekanisme identifikasi versi kunci, rotasi kunci, backup, escrow, maupun pemulihan kunci. Kehilangan kunci privat ALS menyebabkan event yang dibungkus untuk kunci tersebut tidak dapat didekripsi, sedangkan kompromi kunci dapat membuka seluruh arsip terkait. Pengembangan selanjutnya perlu menambahkan \texttt{key\_id} atau \texttt{key\_version} pada amplop event serta kebijakan penyimpanan, rotasi, dan retensi kunci lama.
+ 
 \end{enumerate}
 
 Keterbatasan tersebut menunjukkan bahwa implementasi masih berada pada tingkat pembuktian konsep (\textit{proof of concept}). Pengembangan berikutnya perlu menguji sistem pada jaringan IOTA Testnet, memperkuat mekanisme pengelolaan kunci Ed25519 untuk mendukung \textit{non-repudiation} jangka panjang, serta mengevaluasi skalabilitas \textit{hash-chain} verification pada volume log produksi.
